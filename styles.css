@@ -996,11 +996,21 @@ h1 {
 }
 .order-field input:focus { border-color: var(--green); }
 
-.order-error {
+.order-field-error {
   color: #a62b1f;
+  font-size: 12px;
+  min-height: 0;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+#order-error {
   font-size: 13px;
-  min-height: 18px;
-  margin: -8px 0;
+  margin: -4px 0 0;
+}
+
+.order-field input.is-error {
+  border-color: #a62b1f;
 }
 
 .order-submit { width: 100%; justify-content: center; margin-top: 4px; }
