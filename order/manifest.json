@@ -1,6 +1,6 @@
 {
   "name": "Dairy Bliss",
-  "short_name": "DairyBliss",
+  "short_name": "Dairy Bliss",
   "description": "Order fresh paneer from Dairy Bliss — Pure Paneer Delight. Delivering every Wednesday and Saturday.",
   "start_url": "./index.html",
   "scope": "./",
