@@ -7,7 +7,7 @@
   <meta name="description" content="Dairy Bliss makes fresh buffalo milk paneer. Pure & Fresh.">
   <title>Dairy Bliss | Pure & Fresh</title>
   <link rel="icon" href="assets/favicon.png">
-  <link rel="stylesheet" href="styles.css?v=33">
+  <link rel="stylesheet" href="styles.css?v=34">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -262,7 +262,7 @@
           </div>
           <div class="order-field">
             <label for="o-address">Address</label>
-            <input id="o-address" type="text" placeholder="Flat no., building, street" autocomplete="street-address">
+            <input id="o-address" type="text" placeholder="Flat no., building, street" autocomplete="off">
             <p class="order-field-error" id="err-address"></p>
           </div>
           <button class="button primary order-submit" onclick="submitOrder()">Send Order on WhatsApp →</button>
@@ -287,11 +287,16 @@
     </div>
   </div>
 
+  <!-- Google Places — replace YOUR_MAPS_KEY with your actual key -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_MAPS_KEY&libraries=places&callback=initAutocomplete">
+  </script>
   <script src="script.js?v=5"></script>
   <script>
     /* ── ORDER MODAL ── */
     const PRICES = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
     const LABELS = { q250: '250g', q500: '500g', q750: '750g', q1kg: '1kg' };
+    let _placeUrl = null; // Google Maps URL from Places autocomplete
 
     function openOrderModal() {
       document.getElementById('order-modal').classList.add('is-open');
@@ -310,6 +315,9 @@
       const val = Math.max(0, parseInt(el.textContent) + delta);
       el.textContent = val;
       updateTotal();
+      // Clear the "select a quantity" error as soon as something is picked
+      const anySelected = Object.keys(PRICES).some(k => parseInt(document.getElementById(k).textContent) > 0);
+      if (anySelected) setFieldError('err-qty', '');
     }
 
     function updateTotal() {
@@ -338,7 +346,11 @@
       ['err-qty','err-name','err-phone','err-pincode','err-address'].forEach(id => setFieldError(id, ''));
     }
     ['o-name','o-phone','o-pincode','o-address'].forEach(id => {
-      document.getElementById(id)?.addEventListener('input', () => setFieldError('err-' + id.slice(2), ''));
+      document.getElementById(id)?.addEventListener('input', () => {
+        setFieldError('err-' + id.slice(2), '');
+        // If user manually edits address after a place was selected, clear the saved map URL
+        if (id === 'o-address') _placeUrl = null;
+      });
     });
 
     function submitOrder() {
@@ -370,8 +382,46 @@
       msg += '\nPhone: ' + phone;
       msg += '\nAddress: ' + address;
       msg += '\nPincode: ' + pincode;
+      if (_placeUrl) msg += '\nMap: ' + _placeUrl;
 
       window.open('https://wa.me/918861000100?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    /* ── GOOGLE PLACES AUTOCOMPLETE ── */
+    function initAutocomplete() {
+      const input = document.getElementById('o-address');
+      if (!input || !window.google) return;
+      const ac = new google.maps.places.Autocomplete(input, {
+        types: ['geocode', 'establishment'],
+        componentRestrictions: { country: 'in' },
+        fields: ['address_components', 'formatted_address', 'geometry', 'url']
+      });
+      // Keep Places dropdown above the modal
+      ac.setFields(['address_components', 'formatted_address', 'geometry', 'url']);
+      ac.addListener('place_changed', () => {
+        const place = ac.getPlace();
+        if (!place.geometry) return;
+        // Fill address field with full formatted address
+        input.value = place.formatted_address || input.value;
+        setFieldError('err-address', '');
+        // Auto-fill pincode if found in address components
+        const postal = (place.address_components || []).find(c => c.types.includes('postal_code'));
+        if (postal) {
+          const pc = document.getElementById('o-pincode');
+          if (!pc.value) { // only fill if empty
+            pc.value = postal.long_name;
+            setFieldError('err-pincode', '');
+          }
+        }
+        // Store the Google Maps link for the WhatsApp message
+        if (place.url) {
+          _placeUrl = place.url;
+        } else {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          _placeUrl = `https://maps.google.com/?q=${lat},${lng}`;
+        }
+      });
     }
 
     /* ── PINCODE MODAL ── */

@@ -1027,6 +1027,19 @@ h1 {
   .order-modal-left { border-right: none; border-bottom: 1px solid var(--line); }
 }
 
+/* Google Places autocomplete dropdown — must sit above the modal (z-index 100) */
+.pac-container {
+  z-index: 10001 !important;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 32px rgba(7,20,13,0.12);
+  font-family: var(--font);
+  font-size: 14px;
+}
+.pac-item { padding: 8px 14px; cursor: pointer; }
+.pac-item:hover { background: var(--paper); }
+.pac-item-query { font-weight: 600; color: var(--ink); }
+
 /* "Check your area" button in footer */
 .check-area-btn {
   background: none;
