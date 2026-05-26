@@ -1610,17 +1610,15 @@ address {
 }
 
 @media (max-width: 680px) {
-  .page-dots {
-    display: none;
-  }
+  html, body { overflow-x: hidden; }
 
-  .site-header {
-    padding: 10px 16px;
-  }
+  .page-dots { display: none; }
+
+  .site-header { padding: 10px 16px; }
 
   .brand img {
-    width: 148px;
-    height: 46px;
+    width: 140px;
+    height: auto;
   }
 
   .nav {
@@ -1628,73 +1626,81 @@ address {
     left: 10px;
   }
 
+  /* Hero — single consistent padding, no doubling */
   .hero {
-    padding: 38px 18px 0;
+    padding: 0;
+    min-height: auto;
+  }
+
+  .hero-copy {
+    padding: 40px 22px 0;
+    width: 100%;
   }
 
   h1 {
-    max-width: 360px;
-    font-size: clamp(36px, 9.2vw, 45px);
-    line-height: 1.02;
+    font-size: clamp(34px, 8.8vw, 42px);
+    line-height: 1.06;
+    max-width: 100%;
   }
 
   .hero-copy p:not(.eyebrow) {
-    max-width: 330px;
-    font-size: 17px;
-    line-height: 1.44;
+    font-size: 16px;
+    line-height: 1.5;
   }
 
   .actions {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
 
-  .hero-photo {
-    display: none;
+  .button {
+    text-align: center;
+    justify-content: center;
   }
+
+  .hero-photo { display: none; }
 
   .hero-trust {
-    margin: 18px -18px 0;
-    padding: 0 18px;
+    margin: 24px 0 0;
+    padding: 0 22px;
+    border-radius: 0;
   }
 
   .hero-trust article {
-    grid-template-columns: 34px 1fr;
-    gap: 18px;
-    padding: 14px 0;
+    grid-template-columns: 36px 1fr;
+    gap: 16px;
+    padding: 16px 0;
   }
 
   .trust-icon {
-    width: 62px;
-    height: 62px;
-    transform: scale(1.22);
+    width: 36px;
+    height: 36px;
+    transform: none;
   }
 
-  .hero-trust h3 {
-    font-size: 15px;
-  }
+  .hero-trust h3 { font-size: 14px; }
+  .hero-trust p  { font-size: 13px; line-height: 1.45; }
 
-  .hero-trust p {
-    font-size: 14px;
-    line-height: 1.45;
-  }
-
+  /* Sections */
   .paneer-feature,
   .story-band,
   .products,
   .quality,
   .order,
   .footer {
-    padding-inline: 18px;
+    padding-inline: 22px;
   }
+
+  .testimonials { padding-inline: 22px; }
 
   .paneer-feature h2,
   .story-band h2,
   .section-head h2,
   .quality h2,
   .order h2 {
-    font-size: clamp(29px, 7.8vw, 37px);
-    line-height: 1.04;
+    font-size: clamp(28px, 7.5vw, 36px);
+    line-height: 1.06;
   }
 
   .story-band,
