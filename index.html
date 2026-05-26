@@ -22,7 +22,7 @@
       <a href="#story">Our Story</a>
       <a href="#products">Products</a>
       <a href="#quality">Quality</a>
-      <a class="nav-cta" href="order/index.html" rel="noopener">Order Now</a>
+      <a class="nav-cta" href="#" onclick="openOrderModal();return false;">Order Now</a>
     </nav>
   </header>
 
@@ -40,7 +40,7 @@
         <p class="eyebrow reveal">Introducing</p>
         <h1 id="hero-title" class="reveal reveal-delay-1">Paneer,<br>the way it's<br>meant to taste.</h1>
         <div class="actions reveal reveal-delay-2">
-          <a class="button primary" href="order/index.html" rel="noopener">Reserve a Batch</a>
+          <a class="button primary" href="#" onclick="openOrderModal();return false;">Reserve a Batch</a>
           <a class="button secondary" href="#paneer">Why Buffalo Milk?</a>
         </div>
         <br>
@@ -109,7 +109,7 @@
             <li><span>750g</span><span>₹420</span></li>
             <li><span>1 kg</span><span>₹550</span></li>
           </ul>
-          <a class="button primary" href="order/index.html" rel="noopener">Reserve now</a>
+          <a class="button primary" href="#" onclick="openOrderModal();return false;">Reserve now</a>
         </article>
         <article class="reveal reveal-delay-1">
           <img class="product-image" src="assets/ghee.png" alt="Classic ghee jar">
@@ -193,7 +193,7 @@
         <a href="#story">Our Story</a>
         <a href="#products">Products</a>
         <a href="#quality">Quality</a>
-        <a href="order/index.html" rel="noopener">Order Now</a>
+        <a href="#" onclick="openOrderModal();return false;">Order Now</a>
       </nav>
       <div class="footer-delivery">
         <span class="footer-label">Delivery</span>
@@ -209,6 +209,64 @@
       </address>
     </div>
   </footer>
+
+  <!-- Order modal -->
+  <div class="order-modal" id="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
+    <div class="order-modal-box">
+      <button class="order-modal-close" onclick="closeOrderModal()" aria-label="Close">✕</button>
+      <div class="order-modal-inner">
+        <div class="order-modal-left">
+          <p class="eyebrow" style="justify-content:flex-start;margin-bottom:16px;">Place your order</p>
+          <h3 id="order-modal-title">Fresh Paneer,<br>delivered to you.</h3>
+          <p class="order-modal-sub">Wed &amp; Sat delivery. Select what you need and we'll confirm on WhatsApp.</p>
+          <div class="order-items">
+            <p class="order-section-label">Choose quantity</p>
+            <label class="order-item">
+              <div class="order-item-info"><span>250g</span><span class="order-price">₹145</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q250',-1)">−</button><span id="q250">0</span><button type="button" onclick="adjustQty('q250',1)">+</button></div>
+            </label>
+            <label class="order-item">
+              <div class="order-item-info"><span>500g</span><span class="order-price">₹280</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q500',-1)">−</button><span id="q500">0</span><button type="button" onclick="adjustQty('q500',1)">+</button></div>
+            </label>
+            <label class="order-item">
+              <div class="order-item-info"><span>750g</span><span class="order-price">₹420</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q750',-1)">−</button><span id="q750">0</span><button type="button" onclick="adjustQty('q750',1)">+</button></div>
+            </label>
+            <label class="order-item">
+              <div class="order-item-info"><span>1 kg</span><span class="order-price">₹550</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q1kg',-1)">−</button><span id="q1kg">0</span><button type="button" onclick="adjustQty('q1kg',1)">+</button></div>
+            </label>
+            <div class="order-total" id="order-total" style="display:none">
+              Total: <strong id="order-total-val"></strong>
+            </div>
+          </div>
+        </div>
+        <div class="order-modal-right">
+          <p class="order-section-label">Your details</p>
+          <div class="order-field">
+            <label for="o-name">Name</label>
+            <input id="o-name" type="text" placeholder="Your name" autocomplete="name">
+          </div>
+          <div class="order-field">
+            <label for="o-phone">Phone</label>
+            <input id="o-phone" type="tel" placeholder="10-digit mobile number" inputmode="numeric" maxlength="10" autocomplete="tel">
+          </div>
+          <div class="order-field">
+            <label for="o-pincode">Pincode</label>
+            <input id="o-pincode" type="tel" placeholder="e.g. 560064" inputmode="numeric" maxlength="6">
+          </div>
+          <div class="order-field">
+            <label for="o-notes">Notes <span style="font-weight:400;opacity:0.6">(optional)</span></label>
+            <input id="o-notes" type="text" placeholder="Apartment, landmark, etc.">
+          </div>
+          <p class="order-error" id="order-error"></p>
+          <button class="button primary order-submit" onclick="submitOrder()">Send Order on WhatsApp →</button>
+          <p class="order-fine">We'll confirm your order and delivery slot on WhatsApp within a few hours.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Pincode checker modal -->
   <div class="pincode-modal" id="pincode-modal" role="dialog" aria-modal="true" aria-labelledby="pincode-modal-title">
@@ -227,6 +285,75 @@
 
   <script src="script.js?v=5"></script>
   <script>
+    /* ── ORDER MODAL ── */
+    const PRICES = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
+    const LABELS = { q250: '250g', q500: '500g', q750: '750g', q1kg: '1kg' };
+
+    function openOrderModal() {
+      document.getElementById('order-modal').classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeOrderModal() {
+      document.getElementById('order-modal').classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('order-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeOrderModal();
+    });
+
+    function adjustQty(id, delta) {
+      const el = document.getElementById(id);
+      const val = Math.max(0, parseInt(el.textContent) + delta);
+      el.textContent = val;
+      updateTotal();
+    }
+
+    function updateTotal() {
+      let total = 0;
+      Object.keys(PRICES).forEach(k => {
+        total += parseInt(document.getElementById(k).textContent) * PRICES[k];
+      });
+      const totalEl = document.getElementById('order-total');
+      if (total > 0) {
+        totalEl.style.display = 'flex';
+        document.getElementById('order-total-val').textContent = '₹' + total;
+      } else {
+        totalEl.style.display = 'none';
+      }
+    }
+
+    function submitOrder() {
+      const name = document.getElementById('o-name').value.trim();
+      const phone = document.getElementById('o-phone').value.trim();
+      const pincode = document.getElementById('o-pincode').value.trim();
+      const notes = document.getElementById('o-notes').value.trim();
+      const errorEl = document.getElementById('order-error');
+
+      let items = [];
+      Object.keys(PRICES).forEach(k => {
+        const qty = parseInt(document.getElementById(k).textContent);
+        if (qty > 0) items.push(qty + ' × ' + LABELS[k] + ' (₹' + (qty * PRICES[k]) + ')');
+      });
+
+      if (!items.length) { errorEl.textContent = 'Please select at least one quantity.'; return; }
+      if (!name) { errorEl.textContent = 'Please enter your name.'; return; }
+      if (!/^\d{10}$/.test(phone)) { errorEl.textContent = 'Please enter a valid 10-digit phone number.'; return; }
+      if (!/^\d{6}$/.test(pincode)) { errorEl.textContent = 'Please enter a valid 6-digit pincode.'; return; }
+      errorEl.textContent = '';
+
+      const total = Object.keys(PRICES).reduce((s,k) => s + parseInt(document.getElementById(k).textContent)*PRICES[k], 0);
+      let msg = 'Hi Dairy Bliss, I\'d like to place an order:\n\n';
+      msg += items.join('\n');
+      msg += '\n\nTotal: ₹' + total;
+      msg += '\n\nName: ' + name;
+      msg += '\nPhone: ' + phone;
+      msg += '\nPincode: ' + pincode;
+      if (notes) msg += '\nNotes: ' + notes;
+
+      window.open('https://wa.me/918861000100?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    /* ── PINCODE MODAL ── */
     const SERVICEABLE = new Set([
       '560064','560063','560097', // Yelahanka
       '560045',                   // Jakkur, Thanisandra
