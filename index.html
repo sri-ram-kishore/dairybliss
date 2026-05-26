@@ -240,6 +240,7 @@
             <div class="order-total" id="order-total" style="display:none">
               Total: <strong id="order-total-val"></strong>
             </div>
+            <p class="order-field-error" id="err-qty" style="margin-top:10px"></p>
           </div>
         </div>
         <div class="order-modal-right">
@@ -260,12 +261,12 @@
             <p class="order-field-error" id="err-pincode"></p>
           </div>
           <div class="order-field">
-            <label for="o-notes">Notes <span style="font-weight:400;opacity:0.6">(optional)</span></label>
-            <input id="o-notes" type="text" placeholder="Apartment, landmark, etc.">
+            <label for="o-address">Address</label>
+            <input id="o-address" type="text" placeholder="Flat no., building, street" autocomplete="street-address">
+            <p class="order-field-error" id="err-address"></p>
           </div>
-          <p class="order-field-error" id="order-error"></p>
           <button class="button primary order-submit" onclick="submitOrder()">Send Order on WhatsApp →</button>
-          <p class="order-fine">We'll confirm your order and delivery slot on WhatsApp within a few hours.</p>
+          <p class="order-fine">We'll confirm on WhatsApp shortly.</p>
         </div>
       </div>
     </div>
@@ -328,13 +329,15 @@
     function setFieldError(id, msg) {
       const el = document.getElementById(id);
       if (el) el.textContent = msg;
-      if (msg) document.getElementById(id.replace('err-','o-'))?.classList.add('is-error');
-      else document.getElementById(id.replace('err-','o-'))?.classList.remove('is-error');
+      const inputId = id === 'err-qty' ? null : 'o-' + id.slice(4);
+      if (inputId) {
+        document.getElementById(inputId)?.classList.toggle('is-error', !!msg);
+      }
     }
     function clearAllErrors() {
-      ['err-name','err-phone','err-pincode','order-error'].forEach(id => setFieldError(id, ''));
+      ['err-qty','err-name','err-phone','err-pincode','err-address'].forEach(id => setFieldError(id, ''));
     }
-    ['o-name','o-phone','o-pincode'].forEach(id => {
+    ['o-name','o-phone','o-pincode','o-address'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', () => setFieldError('err-' + id.slice(2), ''));
     });
 
@@ -342,7 +345,7 @@
       const name = document.getElementById('o-name').value.trim();
       const phone = document.getElementById('o-phone').value.trim();
       const pincode = document.getElementById('o-pincode').value.trim();
-      const notes = document.getElementById('o-notes').value.trim();
+      const address = document.getElementById('o-address').value.trim();
 
       let items = [];
       Object.keys(PRICES).forEach(k => {
@@ -352,10 +355,11 @@
 
       clearAllErrors();
       let valid = true;
-      if (!items.length) { document.getElementById('order-error').textContent = 'Please select at least one quantity.'; valid = false; }
+      if (!items.length) { setFieldError('err-qty', 'Please select at least one quantity.'); valid = false; }
       if (!name) { setFieldError('err-name', 'Please enter your name.'); valid = false; }
       if (!/^\d{10}$/.test(phone)) { setFieldError('err-phone', 'Please enter a valid 10-digit number.'); valid = false; }
       if (!/^\d{6}$/.test(pincode)) { setFieldError('err-pincode', 'Please enter a valid 6-digit pincode.'); valid = false; }
+      if (!address) { setFieldError('err-address', 'Please enter your delivery address.'); valid = false; }
       if (!valid) return;
 
       const total = Object.keys(PRICES).reduce((s,k) => s + parseInt(document.getElementById(k).textContent)*PRICES[k], 0);
@@ -364,8 +368,8 @@
       msg += '\n\nTotal: ₹' + total;
       msg += '\n\nName: ' + name;
       msg += '\nPhone: ' + phone;
+      msg += '\nAddress: ' + address;
       msg += '\nPincode: ' + pincode;
-      if (notes) msg += '\nNotes: ' + notes;
 
       window.open('https://wa.me/918861000100?text=' + encodeURIComponent(msg), '_blank');
     }
