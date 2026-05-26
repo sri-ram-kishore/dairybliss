@@ -1203,6 +1203,7 @@ address {
     display: block;
     flex: none;
     width: 100%;
+    margin: 0;
     padding: 48px 22px 16px;
     padding-right: 22px;
   }
