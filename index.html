@@ -383,6 +383,8 @@
       msg += '\nAddress: ' + address;
       msg += '\nPincode: ' + pincode;
       if (_placeUrl) msg += '\nMap: ' + _placeUrl;
+      const upiLink = 'upi://pay?pa=reks.hsbc@ybl&pn=Dairy%20Bliss&am=' + total + '&cu=INR&tn=DairyBliss%20Order';
+      msg += '\n\n💳 To confirm your order, please pay ₹' + total + ' via UPI:\n' + upiLink + '\n\n(Tap the link above to pay instantly via any UPI app — GPay, PhonePe, Paytm, etc.)';
 
       window.open('https://wa.me/918861000100?text=' + encodeURIComponent(msg), '_blank');
     }
