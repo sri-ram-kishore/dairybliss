@@ -1304,6 +1304,16 @@ h1 {
 }
 
 /* Google Places autocomplete dropdown — must sit above the modal (z-index 100) */
+/* Suppress Chrome contact/autofill bubbles on address fields */
+#o-address::-webkit-contacts-auto-fill-button,
+#o-address::-webkit-credentials-auto-fill-button,
+#pincode-input::-webkit-contacts-auto-fill-button,
+#pincode-input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 .pac-container {
   z-index: 10001 !important;
   border-radius: var(--radius);
