@@ -281,7 +281,16 @@ h1 {
   gap: 8px;
 }
 .trust-icon-item + .trust-icon-item {
-  border-left: 1px solid var(--line);
+  position: relative;
+}
+.trust-icon-item + .trust-icon-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7.5%;
+  height: 85%;
+  width: 1px;
+  background: var(--line);
 }
 .trust-icon-item:first-child {
   padding-left: 0;
