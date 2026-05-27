@@ -919,14 +919,16 @@ h1 {
   padding-top: 16px;
 }
 
-.footer-social a {
+.footer-social a,
+.footer-contact .footer-social a {
   color: var(--green-mid);
   display: flex;
   align-items: center;
   transition: color 150ms ease, transform 150ms ease;
 }
 
-.footer-social a:hover {
+.footer-social a:hover,
+.footer-contact .footer-social a:hover {
   color: #6abf3a;
   transform: translateY(-2px);
 }
