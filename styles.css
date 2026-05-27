@@ -263,10 +263,6 @@ h1 {
   display: flex;
   align-items: stretch;
   margin: 18px 0 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: #fff;
   max-width: 460px;
 }
 .trust-icon-tile {
@@ -274,6 +270,7 @@ h1 {
   min-width: 0;
   height: auto;
   display: block;
+  mix-blend-mode: multiply;
 }
 
 /* ── HERO TRUST BAR ── */
