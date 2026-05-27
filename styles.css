@@ -261,30 +261,24 @@ h1 {
 
 .hero-trust-strip {
   display: flex;
-  flex-direction: column;
-  gap: 7px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
   list-style: none;
   padding: 0;
   margin: 14px 0 0;
 }
 .hero-trust-strip li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-mid);
-  letter-spacing: 0.03em;
+  color: var(--muted);
+  letter-spacing: 0.04em;
 }
-.hero-trust-strip li::before {
-  content: '';
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%233d7a1a' opacity='0.12'/%3E%3Cpath d='M4.5 8l2.5 2.5 4.5-4.5' stroke='%233d7a1a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
+.hero-trust-strip li + li::before {
+  content: '·';
+  margin: 0 9px;
+  opacity: 0.4;
+  font-weight: 400;
 }
 
 /* ── HERO TRUST BAR ── */
@@ -1909,9 +1903,6 @@ address {
   .hero-copy {
     padding: 40px 22px 0;
     width: 100%;
-  }
-  .hero-trust-strip {
-    gap: 4px 0;
   }
 
   h1 {
