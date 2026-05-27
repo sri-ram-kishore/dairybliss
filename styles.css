@@ -920,14 +920,14 @@ h1 {
 }
 
 .footer-social a {
-  color: rgba(255, 255, 255, 0.38);
+  color: var(--green-mid);
   display: flex;
   align-items: center;
   transition: color 150ms ease, transform 150ms ease;
 }
 
 .footer-social a:hover {
-  color: #fff;
+  color: #6abf3a;
   transform: translateY(-2px);
 }
 
