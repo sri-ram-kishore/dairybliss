@@ -264,6 +264,24 @@ h1 {
   box-shadow: 0 6px 22px rgba(61, 122, 26, 0.32), 0 1px 4px rgba(61, 122, 26, 0.18);
 }
 
+.ghost-btn {
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  border-radius: 10px;
+  min-height: 52px;
+  padding: 0 28px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  opacity: 0.85;
+  transition: opacity 0.18s, background 0.18s;
+}
+.ghost-btn:hover {
+  opacity: 1;
+  background: rgba(28, 47, 92, 0.05);
+}
+
 .hero-sub-block {
   margin-top: 22px;
   margin-bottom: 16px;
