@@ -260,11 +260,8 @@ h1 {
 }
 
 .hero-sub-block {
-  margin-top: 32px;
+  margin-top: 28px;
   margin-bottom: 8px;
-}
-.hero-sub-block > p {
-  margin: 0 0 0;
 }
 .hero-trust-icons {
   display: flex;
