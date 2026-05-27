@@ -208,11 +208,11 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: flex-start;
+  justify-content: space-between;
   text-align: left;
   width: 100%;
   margin: 0;
-  padding: clamp(72px, 9vw, 130px) min(52vw, 640px) clamp(36px, 4vw, 56px) clamp(22px, 4.8vw, 72px);
+  padding: clamp(56px, 7vw, 100px) min(52vw, 640px) clamp(40px, 5vw, 72px) clamp(22px, 4.8vw, 72px);
 }
 
 h1 {
@@ -261,23 +261,30 @@ h1 {
 
 .hero-trust-strip {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0;
+  flex-direction: column;
+  gap: 8px;
   list-style: none;
   padding: 0;
-  margin: 32px 0 0;
+  margin: 0;
 }
 .hero-trust-strip li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-mid);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
-.hero-trust-strip li + li::before {
-  content: '·';
-  margin: 0 10px;
-  opacity: 0.4;
+.hero-trust-strip li::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%233d7a1a' opacity='0.12'/%3E%3Cpath d='M4.5 8l2.5 2.5 4.5-4.5' stroke='%233d7a1a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
 }
 
 /* ── HERO TRUST BAR ── */
