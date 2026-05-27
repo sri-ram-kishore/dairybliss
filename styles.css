@@ -1232,8 +1232,10 @@ h1 {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
-.order-submit { width: 100%; max-width: 420px; justify-content: center; }
+.order-submit { width: 100%; max-width: 480px; justify-content: center; }
 
 .order-fine {
   font-size: 12px;
