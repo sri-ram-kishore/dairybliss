@@ -259,6 +259,13 @@ h1 {
   letter-spacing: 0.01em;
 }
 
+.hero-sub-block {
+  margin-top: 32px;
+  margin-bottom: 8px;
+}
+.hero-sub-block > p {
+  margin: 0 0 0;
+}
 .hero-trust-icons {
   display: flex;
   align-items: flex-start;
