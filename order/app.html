@@ -940,19 +940,17 @@ function populateDates() {
   document.getElementById('r-sat').dataset.fullDate = fmtDate(sd);
 }
 
-// After Tue cutoff Saturday is the sooner slot → show it first.
-// All other times Wednesday comes first (default HTML order).
+// Always show whichever delivery date is sooner first.
 function reorderCards() {
-  const now = new Date();
-  const day  = now.getDay();
-  const hour = now.getHours();
+  const wd = nextDeliveryDate(3); // next Wednesday
+  const sd = nextDeliveryDate(6); // next Saturday
   const container = document.getElementById('day-cards');
   const wedCard   = document.getElementById('dc-wed');
   const satCard   = document.getElementById('dc-sat');
-  if (day === 2 && hour >= CUTOFF_HOUR) {
-    container.insertBefore(satCard, wedCard); // Sat first
+  if (sd < wd) {
+    container.insertBefore(satCard, wedCard); // Sat is sooner
   } else {
-    container.insertBefore(wedCard, satCard); // Wed first (default)
+    container.insertBefore(wedCard, satCard); // Wed is sooner
   }
 }
 
@@ -1263,7 +1261,23 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
 
   if (d.payKey === 'upi') {
     setBusy(false);
-    showUPIScreen(d);
+    const rzp = new Razorpay({
+      key: 'rzp_live_Su6MbKPaMhPWgH',
+      amount: d.amount * 100,
+      currency: 'INR',
+      name: 'Dairy Bliss',
+      description: d.qtyLabel + ' Fresh Paneer',
+      image: '/assets/logo.png',
+      prefill: { name: d.name, contact: '+91' + d.phone },
+      theme: { color: '#06391f' },
+      method: { upi: true, card: false, netbanking: false, wallet: false, emi: false },
+      handler: async function(response) {
+        await sendToSheet(d, 'UPI — ' + response.razorpay_payment_id);
+        showConfirmation(d, 'UPI');
+      },
+      modal: { ondismiss: function() { setBusy(false); } }
+    });
+    rzp.open();
   } else {
     await sendToSheet(d, 'Cash on Delivery');
     setBusy(false);
@@ -1313,5 +1327,6 @@ function dismissInstall() {
 window.addEventListener('appinstalled', () =>
   document.getElementById('install-banner').classList.remove('show'));
 </script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </body>
 </html>
