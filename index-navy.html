@@ -6,8 +6,11 @@
   <meta name="theme-color" content="#f5f7fa">
   <meta name="description" content="Dairy Bliss makes fresh buffalo milk paneer. Pure & Fresh.">
   <title>Dairy Bliss | Pure & Fresh</title>
-  <link rel="icon" href="assets/favicon.png">
-  <link rel="stylesheet" href="styles-navy.css?v=11">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles-navy.css?v=95">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -21,7 +24,7 @@
     <nav class="nav" aria-label="Primary">
       <a href="#story">Our Story</a>
       <a href="#products">Products</a>
-      <a href="#quality">Quality</a>
+      <a href="#quality">Purity</a>
       <a class="nav-cta" href="#" onclick="openOrderModal();return false;">Order Now</a>
     </nav>
   </header>
@@ -32,45 +35,23 @@
     <a href="#story" aria-label="Our Story" data-section-dot="story"></a>
     <a href="#products" aria-label="Products" data-section-dot="products"></a>
     <a href="#quality" aria-label="Quality" data-section-dot="quality"></a>
+    <a href="#testimonials" aria-label="Testimonials" data-section-dot="testimonials"></a>
   </nav>
 
   <main>
     <section class="hero snap-section" id="intro" aria-labelledby="hero-title">
       <div class="hero-copy">
         <p class="eyebrow reveal">Introducing</p>
-        <h1 id="hero-title" class="reveal reveal-delay-1">Paneer,<br>the way it's<br>meant to taste.</h1>
+        <h1 id="hero-title" class="reveal reveal-delay-1">Paneer you feel<br>good serving.</h1>
+        <p class="reveal reveal-delay-1">Made from rich buffalo milk and set with care — soft to bite, firm in the kadai, and fresh at your door.</p>
         <div class="actions reveal reveal-delay-2">
-          <a class="button primary" href="#" onclick="openOrderModal();return false;">Reserve a Batch</a>
-          <a class="button secondary" href="#paneer">Why Buffalo Milk?</a>
+          <a class="button primary" href="#" onclick="openOrderModal();return false;">Order Now</a>
+          <a class="hero-text-link reveal reveal-delay-2" href="#paneer">Our promise →</a>
         </div>
-        <br>
       </div>
       <figure class="hero-photo">
         <img src="assets/hero-image.png" alt="Dairy Bliss paneer, ghee and white butter with mountain backdrop">
       </figure>
-      <div class="hero-trust" aria-label="Dairy Bliss highlights">
-        <article class="reveal">
-          <img src="assets/icon-new-leaf.png" alt="" class="trust-icon">
-          <div>
-            <h3>No fillers. No starch.</h3>
-            <p>Just buffalo milk and natural culture. No preservatives. No additives.</p>
-          </div>
-        </article>
-        <article class="reveal reveal-delay-1">
-          <img src="assets/icon-new-farm.png" alt="" class="trust-icon">
-          <div>
-            <h3>Holds in the kadai</h3>
-            <p>Soft inside. Holds its shape. Works in every dish.</p>
-          </div>
-        </article>
-        <article class="reveal reveal-delay-2">
-          <img src="assets/icon-new-heart.png" alt="" class="trust-icon">
-          <div>
-            <h3>Twice a week</h3>
-            <p>Wednesday and Saturday, delivered to your door while it's still fresh.</p>
-          </div>
-        </article>
-      </div>
     </section>
 
     <section class="paneer-feature snap-section" id="paneer">
@@ -88,8 +69,7 @@
     <section class="story-band snap-section" id="story">
       <p class="eyebrow reveal">Our Story</p>
       <h2 class="reveal reveal-delay-1">Fresh from source.<br>Made for the table.</h2>
-      <p class="reveal reveal-delay-2">We started Dairy Bliss to bring genuinely fresh paneer to Bangalore home kitchens.</p>
-      <p class="reveal reveal-delay-3">Paneer is where we began because you can't fake it. If the milk isn't right — you taste it. Get paneer right, and everything follows.</p>
+      <p class="reveal reveal-delay-2">We started Dairy Bliss to bring genuinely fresh paneer to Bangalore home kitchens. Paneer is where we began because you can't fake it — if the milk isn't right, you taste it. Get paneer right, and everything follows.</p>
     </section>
 
     <section class="products snap-section" id="products">
@@ -98,43 +78,76 @@
         <h2>Paneer, first.<br>More soon.</h2>
       </div>
       <div class="product-lineup">
+
+        <!-- ── PANEER CARD (left, landscape) ── -->
         <article class="product-primary reveal">
-          <img class="product-image" src="assets/paneer.png" alt="Fresh paneer cubes in a bowl">
-          <span>Available now</span>
-          <h3>Fresh Paneer</h3>
-          <p>Soft buffalo milk paneer that stays tender while cooking.</p>
-          <ul class="price-list">
-            <li><span>250g</span><span>₹145</span></li>
-            <li><span>500g</span><span>₹280</span></li>
-            <li><span>750g</span><span>₹420</span></li>
-            <li><span>1 kg</span><span>₹550</span></li>
-          </ul>
-          <a class="button primary" href="#" onclick="openOrderModal();return false;">Reserve now</a>
+          <div class="product-primary-inner">
+            <div class="product-primary-img-wrap">
+              <img src="assets/paneer-new-tobeused.png" alt="Fresh paneer block">
+            </div>
+            <div class="product-primary-text">
+              <span class="badge badge-available">Available now</span>
+              <h3>Fresh Paneer</h3>
+              <p>Soft buffalo milk paneer that stays tender while cooking.</p>
+              <ul class="price-list">
+                <li class="price-list-header"><span>Size</span><span>Price</span></li>
+                <li><span>250g</span><span>₹145</span></li>
+                <li><span>500g</span><span>₹280</span></li>
+                <li><span>750g</span><span>₹420</span></li>
+                <li><span>1 kg</span><span>₹550</span></li>
+              </ul>
+              <a class="button primary product-order-btn" href="#" onclick="openOrderModal();return false;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:7px;flex-shrink:0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                Order Now
+              </a>
+            </div>
+          </div>
         </article>
-        <article class="reveal reveal-delay-1">
-          <img class="product-image" src="assets/ghee.png" alt="Classic ghee jar">
-          <span>Coming soon</span>
-          <h3>Ghee</h3>
-          <p>Slow-made. Deep aroma. Rich finish.</p>
-        </article>
-        <article class="reveal reveal-delay-2">
-          <img class="product-image" src="assets/curd.png" alt="Set curd bowl">
-          <span>Coming soon</span>
-          <h3>Curd</h3>
-          <p>Thick-set and naturally cultured.</p>
-        </article>
-        <article class="reveal reveal-delay-3">
-          <img class="product-image" src="assets/khoya.png" alt="Khoya for sweets">
-          <span>Coming soon</span>
-          <h3>Khoya</h3>
-          <p>The base of every great mithai.</p>
-        </article>
-        <article class="reveal reveal-delay-3">
-          <img class="product-image" src="assets/product-whey.png" alt="Whey protein">
-          <span>Coming soon</span>
-          <h3>Whey</h3>
-          <p>Natural whey, straight from the dairy.</p>
-        </article>
+
+        <!-- ── COMING SOON 2×2 GRID (right) ── -->
+        <div class="product-secondary-grid">
+          <article class="reveal reveal-delay-1">
+            <div class="product-img-wrap">
+              <img src="assets/ghee-new.png" alt="Ghee">
+            </div>
+            <div class="product-text">
+              <span class="badge badge-soon">Coming soon</span>
+              <h3>Ghee</h3>
+              <p>Slow-made. Deep aroma. Rich finish.</p>
+            </div>
+          </article>
+          <article class="reveal reveal-delay-1">
+            <div class="product-img-wrap">
+              <img src="assets/curd-new.png" alt="Curd">
+            </div>
+            <div class="product-text">
+              <span class="badge badge-soon">Coming soon</span>
+              <h3>Curd</h3>
+              <p>Thick-set and naturally cultured.</p>
+            </div>
+          </article>
+          <article class="reveal reveal-delay-2">
+            <div class="product-img-wrap">
+              <img src="assets/khoya-new.png" alt="Khoya">
+            </div>
+            <div class="product-text">
+              <span class="badge badge-soon">Coming soon</span>
+              <h3>Khoya</h3>
+              <p>The base of every great mithai.</p>
+            </div>
+          </article>
+          <article class="reveal reveal-delay-2">
+            <div class="product-img-wrap">
+              <img src="assets/butter-new.png" alt="Butter">
+            </div>
+            <div class="product-text">
+              <span class="badge badge-soon">Coming soon</span>
+              <h3>Butter</h3>
+              <p>Churned fresh from pure buffalo cream.</p>
+            </div>
+          </article>
+        </div>
+
       </div>
     </section>
 
@@ -150,7 +163,7 @@
     </section>
   </main>
 
-  <section class="testimonials" id="testimonials">
+  <section class="testimonials snap-section" id="testimonials">
     <div class="section-head reveal">
       <p class="eyebrow">From our customers</p>
       <h2>Fresh paneer,<br>happy kitchens.</h2>
@@ -187,6 +200,7 @@
     <div class="footer-top">
       <div class="footer-brand">
         <img src="assets/logo-footer.png" alt="Dairy Bliss Pure & Fresh">
+        <p class="footer-copy">© 2026 Dairy Bliss.</p>
       </div>
       <nav class="footer-links">
         <span class="footer-label">Menu</span>
@@ -205,7 +219,17 @@
         <span class="footer-label">Contact</span>
         <a href="tel:+918861000100">+91 88610 00100</a>
         <a href="mailto:hello@dairybliss.com">hello@dairybliss.com</a>
-        <p class="footer-copy">© 2026 Dairy Bliss.</p>
+        <div class="footer-social">
+          <a href="https://instagram.com/dairybliss" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a href="https://facebook.com/dairybliss" target="_blank" rel="noopener" aria-label="Facebook">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="https://wa.me/918861000100" target="_blank" rel="noopener" aria-label="WhatsApp">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+          </a>
+        </div>
       </address>
     </div>
   </footer>
@@ -245,6 +269,13 @@
         </div>
         <div class="order-modal-right">
           <p class="order-section-label">Your details</p>
+          <div class="order-field">
+            <label for="o-date">Delivery Date</label>
+            <select id="o-date">
+              <option value="">Select a delivery date</option>
+            </select>
+            <p class="order-field-error" id="err-date"></p>
+          </div>
           <div class="order-field">
             <label for="o-name">Name</label>
             <input id="o-name" type="text" placeholder="Your name" autocomplete="name">
@@ -298,9 +329,32 @@
     const LABELS = { q250: '250g', q500: '500g', q750: '750g', q1kg: '1kg' };
     let _placeUrl = null; // Google Maps URL from Places autocomplete
 
+    function populateDeliveryDates() {
+      const sel = document.getElementById('o-date');
+      // Keep only the placeholder option
+      while (sel.options.length > 1) sel.remove(1);
+      const days = [3, 6]; // Wednesday = 3, Saturday = 6
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const now = new Date();
+      // Start from tomorrow to avoid same-day orders
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      let added = 0;
+      for (let offset = 0; added < 6; offset++) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + offset);
+        if (days.includes(d.getDay())) {
+          const label = dayNames[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
+          const value = d.toISOString().slice(0, 10); // YYYY-MM-DD
+          sel.add(new Option(label, value));
+          added++;
+        }
+      }
+    }
+
     function openOrderModal() {
       document.getElementById('order-modal').classList.add('is-open');
       document.body.style.overflow = 'hidden';
+      populateDeliveryDates();
     }
     function closeOrderModal() {
       document.getElementById('order-modal').classList.remove('is-open');
@@ -343,8 +397,9 @@
       }
     }
     function clearAllErrors() {
-      ['err-qty','err-name','err-phone','err-pincode','err-address'].forEach(id => setFieldError(id, ''));
+      ['err-qty','err-date','err-name','err-phone','err-pincode','err-address'].forEach(id => setFieldError(id, ''));
     }
+    document.getElementById('o-date').addEventListener('change', () => setFieldError('err-date', ''));
     ['o-name','o-phone','o-pincode','o-address'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', () => {
         setFieldError('err-' + id.slice(2), '');
@@ -354,6 +409,7 @@
     });
 
     function submitOrder() {
+      const deliveryDate = document.getElementById('o-date').value;
       const name = document.getElementById('o-name').value.trim();
       const phone = document.getElementById('o-phone').value.trim();
       const pincode = document.getElementById('o-pincode').value.trim();
@@ -368,17 +424,22 @@
       clearAllErrors();
       let valid = true;
       if (!items.length) { setFieldError('err-qty', 'Please select at least one quantity.'); valid = false; }
+      if (!deliveryDate) { setFieldError('err-date', 'Please select a delivery date.'); valid = false; }
       if (!name) { setFieldError('err-name', 'Please enter your name.'); valid = false; }
       if (!/^\d{10}$/.test(phone)) { setFieldError('err-phone', 'Please enter a valid 10-digit number.'); valid = false; }
       if (!/^\d{6}$/.test(pincode)) { setFieldError('err-pincode', 'Please enter a valid 6-digit pincode.'); valid = false; }
       if (!address) { setFieldError('err-address', 'Please enter your delivery address.'); valid = false; }
       if (!valid) return;
 
+      // Format the selected date nicely for the message (e.g. "Wed, 28 May")
+      const dateLabel = document.getElementById('o-date').options[document.getElementById('o-date').selectedIndex].text;
+
       const total = Object.keys(PRICES).reduce((s,k) => s + parseInt(document.getElementById(k).textContent)*PRICES[k], 0);
       let msg = 'Hi Dairy Bliss, I\'d like to place an order:\n\n';
       msg += items.join('\n');
       msg += '\n\nTotal: ₹' + total;
-      msg += '\n\nName: ' + name;
+      msg += '\n\nDelivery Date: ' + dateLabel;
+      msg += '\nName: ' + name;
       msg += '\nPhone: ' + phone;
       msg += '\nAddress: ' + address;
       msg += '\nPincode: ' + pincode;

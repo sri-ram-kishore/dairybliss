@@ -10,8 +10,10 @@
   <meta name="apple-mobile-web-app-title" content="DairyBliss">
   <title>Dairy Bliss — Order Fresh Paneer</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="icons/favicon.png">
-  <link rel="apple-touch-icon" href="icons/favicon.png">
+  <link rel="icon" href="../assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="../assets/favicon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/apple-touch-icon.png">
 
   <style>
     /* ============================================================
@@ -19,21 +21,21 @@
        Warm food-brand aesthetic: cream bg, green accents, card UI
        ============================================================ */
     :root {
-      --green:       #06391f;
-      --green-mid:   #155933;
-      --green-light: #eef4ef;
-      --cream:       #fbf8f2;
+      --green:       #3d7a1a;
+      --green-mid:   #4e9522;
+      --green-light: #f0f6ea;
+      --cream:       #faf8f4;
       --cream-card:  #ffffff;
       --white:       #ffffff;
-      --gold:        #bd8415;
-      --text:        #0f1c15;
-      --text-mid:    #6b756e;
-      --text-soft:   #8a998a;
-      --border:      rgba(15,28,21,0.11);
-      --border-sel:  #06391f;
-      --shadow:      0 1px 3px rgba(0,0,0,0.07), 0 2px 10px rgba(0,0,0,0.04);
-      --err:         #c0392b;
-      --ok:          #2e7d32;
+      --gold:        #3d7a1a;
+      --text:        #1c2f5c;
+      --text-mid:    #4a5f7a;
+      --text-soft:   #7a8fa8;
+      --border:      rgba(28,47,92,0.10);
+      --border-sel:  #3d7a1a;
+      --shadow:      0 1px 3px rgba(28,47,92,0.06), 0 2px 10px rgba(28,47,92,0.04);
+      --err:         #a62b1f;
+      --ok:          #3d7a1a;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -69,7 +71,7 @@
       margin: 0;
       display: flex; align-items: center; justify-content: center;
     }
-    .logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
+    .logo-wrap img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
     .logo-wrap .fb { font-size: 42px; line-height: 1; }
     .hd h1 { display: none; }
     .hd .tag { display: none; }
@@ -597,7 +599,7 @@ const CONFIG = {
 <!-- HEADER -->
 <header class="hd">
   <div class="logo-wrap">
-    <img src="icons/Logo.png" alt="Dairy Bliss"
+    <img src="../assets/logo-header.png" alt="Dairy Bliss"
          onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'fb',textContent:'🥛'}))">
   </div>
   <h1>Dairy Bliss</h1>
@@ -884,7 +886,7 @@ const CONFIG = {
 <!-- INSTALL BANNER -->
 <div class="inst-banner" id="install-banner">
   <div class="inst-ico">
-    <img src="icons/Logo.png" alt=""
+    <img src="../assets/logo-header.png" alt=""
          onerror="this.parentElement.textContent='🥛'">
   </div>
   <div class="inst-text">
@@ -1264,7 +1266,7 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
       currency: 'INR',
       name: 'Dairy Bliss',
       description: d.qtyLabel + ' Fresh Paneer',
-      image: '/assets/logo.png',
+      image: '/assets/logo-header.png',
       prefill: { name: d.name, contact: '+91' + d.phone },
       theme: { color: '#06391f' },
       method: { upi: true, card: false, netbanking: false, wallet: false, emi: false },
