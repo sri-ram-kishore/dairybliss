@@ -5,11 +5,11 @@
 //  localStorage and retried via Background Sync.
 // ============================================================
 
-const CACHE_NAME = 'dairy-bliss-v5';
+const CACHE_NAME = 'dairy-bliss-v6';
 
 // Assets to precache on install
 const PRECACHE_ASSETS = [
-  './app.html',
+  './index.html',
   './manifest.json',
 ];
 
@@ -80,7 +80,7 @@ self.addEventListener('fetch', event => {
         .catch(() => {
           // Offline fallback: serve app.html for navigation requests
           if (request.mode === 'navigate') {
-            return caches.match('./app.html');
+            return caches.match('./index.html');
           }
           // For other failed requests, return empty 503
           return new Response('Offline', { status: 503 });

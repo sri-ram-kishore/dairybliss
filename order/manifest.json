@@ -2,7 +2,7 @@
   "name": "Dairy Bliss",
   "short_name": "Dairy Bliss",
   "description": "Order fresh paneer from Dairy Bliss — Pure Paneer Delight. Delivering every Wednesday and Saturday.",
-  "start_url": "./app.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -29,7 +29,7 @@
       "name": "Order Paneer",
       "short_name": "Order",
       "description": "Place a new paneer order",
-      "url": "./app.html",
+      "url": "./",
       "icons": [{ "src": "../assets/favicon-192.png", "sizes": "192x192" }]
     }
   ]
