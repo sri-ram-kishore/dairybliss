@@ -1199,6 +1199,8 @@ h1 {
   background-position: right 14px center;
   padding-right: 36px;
   cursor: pointer;
+  height: 42px;
+  line-height: normal;
 }
 /* Muted colour when no date selected yet (matches input placeholder style) */
 .order-field select.ph { color: var(--muted); }
