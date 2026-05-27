@@ -582,15 +582,15 @@ h1 {
 .product-text {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  text-align: left;
+  align-items: center;
+  text-align: center;
   padding: clamp(14px, 1.3vw, 20px) clamp(20px, 2vw, 30px) clamp(18px, 1.8vw, 26px);
   flex: none;
 }
 
 .product-secondary-grid .product-text > * {
-  align-self: stretch;
-  text-align: left;
+  align-self: center;
+  text-align: center;
 }
 
 /* Badges */
@@ -611,12 +611,11 @@ h1 {
   align-self: center;
 }
 .product-secondary-grid .badge-soon {
-  display: block;
-  align-self: stretch;
-  width: 100%;
+  display: inline-flex;
+  align-self: center;
   margin-left: 0;
   padding-left: 0;
-  justify-content: initial;
+  justify-content: center;
   text-align: left;
 }
 
