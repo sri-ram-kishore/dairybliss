@@ -279,8 +279,8 @@
             <p class="order-field-error" id="err-phone"></p>
           </div>
           <div class="order-field">
-            <label for="o-address">Address</label>
-            <input id="o-address" type="text" placeholder="Search or type your full address" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')">
+            <label for="o-loc">Drop-off location</label>
+            <input id="o-loc" name="dropoff" type="text" placeholder="Building, street, area" autocomplete="off">
             <p class="order-field-error" id="err-address"></p>
           </div>
           <div class="order-field">
@@ -380,7 +380,7 @@
     function closeOrderModal() {
       document.getElementById('order-modal').classList.remove('is-open');
       document.body.style.overflow = '';
-      const addr = document.getElementById('o-address');
+      const addr = document.getElementById('o-loc');
       if (addr) addr.setAttribute('readonly', 'readonly');
     }
     document.getElementById('order-modal').addEventListener('click', function(e) {
@@ -426,11 +426,11 @@
       setFieldError('err-date', '');
       this.classList.remove('ph');
     });
-    ['o-name','o-phone','o-address'].forEach(id => {
+    ['o-name','o-phone','o-loc'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', () => {
         setFieldError('err-' + id.slice(2), '');
         // If user manually edits address after a place was selected, clear the saved map URL
-        if (id === 'o-address') _placeUrl = null;
+        if (id === 'o-loc') _placeUrl = null;
       });
     });
 
@@ -438,7 +438,7 @@
       const deliveryDate = document.getElementById('o-date').value;
       const name = document.getElementById('o-name').value.trim();
       const phone = document.getElementById('o-phone').value.trim();
-      const address = document.getElementById('o-address').value.trim();
+      const address = document.getElementById('o-loc').value.trim();
 
       let items = [];
       Object.keys(PRICES).forEach(k => {
@@ -487,14 +487,14 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         hidePacDropdowns();
-        document.getElementById('o-address')?.blur();
+        document.getElementById('o-loc')?.blur();
         document.getElementById('pincode-input')?.blur();
       }
     }, true); // capture phase so it fires before anything else
 
     // Click anywhere outside address inputs → close
     document.addEventListener('click', function(e) {
-      if (!e.target.closest('#o-address') && !e.target.closest('#pincode-input') &&
+      if (!e.target.closest('#o-loc') && !e.target.closest('#pincode-input') &&
           !e.target.closest('.pac-container')) {
         hidePacDropdowns();
       }
@@ -503,7 +503,7 @@
     // Watch for pac-container being added to DOM and suppress it for short inputs
     const _pacObserver = new MutationObserver(() => {
       const activeInput = document.activeElement;
-      if (activeInput && (activeInput.id === 'o-address' || activeInput.id === 'pincode-input')) {
+      if (activeInput && (activeInput.id === 'o-loc' || activeInput.id === 'pincode-input')) {
         if (activeInput.value.length <= 2) hidePacDropdowns();
       }
     });
@@ -520,7 +520,7 @@
       if (!window.google) return;
 
       // Order modal address
-      const input = document.getElementById('o-address');
+      const input = document.getElementById('o-loc');
       if (input) {
         const ac = new google.maps.places.Autocomplete(input, {
           types: ['geocode', 'establishment'],
@@ -570,7 +570,7 @@
 function openOrderModalPrefilled() {
       openOrderModal();
       if (_checkedAddress) {
-        const addrInput = document.getElementById('o-address');
+        const addrInput = document.getElementById('o-loc');
         addrInput.value = _checkedAddress;
         setFieldError('err-address', '');
       }
