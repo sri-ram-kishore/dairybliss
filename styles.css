@@ -197,7 +197,7 @@ h3 {
   padding: 0;
   overflow: hidden;
   background:
-    linear-gradient(to bottom, rgba(250,248,244,1.0) 0%, rgba(250,248,244,0.0) 22%),
+    linear-gradient(to bottom, rgba(255,255,255,1.0) 0%, rgba(250,248,244,0.75) 7%, rgba(250,248,244,0.0) 22%),
     linear-gradient(to right, rgba(250,248,244,1.0) 0%, rgba(250,248,244,0.94) 30%, rgba(250,248,244,0.50) 54%, rgba(250,248,244,0.0) 74%);
 }
 
@@ -212,7 +212,7 @@ h3 {
   text-align: left;
   width: 100%;
   margin: 0;
-  padding: clamp(56px, 7vw, 100px) min(52vw, 640px) clamp(40px, 5vw, 72px) clamp(22px, 4.8vw, 72px);
+  padding: clamp(20px, 4.2vw, 65px) min(52vw, 640px) clamp(60px, 8vw, 108px) clamp(22px, 4.8vw, 72px);
 }
 
 h1 {
@@ -241,6 +241,8 @@ h1 {
 
 .hero-text-link {
   display: inline-flex;
+  align-items: center;
+  align-self: center;
   margin-top: 0;
   font-size: 14px;
   font-weight: 600;
@@ -277,8 +279,8 @@ h1 {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 0 18px;
-  gap: 8px;
+  padding: 0 26px;
+  gap: 12px;
 }
 .trust-icon-item + .trust-icon-item {
   position: relative;
