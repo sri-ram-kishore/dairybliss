@@ -307,7 +307,6 @@
       <p class="pincode-modal-sub">Search your address and we'll let you know.</p>
       <div class="pincode-input-row">
         <input class="pincode-input" id="pincode-input" type="text" placeholder="Search your area or building…" autocomplete="off" />
-        <button class="button primary" onclick="checkArea()">Check</button>
       </div>
       <div class="pincode-result" id="pincode-result"></div>
     </div>
@@ -499,11 +498,7 @@
       if (e.target === this) closePincodeModal();
     });
 
-    document.getElementById('pincode-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') checkArea();
-    });
-
-    function openOrderModalPrefilled() {
+function openOrderModalPrefilled() {
       openOrderModal();
       if (_checkedAddress) {
         const addrInput = document.getElementById('o-address');

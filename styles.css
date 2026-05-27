@@ -1298,12 +1298,10 @@ h1 {
 }
 
 .pincode-input-row {
-  display: flex;
-  gap: 10px;
   margin-bottom: 20px;
 }
 .pincode-input {
-  flex: 1;
+  width: 100%;
   padding: 12px 16px;
   border: 1.5px solid var(--line);
   border-radius: var(--radius);
