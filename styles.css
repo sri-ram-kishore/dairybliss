@@ -152,35 +152,6 @@ p {
   background: var(--green);
 }
 
-.page-dots {
-  position: fixed;
-  top: 50%;
-  right: 22px;
-  z-index: 30;
-  display: grid;
-  gap: 12px;
-  padding: 10px 8px;
-  background: rgba(255, 253, 248, 0.48);
-  border: 1px solid rgba(28, 47, 92, 0.08);
-  border-radius: 999px;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  transform: translateY(-50%);
-}
-
-.page-dots a {
-  width: 8px;
-  height: 8px;
-  background: rgba(28, 47, 92, 0.22);
-  border-radius: 50%;
-  transition: background 160ms ease, transform 160ms ease;
-}
-
-.page-dots a:hover,
-.page-dots a.is-active {
-  background: var(--ink);
-  transform: scale(1.55);
-}
 
 .snap-section {
   scroll-margin-top: 0;
@@ -358,6 +329,24 @@ h1 {
   height: 100%;
   object-fit: cover;
   object-position: right top;
+}
+
+.scroll-indicator {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  color: var(--ink);
+  opacity: 0.35;
+  transition: opacity 180ms;
+  animation: scroll-bounce 2s ease-in-out infinite;
+}
+.scroll-indicator:hover { opacity: 0.7; }
+
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(6px); }
 }
 
 
@@ -1867,7 +1856,7 @@ address {
 @media (max-width: 680px) {
   html, body { overflow-x: hidden; }
 
-  .page-dots { display: none; }
+  .scroll-indicator { display: none; }
 
   .site-header { padding: 10px 16px; }
 
