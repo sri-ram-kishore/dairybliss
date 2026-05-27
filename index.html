@@ -476,24 +476,38 @@
 
     // Hide all Google Places pac-containers
     function hidePacDropdowns() {
-      document.querySelectorAll('.pac-container').forEach(el => { el.style.display = 'none'; });
+      document.querySelectorAll('.pac-container').forEach(el => {
+        el.style.display = 'none';
+      });
     }
 
-    // Click outside any address input → close dropdown
+    // Document-level Escape — catches focus being inside the dropdown itself
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        hidePacDropdowns();
+        document.getElementById('o-address')?.blur();
+        document.getElementById('pincode-input')?.blur();
+      }
+    }, true); // capture phase so it fires before anything else
+
+    // Click anywhere outside address inputs → close
     document.addEventListener('click', function(e) {
-      if (!e.target.closest('#o-address') && !e.target.closest('#pincode-input')) {
+      if (!e.target.closest('#o-address') && !e.target.closest('#pincode-input') &&
+          !e.target.closest('.pac-container')) {
         hidePacDropdowns();
       }
     });
 
+    // Watch for pac-container being added to DOM and suppress it for short inputs
+    const _pacObserver = new MutationObserver(() => {
+      const activeInput = document.activeElement;
+      if (activeInput && (activeInput.id === 'o-address' || activeInput.id === 'pincode-input')) {
+        if (activeInput.value.length <= 2) hidePacDropdowns();
+      }
+    });
+    _pacObserver.observe(document.body, { childList: true, subtree: true });
+
     function attachPacEscape(input) {
-      input.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          e.stopPropagation();
-          hidePacDropdowns();
-          this.blur();
-        }
-      });
       // Suppress dropdown for very short inputs (≤2 chars)
       input.addEventListener('input', function() {
         if (this.value.length <= 2) hidePacDropdowns();
