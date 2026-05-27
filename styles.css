@@ -531,9 +531,9 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 28px 32px;
-  text-align: center;
+  text-align: left;
 }
 
 
@@ -606,9 +606,9 @@ h1 {
   text-transform: uppercase;
 }
 
-/* Badge centred with the rest of the text column */
+/* Badge left-aligned with the rest of the text column */
 .product-primary-text .badge {
-  align-self: center;
+  align-self: flex-start;
 }
 .product-secondary-grid .badge-soon {
   display: block;
@@ -656,22 +656,23 @@ h1 {
 
 /* Paneer card — larger type to fill the space */
 .product-primary .product-primary-text h3 {
-  font-size: clamp(34px, 2.9vw, 48px);
+  font-size: clamp(24px, 1.8vw, 30px);
   font-weight: 760;
   margin-top: 12px;
-  margin-bottom: 14px;
-  line-height: 1.02;
+  margin-bottom: 10px;
+  line-height: 1.1;
 }
 
 .product-primary .product-primary-text > p {
   max-width: 340px;
-  font-size: clamp(15px, 1.05vw, 18px);
+  font-size: clamp(13px, 0.96vw, 15px);
   line-height: 1.45;
 }
 
 .product-primary .price-list {
-  margin: clamp(22px, 2.4vw, 34px) auto 24px;
+  margin: clamp(18px, 2vw, 28px) 0 20px;
   max-width: 370px;
+  width: 100%;
 }
 
 .product-primary .price-list li {
@@ -726,7 +727,7 @@ h1 {
 }
 
 .product-order-btn {
-  align-self: center;
+  align-self: flex-start;
   min-width: min(100%, 320px);
   min-height: 54px;
   margin-top: 0;
