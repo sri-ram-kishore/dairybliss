@@ -531,9 +531,9 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   padding: 28px 32px;
-  text-align: left;
+  text-align: center;
 }
 
 
@@ -606,9 +606,9 @@ h1 {
   text-transform: uppercase;
 }
 
-/* Badge left-aligned with the rest of the text column */
+/* Badge centred with the rest of the text column */
 .product-primary-text .badge {
-  align-self: flex-start;
+  align-self: center;
 }
 .product-secondary-grid .badge-soon {
   display: block;
@@ -670,7 +670,7 @@ h1 {
 }
 
 .product-primary .price-list {
-  margin: clamp(18px, 2vw, 28px) 0 20px;
+  margin: clamp(18px, 2vw, 28px) auto 20px;
   max-width: 370px;
   width: 100%;
 }
@@ -727,7 +727,7 @@ h1 {
 }
 
 .product-order-btn {
-  align-self: flex-start;
+  align-self: center;
   min-width: min(100%, 320px);
   min-height: 54px;
   margin-top: 0;
