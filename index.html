@@ -280,7 +280,7 @@
           </div>
           <div class="order-field">
             <label for="o-address">Address</label>
-            <input id="o-address" type="text" placeholder="Flat, building, street, area" autocomplete="off">
+            <input id="o-address" type="text" placeholder="Search or type your full address" autocomplete="off" data-lpignore="true" data-form-type="other">
             <p class="order-field-error" id="err-address"></p>
           </div>
           <div class="order-field">
@@ -517,7 +517,22 @@
     function initAutocomplete() {
       if (!window.google) return;
 
-      // Order modal address — plain text input, no autocomplete widget
+      // Order modal address
+      const input = document.getElementById('o-address');
+      if (input) {
+        const ac = new google.maps.places.Autocomplete(input, {
+          types: ['geocode', 'establishment'],
+          componentRestrictions: { country: 'in' },
+          fields: ['formatted_address', 'geometry', 'url']
+        });
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace();
+          if (!place.geometry) return;
+          input.value = place.formatted_address || input.value;
+          setFieldError('err-address', '');
+          _placeUrl = place.url || `https://maps.google.com/?q=${place.geometry.location.lat()},${place.geometry.location.lng()}`;
+        });
+      }
 
       // Area checker input
       const areaInput = document.getElementById('pincode-input');
