@@ -903,15 +903,14 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
 }
 
 .footer-brand img {
-  width: 180px;
+  width: 160px;
   height: auto;
   object-fit: contain;
-  object-position: left center;
   display: block;
-  margin-left: -12px;
 }
 
 .footer-social {
