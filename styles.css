@@ -1082,10 +1082,10 @@ h1 {
 }
 
 .order-modal-right {
-  padding: 28px 28px 32px 32px;
+  padding: 24px 28px 28px 32px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .order-modal-sub {
@@ -1168,7 +1168,7 @@ h1 {
 .order-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .order-field label {
   font-size: 12px;
@@ -1178,7 +1178,7 @@ h1 {
 }
 .order-field input,
 .order-field select {
-  padding: 11px 14px;
+  padding: 9px 12px;
   border: 1.5px solid var(--line);
   border-radius: calc(var(--radius) - 4px);
   font-size: 15px;
