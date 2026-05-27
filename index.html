@@ -446,6 +446,8 @@
 
     /* ── GOOGLE PLACES AUTOCOMPLETE (order modal) ── */
     let _areaAc = null; // area checker autocomplete instance
+    let _checkedAddress = ''; // address the user searched in area checker
+    let _checkedPlaceUrl = null; // Maps URL from area checker
 
     function initAutocomplete() {
       if (!window.google) return;
@@ -473,7 +475,7 @@
         _areaAc = new google.maps.places.Autocomplete(areaInput, {
           types: ['geocode', 'establishment'],
           componentRestrictions: { country: 'in' },
-          fields: ['address_components', 'formatted_address', 'geometry']
+          fields: ['address_components', 'formatted_address', 'geometry', 'url']
         });
         _areaAc.addListener('place_changed', () => checkArea());
       }
@@ -501,6 +503,16 @@
       if (e.key === 'Enter') checkArea();
     });
 
+    function openOrderModalPrefilled() {
+      openOrderModal();
+      if (_checkedAddress) {
+        const addrInput = document.getElementById('o-address');
+        addrInput.value = _checkedAddress;
+        setFieldError('err-address', '');
+      }
+      if (_checkedPlaceUrl) _placeUrl = _checkedPlaceUrl;
+    }
+
     function checkArea() {
       const resultEl = document.getElementById('pincode-result');
       const place = _areaAc && _areaAc.getPlace && _areaAc.getPlace();
@@ -508,12 +520,19 @@
       // Try to get pincode from Places result
       let pin = null;
       let areaName = document.getElementById('pincode-input').value.trim();
+      let areaPlaceUrl = null;
 
       if (place && place.address_components) {
         const postal = place.address_components.find(c => c.types.includes('postal_code'));
         if (postal) pin = postal.long_name;
         if (place.formatted_address) areaName = place.formatted_address;
+        if (place.url) areaPlaceUrl = place.url;
+        else if (place.geometry) areaPlaceUrl = `https://maps.google.com/?q=${place.geometry.location.lat()},${place.geometry.location.lng()}`;
       }
+
+      // Store for pre-filling order modal
+      _checkedAddress = areaName;
+      _checkedPlaceUrl = areaPlaceUrl;
 
       if (!areaName) {
         resultEl.innerHTML = '<p class="pincode-error">Please search for your area first.</p>';
@@ -527,7 +546,7 @@
           <div class="pincode-yes">
             <span class="pincode-badge yes">✓ We deliver to your area</span>
             <p>Fresh paneer, Wednesday &amp; Saturday, to your door.</p>
-            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModal();return false;">Order Now →</a>
+            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
           </div>`;
       } else if (isServiceable === false) {
         resultEl.innerHTML = `
@@ -542,7 +561,7 @@
           <div class="pincode-yes">
             <span class="pincode-badge yes">Looks like we might cover your area</span>
             <p>Place an order and we'll confirm delivery on WhatsApp.</p>
-            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModal();return false;">Order Now →</a>
+            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
           </div>`;
       }
     }
