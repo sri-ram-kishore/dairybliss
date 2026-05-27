@@ -1165,12 +1165,14 @@ h1 {
   border: 1.5px solid var(--line);
   border-radius: calc(var(--radius) - 4px);
   font-size: 15px;
+  line-height: 1.4;
   font-family: inherit;
   background: #fff;
   color: var(--ink);
   outline: none;
   transition: border-color 120ms;
   width: 100%;
+  box-sizing: border-box;
 }
 .order-field select {
   appearance: none;
@@ -1181,9 +1183,10 @@ h1 {
   padding-right: 36px;
   cursor: pointer;
 }
+/* Muted colour when no date selected yet (matches input placeholder style) */
+.order-field select.ph { color: var(--muted); }
 .order-field input:focus,
 .order-field select:focus { border-color: var(--green); }
-.order-field select option[value=""] { color: var(--muted); }
 
 .order-field-error {
   color: #a62b1f;

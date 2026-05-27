@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles-navy.css?v=97">
+  <link rel="stylesheet" href="styles-navy.css?v=98">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -355,6 +355,7 @@
       document.getElementById('order-modal').classList.add('is-open');
       document.body.style.overflow = 'hidden';
       populateDeliveryDates();
+      document.getElementById('o-date').classList.add('ph');
     }
     function closeOrderModal() {
       document.getElementById('order-modal').classList.remove('is-open');
@@ -399,7 +400,10 @@
     function clearAllErrors() {
       ['err-qty','err-date','err-name','err-phone','err-pincode','err-address'].forEach(id => setFieldError(id, ''));
     }
-    document.getElementById('o-date').addEventListener('change', () => setFieldError('err-date', ''));
+    document.getElementById('o-date').addEventListener('change', function() {
+      setFieldError('err-date', '');
+      this.classList.remove('ph');
+    });
     ['o-name','o-phone','o-pincode','o-address'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', () => {
         setFieldError('err-' + id.slice(2), '');
