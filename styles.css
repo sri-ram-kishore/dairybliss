@@ -397,8 +397,8 @@ h1 {
   height: 100%;
   margin: 0;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 18%, black 42%);
-  mask-image: linear-gradient(to right, transparent 0%, transparent 18%, black 42%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 50%);
+  mask-image: linear-gradient(to right, transparent 0%, black 50%);
 }
 
 .hero-photo::before {
