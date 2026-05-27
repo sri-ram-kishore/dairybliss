@@ -236,7 +236,7 @@ h1 {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px 18px;
-  margin-top: 36px;
+  margin-top: 48px;
 }
 
 .hero-text-link {
@@ -266,7 +266,7 @@ h1 {
 
 .hero-sub-block {
   margin-top: 22px;
-  margin-bottom: 0;
+  margin-bottom: 16px;
 }
 .hero-trust-icons {
   display: flex;
