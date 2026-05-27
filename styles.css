@@ -1178,11 +1178,11 @@ h1 {
 }
 .order-field input,
 .order-field select {
-  padding: 9px 12px;
+  padding: 0 12px;
+  height: 44px;
   border: 1.5px solid var(--line);
   border-radius: calc(var(--radius) - 4px);
   font-size: 15px;
-  line-height: 1.4;
   font-family: inherit;
   background: #fff;
   color: var(--ink);
@@ -1225,7 +1225,15 @@ h1 {
   border-color: #a62b1f;
 }
 
-.order-submit { width: 100%; justify-content: center; margin-top: 4px; }
+.order-modal-footer {
+  padding: 20px 32px 24px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.order-submit { width: 100%; max-width: 420px; justify-content: center; }
 
 .order-fine {
   font-size: 12px;
