@@ -280,16 +280,16 @@
             <p class="order-field-error" id="err-phone"></p>
           </div>
           <div class="order-field">
+            <label for="o-address">Address</label>
+            <input id="o-address" type="text" placeholder="Search your building, street or area" autocomplete="off">
+            <p class="order-field-error" id="err-address"></p>
+          </div>
+          <div class="order-field">
             <label for="o-date">Delivery Date</label>
             <select id="o-date" class="ph">
               <option value="">Select a delivery date</option>
             </select>
             <p class="order-field-error" id="err-date"></p>
-          </div>
-          <div class="order-field">
-            <label for="o-address">Address</label>
-            <input id="o-address" type="text" placeholder="Search your building, street or area" autocomplete="off">
-            <p class="order-field-error" id="err-address"></p>
           </div>
           <button class="button primary order-submit" onclick="submitOrder()">Send Order on WhatsApp →</button>
           <p class="order-fine">We'll confirm on WhatsApp shortly.</p>
@@ -424,8 +424,8 @@
       if (!items.length) { setFieldError('err-qty', 'Please select at least one quantity.'); valid = false; }
       if (!name) { setFieldError('err-name', 'Please enter your name.'); valid = false; }
       if (!/^\d{10}$/.test(phone)) { setFieldError('err-phone', 'Please enter a valid 10-digit number.'); valid = false; }
-      if (!deliveryDate) { setFieldError('err-date', 'Please select a delivery date.'); valid = false; }
       if (!address) { setFieldError('err-address', 'Please enter your delivery address.'); valid = false; }
+      if (!deliveryDate) { setFieldError('err-date', 'Please select a delivery date.'); valid = false; }
       if (!valid) return;
 
       // Format the selected date nicely for the message (e.g. "Wed, 28 May")
