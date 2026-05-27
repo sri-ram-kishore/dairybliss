@@ -474,6 +474,32 @@
     let _checkedAddress = ''; // address the user searched in area checker
     let _checkedPlaceUrl = null; // Maps URL from area checker
 
+    // Hide all Google Places pac-containers
+    function hidePacDropdowns() {
+      document.querySelectorAll('.pac-container').forEach(el => { el.style.display = 'none'; });
+    }
+
+    // Click outside any address input → close dropdown
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#o-address') && !e.target.closest('#pincode-input')) {
+        hidePacDropdowns();
+      }
+    });
+
+    function attachPacEscape(input) {
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          hidePacDropdowns();
+          this.blur();
+        }
+      });
+      // Suppress dropdown for very short inputs (≤2 chars)
+      input.addEventListener('input', function() {
+        if (this.value.length <= 2) hidePacDropdowns();
+      });
+    }
+
     function initAutocomplete() {
       if (!window.google) return;
 
@@ -492,6 +518,7 @@
           setFieldError('err-address', '');
           _placeUrl = place.url || `https://maps.google.com/?q=${place.geometry.location.lat()},${place.geometry.location.lng()}`;
         });
+        attachPacEscape(input);
       }
 
       // Area checker input
@@ -503,6 +530,7 @@
           fields: ['address_components', 'formatted_address', 'geometry', 'url']
         });
         _areaAc.addListener('place_changed', () => checkArea());
+        attachPacEscape(areaInput);
       }
     }
 
