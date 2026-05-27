@@ -1046,36 +1046,53 @@ h1 {
 }
 .order-modal-close:hover { background: rgba(0,0,0,0.14); }
 
-.order-modal-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
+.order-modal-header {
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--line);
 }
 
-.order-modal-left {
-  padding: 32px 28px 32px 32px;
-  border-left: 1px solid var(--line);
-}
-
-.order-modal-right {
-  padding: 32px 32px 32px 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.order-modal-left h3 {
+.order-modal-header h3 {
   font-size: clamp(20px,2.4vw,26px);
   color: var(--ink);
   line-height: 1.18;
   margin-bottom: 6px;
 }
 
+.order-modal-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  position: relative;
+}
+
+/* Partial-height separator — doesn't run to the full column edge */
+.order-modal-inner::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  height: 80%;
+  width: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+
+.order-modal-left {
+  padding: 28px 32px 32px 28px;
+}
+
+.order-modal-right {
+  padding: 28px 28px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .order-modal-sub {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
-  margin-bottom: 20px;
+  margin-top: 4px;
 }
 
 .order-section-label {
@@ -1217,7 +1234,10 @@ h1 {
 
 @media (max-width: 640px) {
   .order-modal-inner { grid-template-columns: 1fr; }
-  .order-modal-left { border-left: none; border-top: 1px solid var(--line); }
+  .order-modal-inner::after { display: none; }
+  .order-modal-left { border-top: 1px solid var(--line); padding: 24px 20px 28px; }
+  .order-modal-right { padding: 24px 20px 0; }
+  .order-modal-header { padding: 20px 20px 16px; }
 }
 
 /* Google Places autocomplete dropdown — must sit above the modal (z-index 100) */
