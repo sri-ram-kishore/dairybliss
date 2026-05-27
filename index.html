@@ -270,13 +270,6 @@
         <div class="order-modal-right">
           <p class="order-section-label">Your details</p>
           <div class="order-field">
-            <label for="o-date">Delivery Date</label>
-            <select id="o-date">
-              <option value="">Select a delivery date</option>
-            </select>
-            <p class="order-field-error" id="err-date"></p>
-          </div>
-          <div class="order-field">
             <label for="o-name">Name</label>
             <input id="o-name" type="text" placeholder="Your name" autocomplete="name">
             <p class="order-field-error" id="err-name"></p>
@@ -287,9 +280,11 @@
             <p class="order-field-error" id="err-phone"></p>
           </div>
           <div class="order-field">
-            <label for="o-pincode">Pincode</label>
-            <input id="o-pincode" type="tel" placeholder="e.g. 560064" inputmode="numeric" maxlength="6">
-            <p class="order-field-error" id="err-pincode"></p>
+            <label for="o-date">Delivery Date</label>
+            <select id="o-date" class="ph">
+              <option value="">Select a delivery date</option>
+            </select>
+            <p class="order-field-error" id="err-date"></p>
           </div>
           <div class="order-field">
             <label for="o-address">Address</label>
@@ -303,16 +298,16 @@
     </div>
   </div>
 
-  <!-- Pincode checker modal -->
+  <!-- Area checker modal -->
   <div class="pincode-modal" id="pincode-modal" role="dialog" aria-modal="true" aria-labelledby="pincode-modal-title">
     <div class="pincode-modal-box">
       <button class="pincode-modal-close" onclick="closePincodeModal()" aria-label="Close">✕</button>
       <p class="eyebrow" style="justify-content:flex-start;margin-bottom:12px;">Delivery Check</p>
       <h3 id="pincode-modal-title">Do we deliver to you?</h3>
-      <p class="pincode-modal-sub">Enter your pincode and we'll let you know.</p>
+      <p class="pincode-modal-sub">Search your address and we'll let you know.</p>
       <div class="pincode-input-row">
-        <input class="pincode-input" id="pincode-input" type="tel" maxlength="6" placeholder="e.g. 560064" inputmode="numeric" />
-        <button class="button primary" onclick="checkPincode()">Check</button>
+        <input class="pincode-input" id="pincode-input" type="text" placeholder="Search your area or building…" autocomplete="off" />
+        <button class="button primary" onclick="checkArea()">Check</button>
       </div>
       <div class="pincode-result" id="pincode-result"></div>
     </div>
@@ -398,13 +393,13 @@
       }
     }
     function clearAllErrors() {
-      ['err-qty','err-date','err-name','err-phone','err-pincode','err-address'].forEach(id => setFieldError(id, ''));
+      ['err-qty','err-date','err-name','err-phone','err-address'].forEach(id => setFieldError(id, ''));
     }
     document.getElementById('o-date').addEventListener('change', function() {
       setFieldError('err-date', '');
       this.classList.remove('ph');
     });
-    ['o-name','o-phone','o-pincode','o-address'].forEach(id => {
+    ['o-name','o-phone','o-address'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', () => {
         setFieldError('err-' + id.slice(2), '');
         // If user manually edits address after a place was selected, clear the saved map URL
@@ -416,7 +411,6 @@
       const deliveryDate = document.getElementById('o-date').value;
       const name = document.getElementById('o-name').value.trim();
       const phone = document.getElementById('o-phone').value.trim();
-      const pincode = document.getElementById('o-pincode').value.trim();
       const address = document.getElementById('o-address').value.trim();
 
       let items = [];
@@ -428,10 +422,9 @@
       clearAllErrors();
       let valid = true;
       if (!items.length) { setFieldError('err-qty', 'Please select at least one quantity.'); valid = false; }
-      if (!deliveryDate) { setFieldError('err-date', 'Please select a delivery date.'); valid = false; }
       if (!name) { setFieldError('err-name', 'Please enter your name.'); valid = false; }
       if (!/^\d{10}$/.test(phone)) { setFieldError('err-phone', 'Please enter a valid 10-digit number.'); valid = false; }
-      if (!/^\d{6}$/.test(pincode)) { setFieldError('err-pincode', 'Please enter a valid 6-digit pincode.'); valid = false; }
+      if (!deliveryDate) { setFieldError('err-date', 'Please select a delivery date.'); valid = false; }
       if (!address) { setFieldError('err-address', 'Please enter your delivery address.'); valid = false; }
       if (!valid) return;
 
@@ -446,58 +439,52 @@
       msg += '\nName: ' + name;
       msg += '\nPhone: ' + phone;
       msg += '\nAddress: ' + address;
-      msg += '\nPincode: ' + pincode;
       if (_placeUrl) msg += '\nMap: ' + _placeUrl;
 
       window.open('https://wa.me/918861000100?text=' + encodeURIComponent(msg), '_blank');
     }
 
-    /* ── GOOGLE PLACES AUTOCOMPLETE ── */
+    /* ── GOOGLE PLACES AUTOCOMPLETE (order modal) ── */
+    let _areaAc = null; // area checker autocomplete instance
+
     function initAutocomplete() {
+      if (!window.google) return;
+
+      // Order modal address
       const input = document.getElementById('o-address');
-      if (!input || !window.google) return;
-      const ac = new google.maps.places.Autocomplete(input, {
-        types: ['geocode', 'establishment'],
-        componentRestrictions: { country: 'in' },
-        fields: ['address_components', 'formatted_address', 'geometry', 'url']
-      });
-      // Keep Places dropdown above the modal
-      ac.setFields(['address_components', 'formatted_address', 'geometry', 'url']);
-      ac.addListener('place_changed', () => {
-        const place = ac.getPlace();
-        if (!place.geometry) return;
-        // Fill address field with full formatted address
-        input.value = place.formatted_address || input.value;
-        setFieldError('err-address', '');
-        // Auto-fill pincode if found in address components
-        const postal = (place.address_components || []).find(c => c.types.includes('postal_code'));
-        if (postal) {
-          const pc = document.getElementById('o-pincode');
-          if (!pc.value) { // only fill if empty
-            pc.value = postal.long_name;
-            setFieldError('err-pincode', '');
-          }
-        }
-        // Store the Google Maps link for the WhatsApp message
-        if (place.url) {
-          _placeUrl = place.url;
-        } else {
-          const lat = place.geometry.location.lat();
-          const lng = place.geometry.location.lng();
-          _placeUrl = `https://maps.google.com/?q=${lat},${lng}`;
-        }
-      });
+      if (input) {
+        const ac = new google.maps.places.Autocomplete(input, {
+          types: ['geocode', 'establishment'],
+          componentRestrictions: { country: 'in' },
+          fields: ['formatted_address', 'geometry', 'url']
+        });
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace();
+          if (!place.geometry) return;
+          input.value = place.formatted_address || input.value;
+          setFieldError('err-address', '');
+          _placeUrl = place.url || `https://maps.google.com/?q=${place.geometry.location.lat()},${place.geometry.location.lng()}`;
+        });
+      }
+
+      // Area checker input
+      const areaInput = document.getElementById('pincode-input');
+      if (areaInput) {
+        _areaAc = new google.maps.places.Autocomplete(areaInput, {
+          types: ['geocode', 'establishment'],
+          componentRestrictions: { country: 'in' },
+          fields: ['address_components', 'formatted_address', 'geometry']
+        });
+        _areaAc.addListener('place_changed', () => checkArea());
+      }
     }
 
-    /* ── PINCODE MODAL ── */
+    /* ── AREA CHECKER MODAL ── */
+    // Serviceable pincodes
     const SERVICEABLE = new Set([
-      '560064','560063','560097', // Yelahanka
-      '560045',                   // Jakkur, Thanisandra
-      '560077',                   // Kogilu, HBR Layout
-      '560092',                   // Sahakara Nagar
-      '560024',                   // Hebbal, Nagavara
-      '560043',                   // Nagawara
-      '560065',                   // Vidyaranyapura
+      '560064','560063','560097',
+      '560045','560077','560092',
+      '560024','560043','560065',
     ]);
 
     function closePincodeModal() {
@@ -511,29 +498,51 @@
     });
 
     document.getElementById('pincode-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') checkPincode();
+      if (e.key === 'Enter') checkArea();
     });
 
-    function checkPincode() {
-      const pin = document.getElementById('pincode-input').value.trim();
+    function checkArea() {
       const resultEl = document.getElementById('pincode-result');
-      if (!/^\d{6}$/.test(pin)) {
-        resultEl.innerHTML = '<p class="pincode-error">Please enter a valid 6-digit pincode.</p>';
+      const place = _areaAc && _areaAc.getPlace && _areaAc.getPlace();
+
+      // Try to get pincode from Places result
+      let pin = null;
+      let areaName = document.getElementById('pincode-input').value.trim();
+
+      if (place && place.address_components) {
+        const postal = place.address_components.find(c => c.types.includes('postal_code'));
+        if (postal) pin = postal.long_name;
+        if (place.formatted_address) areaName = place.formatted_address;
+      }
+
+      if (!areaName) {
+        resultEl.innerHTML = '<p class="pincode-error">Please search for your area first.</p>';
         return;
       }
-      if (SERVICEABLE.has(pin)) {
+
+      const isServiceable = pin ? SERVICEABLE.has(pin) : null;
+
+      if (isServiceable === true) {
         resultEl.innerHTML = `
           <div class="pincode-yes">
-            <span class="pincode-badge yes">✓ We deliver to ${pin}</span>
+            <span class="pincode-badge yes">✓ We deliver to your area</span>
             <p>Fresh paneer, Wednesday &amp; Saturday, to your door.</p>
-            <a class="button primary" href="https://wa.me/918861000100?text=Hi%20Dairy%20Bliss%2C%20I%27d%20like%20to%20order%20fresh%20paneer.%20My%20pincode%20is%20${pin}." rel="noopener" target="_blank">Order on WhatsApp →</a>
+            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModal();return false;">Order Now →</a>
           </div>`;
-      } else {
+      } else if (isServiceable === false) {
         resultEl.innerHTML = `
           <div class="pincode-no">
-            <span class="pincode-badge no">We don't deliver to ${pin} yet</span>
-            <p>We're expanding fast. Let us know your area and we'll notify you when we arrive.</p>
-            <a class="button secondary" href="https://wa.me/918861000100?text=Hi%20Dairy%20Bliss%2C%20I%27m%20interested%20in%20fresh%20paneer%20delivery%20to%20pincode%20${pin}.%20Do%20let%20me%20know%20when%20you%20start%20delivering%20here." rel="noopener" target="_blank">Notify me →</a>
+            <span class="pincode-badge no">Not in our delivery zone yet</span>
+            <p>We're expanding fast. Let us know and we'll notify you when we arrive.</p>
+            <a class="button secondary" href="https://wa.me/918861000100?text=Hi%20Dairy%20Bliss%2C%20please%20notify%20me%20when%20you%20deliver%20to%20${encodeURIComponent(areaName)}." rel="noopener" target="_blank">Notify me →</a>
+          </div>`;
+      } else {
+        // No pincode found from Places — show a soft yes (we'll confirm on WhatsApp)
+        resultEl.innerHTML = `
+          <div class="pincode-yes">
+            <span class="pincode-badge yes">Looks like we might cover your area</span>
+            <p>Place an order and we'll confirm delivery on WhatsApp.</p>
+            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModal();return false;">Order Now →</a>
           </div>`;
       }
     }
