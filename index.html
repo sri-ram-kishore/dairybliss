@@ -280,7 +280,7 @@
           </div>
           <div class="order-field">
             <label for="o-address">Address</label>
-            <input id="o-address" type="text" placeholder="Search or type your full address" autocomplete="off" data-lpignore="true" data-form-type="other">
+            <input id="o-address" type="text" placeholder="Search or type your full address" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')">
             <p class="order-field-error" id="err-address"></p>
           </div>
           <div class="order-field">
@@ -332,7 +332,7 @@
       <h3 id="pincode-modal-title">Do we deliver to you?</h3>
       <p class="pincode-modal-sub">Search your address and we'll let you know.</p>
       <div class="pincode-input-row">
-        <input class="pincode-input" id="pincode-input" type="text" placeholder="Search your area or building…" autocomplete="off" data-lpignore="true" data-form-type="other" spellcheck="false" />
+        <input class="pincode-input" id="pincode-input" type="text" placeholder="Search your area or building…" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
       </div>
       <div class="pincode-result" id="pincode-result"></div>
     </div>
@@ -380,6 +380,8 @@
     function closeOrderModal() {
       document.getElementById('order-modal').classList.remove('is-open');
       document.body.style.overflow = '';
+      const addr = document.getElementById('o-address');
+      if (addr) addr.setAttribute('readonly', 'readonly');
     }
     document.getElementById('order-modal').addEventListener('click', function(e) {
       if (e.target === this) closeOrderModal();
