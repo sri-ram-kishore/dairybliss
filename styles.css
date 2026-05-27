@@ -1054,7 +1054,7 @@ h1 {
 
 .order-modal-left {
   padding: 32px 28px 32px 32px;
-  border-right: 1px solid var(--line);
+  border-left: 1px solid var(--line);
 }
 
 .order-modal-right {
@@ -1217,7 +1217,7 @@ h1 {
 
 @media (max-width: 640px) {
   .order-modal-inner { grid-template-columns: 1fr; }
-  .order-modal-left { border-right: none; border-bottom: 1px solid var(--line); }
+  .order-modal-left { border-left: none; border-top: 1px solid var(--line); }
 }
 
 /* Google Places autocomplete dropdown — must sit above the modal (z-index 100) */

@@ -239,6 +239,33 @@
     <div class="order-modal-box">
       <button class="order-modal-close" onclick="closeOrderModal()" aria-label="Close">✕</button>
       <div class="order-modal-inner">
+        <div class="order-modal-right">
+          <p class="order-section-label">Your details</p>
+          <div class="order-field">
+            <label for="o-name">Name</label>
+            <input id="o-name" type="text" placeholder="Your name" autocomplete="name">
+            <p class="order-field-error" id="err-name"></p>
+          </div>
+          <div class="order-field">
+            <label for="o-phone">Phone</label>
+            <input id="o-phone" type="tel" placeholder="10-digit mobile number" inputmode="numeric" maxlength="10" autocomplete="tel">
+            <p class="order-field-error" id="err-phone"></p>
+          </div>
+          <div class="order-field">
+            <label for="o-address">Address</label>
+            <input id="o-address" type="text" placeholder="Search your building, street or area" autocomplete="off">
+            <p class="order-field-error" id="err-address"></p>
+          </div>
+          <div class="order-field">
+            <label for="o-date">Delivery Date</label>
+            <select id="o-date" class="ph">
+              <option value="">Select a delivery date</option>
+            </select>
+            <p class="order-field-error" id="err-date"></p>
+          </div>
+          <button class="button primary order-submit" onclick="submitOrder()">Send Order on WhatsApp →</button>
+          <p class="order-fine">We'll confirm on WhatsApp shortly.</p>
+        </div>
         <div class="order-modal-left">
           <p class="eyebrow" style="justify-content:flex-start;margin-bottom:16px;">Place your order</p>
           <h3 id="order-modal-title">Fresh Paneer,<br>delivered to you.</h3>
@@ -266,33 +293,6 @@
             </div>
             <p class="order-field-error" id="err-qty" style="margin-top:10px"></p>
           </div>
-        </div>
-        <div class="order-modal-right">
-          <p class="order-section-label">Your details</p>
-          <div class="order-field">
-            <label for="o-name">Name</label>
-            <input id="o-name" type="text" placeholder="Your name" autocomplete="name">
-            <p class="order-field-error" id="err-name"></p>
-          </div>
-          <div class="order-field">
-            <label for="o-phone">Phone</label>
-            <input id="o-phone" type="tel" placeholder="10-digit mobile number" inputmode="numeric" maxlength="10" autocomplete="tel">
-            <p class="order-field-error" id="err-phone"></p>
-          </div>
-          <div class="order-field">
-            <label for="o-address">Address</label>
-            <input id="o-address" type="text" placeholder="Search your building, street or area" autocomplete="off">
-            <p class="order-field-error" id="err-address"></p>
-          </div>
-          <div class="order-field">
-            <label for="o-date">Delivery Date</label>
-            <select id="o-date" class="ph">
-              <option value="">Select a delivery date</option>
-            </select>
-            <p class="order-field-error" id="err-date"></p>
-          </div>
-          <button class="button primary order-submit" onclick="submitOrder()">Send Order on WhatsApp →</button>
-          <p class="order-fine">We'll confirm on WhatsApp shortly.</p>
         </div>
       </div>
     </div>
