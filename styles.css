@@ -245,11 +245,11 @@ h3 {
 }
 
 h1 {
-  max-width: 520px;
+  max-width: 560px;
   margin-bottom: 22px;
-  font-size: clamp(44px, 5vw, 72px);
+  font-size: clamp(38px, 3.8vw, 58px);
   font-weight: 760;
-  line-height: 1.02;
+  line-height: 1.06;
 }
 
 .hero-copy > p:not(.eyebrow) {
