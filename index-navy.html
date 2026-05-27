@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fa">
+  <meta name="description" content="Dairy Bliss makes fresh buffalo milk paneer. Pure & Fresh.">
+  <title>Dairy Bliss | Pure & Fresh</title>
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="stylesheet" href="styles-navy.css?v=11">
+</head>
+<body>
+  <header class="site-header" id="home">
+    <a class="brand" href="#intro" aria-label="Dairy Bliss home">
+      <img src="assets/logo-header.png" alt="Dairy Bliss Pure & Fresh">
+    </a>
+    <button class="menu-button" type="button" aria-label="Open menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="nav" aria-label="Primary">
+      <a href="#story">Our Story</a>
+      <a href="#products">Products</a>
+      <a href="#quality">Quality</a>
+      <a class="nav-cta" href="#" onclick="openOrderModal();return false;">Order Now</a>
+    </nav>
+  </header>
+
+  <nav class="page-dots" aria-label="Page sections">
+    <a class="is-active" href="#intro" aria-label="Intro" data-section-dot="intro"></a>
+    <a href="#paneer" aria-label="Paneer" data-section-dot="paneer"></a>
+    <a href="#story" aria-label="Our Story" data-section-dot="story"></a>
+    <a href="#products" aria-label="Products" data-section-dot="products"></a>
+    <a href="#quality" aria-label="Quality" data-section-dot="quality"></a>
+  </nav>
+
+  <main>
+    <section class="hero snap-section" id="intro" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow reveal">Introducing</p>
+        <h1 id="hero-title" class="reveal reveal-delay-1">Paneer,<br>the way it's<br>meant to taste.</h1>
+        <div class="actions reveal reveal-delay-2">
+          <a class="button primary" href="#" onclick="openOrderModal();return false;">Reserve a Batch</a>
+          <a class="button secondary" href="#paneer">Why Buffalo Milk?</a>
+        </div>
+        <br>
+      </div>
+      <figure class="hero-photo">
+        <img src="assets/hero-image.png" alt="Dairy Bliss paneer, ghee and white butter with mountain backdrop">
+      </figure>
+      <div class="hero-trust" aria-label="Dairy Bliss highlights">
+        <article class="reveal">
+          <img src="assets/icon-new-leaf.png" alt="" class="trust-icon">
+          <div>
+            <h3>No fillers. No starch.</h3>
+            <p>Just buffalo milk and natural culture. No preservatives. No additives.</p>
+          </div>
+        </article>
+        <article class="reveal reveal-delay-1">
+          <img src="assets/icon-new-farm.png" alt="" class="trust-icon">
+          <div>
+            <h3>Holds in the kadai</h3>
+            <p>Soft inside. Holds its shape. Works in every dish.</p>
+          </div>
+        </article>
+        <article class="reveal reveal-delay-2">
+          <img src="assets/icon-new-heart.png" alt="" class="trust-icon">
+          <div>
+            <h3>Twice a week</h3>
+            <p>Wednesday and Saturday, delivered to your door while it's still fresh.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="paneer-feature snap-section" id="paneer">
+      <div class="feature-copy reveal">
+        <p class="eyebrow">What makes it different</p>
+        <h2>Soft texture.<br>Clean milk flavor.</h2>
+      </div>
+      <div class="feature-points">
+        <p class="reveal"><strong>Richer buffalo milk taste</strong><span>Fuller, creamier flavor. You'll taste the difference.</span></p>
+        <p class="reveal reveal-delay-1"><strong>Holds its shape in the kadai</strong><span>Doesn't crumble. Doesn't turn rubbery. Works in every dish.</span></p>
+        <p class="reveal reveal-delay-2"><strong>No preservatives, no starch</strong><span>Pure paneer. What's not in it matters as much as what is.</span></p>
+      </div>
+    </section>
+
+    <section class="story-band snap-section" id="story">
+      <p class="eyebrow reveal">Our Story</p>
+      <h2 class="reveal reveal-delay-1">Fresh from source.<br>Made for the table.</h2>
+      <p class="reveal reveal-delay-2">We started Dairy Bliss to bring genuinely fresh paneer to Bangalore home kitchens.</p>
+      <p class="reveal reveal-delay-3">Paneer is where we began because you can't fake it. If the milk isn't right — you taste it. Get paneer right, and everything follows.</p>
+    </section>
+
+    <section class="products snap-section" id="products">
+      <div class="section-head reveal">
+        <p class="eyebrow reveal">Products</p>
+        <h2>Paneer, first.<br>More soon.</h2>
+      </div>
+      <div class="product-lineup">
+        <article class="product-primary reveal">
+          <img class="product-image" src="assets/paneer.png" alt="Fresh paneer cubes in a bowl">
+          <span>Available now</span>
+          <h3>Fresh Paneer</h3>
+          <p>Soft buffalo milk paneer that stays tender while cooking.</p>
+          <ul class="price-list">
+            <li><span>250g</span><span>₹145</span></li>
+            <li><span>500g</span><span>₹280</span></li>
+            <li><span>750g</span><span>₹420</span></li>
+            <li><span>1 kg</span><span>₹550</span></li>
+          </ul>
+          <a class="button primary" href="#" onclick="openOrderModal();return false;">Reserve now</a>
+        </article>
+        <article class="reveal reveal-delay-1">
+          <img class="product-image" src="assets/ghee.png" alt="Classic ghee jar">
+          <span>Coming soon</span>
+          <h3>Ghee</h3>
+          <p>Slow-made. Deep aroma. Rich finish.</p>
+        </article>
+        <article class="reveal reveal-delay-2">
+          <img class="product-image" src="assets/curd.png" alt="Set curd bowl">
+          <span>Coming soon</span>
+          <h3>Curd</h3>
+          <p>Thick-set and naturally cultured.</p>
+        </article>
+        <article class="reveal reveal-delay-3">
+          <img class="product-image" src="assets/khoya.png" alt="Khoya for sweets">
+          <span>Coming soon</span>
+          <h3>Khoya</h3>
+          <p>The base of every great mithai.</p>
+        </article>
+        <article class="reveal reveal-delay-3">
+          <img class="product-image" src="assets/product-whey.png" alt="Whey protein">
+          <span>Coming soon</span>
+          <h3>Whey</h3>
+          <p>Natural whey, straight from the dairy.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="quality snap-section" id="quality">
+      <div class="quality-statement">
+        <div class="quality-left reveal">
+          <h2>Paneer that tastes fresh<br>before it reaches the pan.</h2>
+        </div>
+        <div class="quality-right reveal reveal-delay-1">
+          <p>Fresh paneer has a short window. We work within it — sourcing from FSSAI certified dairy partners, packing each order to order, and delivering chilled twice a week. Nothing sits. Nothing waits.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <section class="testimonials" id="testimonials">
+    <div class="section-head reveal">
+      <p class="eyebrow">From our customers</p>
+      <h2>Fresh paneer,<br>happy kitchens.</h2>
+    </div>
+    <div class="testimonial-grid">
+      <article class="testimonial-card reveal">
+        <img src="assets/testimonial-1.png" alt="Arjun Rao">
+        <blockquote>"Made paneer butter masala and my kids asked for seconds before I'd even sat down. It holds shape perfectly in the kadai — no crumbling, no rubbery texture. Best we've had in Bangalore."</blockquote>
+        <div class="testimonial-meta">
+          <strong>Arjun Rao</strong>
+          <span>Yelahanka, Bangalore</span>
+        </div>
+      </article>
+      <article class="testimonial-card reveal reveal-delay-1">
+        <img src="assets/testimonial-2.png" alt="Meera Krishnan">
+        <blockquote>"Paneer rice and tikka on the same evening — both turned out better than any restaurant version. So fresh you can taste it. We haven't touched store-bought since."</blockquote>
+        <div class="testimonial-meta">
+          <strong>Meera Krishnan</strong>
+          <span>Koramangala, Bangalore</span>
+        </div>
+      </article>
+      <article class="testimonial-card reveal reveal-delay-2">
+        <img src="assets/testimonial-3.png" alt="Sunita Sharma">
+        <blockquote>"We ate a third of it raw, just like that. My daughter said it tastes like the paneer her nani used to make at home. That's the highest compliment possible."</blockquote>
+        <div class="testimonial-meta">
+          <strong>Sunita Sharma</strong>
+          <span>Hebbal, Bangalore</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <footer class="footer" id="contact">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="assets/logo-footer.png" alt="Dairy Bliss Pure & Fresh">
+      </div>
+      <nav class="footer-links">
+        <span class="footer-label">Menu</span>
+        <a href="#story">Our Story</a>
+        <a href="#products">Products</a>
+        <a href="#quality">Quality</a>
+        <a href="#" onclick="openOrderModal();return false;">Order Now</a>
+      </nav>
+      <div class="footer-delivery">
+        <span class="footer-label">Delivery</span>
+        <p class="footer-delivery-days">Wed &amp; Sat</p>
+        <p>Fresh and chilled,<br>to your door.</p>
+        <button class="check-area-btn" onclick="document.getElementById('pincode-modal').classList.add('is-open')">Check your area →</button>
+      </div>
+      <address class="footer-contact">
+        <span class="footer-label">Contact</span>
+        <a href="tel:+918861000100">+91 88610 00100</a>
+        <a href="mailto:hello@dairybliss.com">hello@dairybliss.com</a>
+        <p class="footer-copy">© 2026 Dairy Bliss.</p>
+      </address>
+    </div>
+  </footer>
+
+  <!-- Order modal -->
+  <div class="order-modal" id="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
+    <div class="order-modal-box">
+      <button class="order-modal-close" onclick="closeOrderModal()" aria-label="Close">✕</button>
+      <div class="order-modal-inner">
+        <div class="order-modal-left">
+          <p class="eyebrow" style="justify-content:flex-start;margin-bottom:16px;">Place your order</p>
+          <h3 id="order-modal-title">Fresh Paneer,<br>delivered to you.</h3>
+          <p class="order-modal-sub">Wed &amp; Sat delivery. Select what you need and we'll confirm on WhatsApp.</p>
+          <div class="order-items">
+            <p class="order-section-label">Choose quantity</p>
+            <label class="order-item">
+              <div class="order-item-info"><span>250g</span><span class="order-price">₹145</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q250',-1)">−</button><span id="q250">0</span><button type="button" onclick="adjustQty('q250',1)">+</button></div>
+            </label>
+            <label class="order-item">
+              <div class="order-item-info"><span>500g</span><span class="order-price">₹280</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q500',-1)">−</button><span id="q500">0</span><button type="button" onclick="adjustQty('q500',1)">+</button></div>
+            </label>
+            <label class="order-item">
+              <div class="order-item-info"><span>750g</span><span class="order-price">₹420</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q750',-1)">−</button><span id="q750">0</span><button type="button" onclick="adjustQty('q750',1)">+</button></div>
+            </label>
+            <label class="order-item">
+              <div class="order-item-info"><span>1 kg</span><span class="order-price">₹550</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q1kg',-1)">−</button><span id="q1kg">0</span><button type="button" onclick="adjustQty('q1kg',1)">+</button></div>
+            </label>
+            <div class="order-total" id="order-total" style="display:none">
+              Total: <strong id="order-total-val"></strong>
+            </div>
+            <p class="order-field-error" id="err-qty" style="margin-top:10px"></p>
+          </div>
+        </div>
+        <div class="order-modal-right">
+          <p class="order-section-label">Your details</p>
+          <div class="order-field">
+            <label for="o-name">Name</label>
+            <input id="o-name" type="text" placeholder="Your name" autocomplete="name">
+            <p class="order-field-error" id="err-name"></p>
+          </div>
+          <div class="order-field">
+            <label for="o-phone">Phone</label>
+            <input id="o-phone" type="tel" placeholder="10-digit mobile number" inputmode="numeric" maxlength="10" autocomplete="tel">
+            <p class="order-field-error" id="err-phone"></p>
+          </div>
+          <div class="order-field">
+            <label for="o-pincode">Pincode</label>
+            <input id="o-pincode" type="tel" placeholder="e.g. 560064" inputmode="numeric" maxlength="6">
+            <p class="order-field-error" id="err-pincode"></p>
+          </div>
+          <div class="order-field">
+            <label for="o-address">Address</label>
+            <input id="o-address" type="text" placeholder="Search your building, street or area" autocomplete="off">
+            <p class="order-field-error" id="err-address"></p>
+          </div>
+          <button class="button primary order-submit" onclick="submitOrder()">Send Order on WhatsApp →</button>
+          <p class="order-fine">We'll confirm on WhatsApp shortly.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pincode checker modal -->
+  <div class="pincode-modal" id="pincode-modal" role="dialog" aria-modal="true" aria-labelledby="pincode-modal-title">
+    <div class="pincode-modal-box">
+      <button class="pincode-modal-close" onclick="closePincodeModal()" aria-label="Close">✕</button>
+      <p class="eyebrow" style="justify-content:flex-start;margin-bottom:12px;">Delivery Check</p>
+      <h3 id="pincode-modal-title">Do we deliver to you?</h3>
+      <p class="pincode-modal-sub">Enter your pincode and we'll let you know.</p>
+      <div class="pincode-input-row">
+        <input class="pincode-input" id="pincode-input" type="tel" maxlength="6" placeholder="e.g. 560064" inputmode="numeric" />
+        <button class="button primary" onclick="checkPincode()">Check</button>
+      </div>
+      <div class="pincode-result" id="pincode-result"></div>
+    </div>
+  </div>
+
+  <!-- Google Places Autocomplete -->
+  <script defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDX5YzsTxtJFNhqU0CKmzEbny7Nol7CW_s&libraries=places&loading=async&callback=initAutocomplete">
+  </script>
+  <script src="script.js?v=5"></script>
+  <script>
+    /* ── ORDER MODAL ── */
+    const PRICES = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
+    const LABELS = { q250: '250g', q500: '500g', q750: '750g', q1kg: '1kg' };
+    let _placeUrl = null; // Google Maps URL from Places autocomplete
+
+    function openOrderModal() {
+      document.getElementById('order-modal').classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeOrderModal() {
+      document.getElementById('order-modal').classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('order-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeOrderModal();
+    });
+
+    function adjustQty(id, delta) {
+      const el = document.getElementById(id);
+      const val = Math.max(0, parseInt(el.textContent) + delta);
+      el.textContent = val;
+      updateTotal();
+      // Clear the "select a quantity" error as soon as something is picked
+      const anySelected = Object.keys(PRICES).some(k => parseInt(document.getElementById(k).textContent) > 0);
+      if (anySelected) setFieldError('err-qty', '');
+    }
+
+    function updateTotal() {
+      let total = 0;
+      Object.keys(PRICES).forEach(k => {
+        total += parseInt(document.getElementById(k).textContent) * PRICES[k];
+      });
+      const totalEl = document.getElementById('order-total');
+      if (total > 0) {
+        totalEl.style.display = 'flex';
+        document.getElementById('order-total-val').textContent = '₹' + total;
+      } else {
+        totalEl.style.display = 'none';
+      }
+    }
+
+    function setFieldError(id, msg) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = msg;
+      const inputId = id === 'err-qty' ? null : 'o-' + id.slice(4);
+      if (inputId) {
+        document.getElementById(inputId)?.classList.toggle('is-error', !!msg);
+      }
+    }
+    function clearAllErrors() {
+      ['err-qty','err-name','err-phone','err-pincode','err-address'].forEach(id => setFieldError(id, ''));
+    }
+    ['o-name','o-phone','o-pincode','o-address'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', () => {
+        setFieldError('err-' + id.slice(2), '');
+        // If user manually edits address after a place was selected, clear the saved map URL
+        if (id === 'o-address') _placeUrl = null;
+      });
+    });
+
+    function submitOrder() {
+      const name = document.getElementById('o-name').value.trim();
+      const phone = document.getElementById('o-phone').value.trim();
+      const pincode = document.getElementById('o-pincode').value.trim();
+      const address = document.getElementById('o-address').value.trim();
+
+      let items = [];
+      Object.keys(PRICES).forEach(k => {
+        const qty = parseInt(document.getElementById(k).textContent);
+        if (qty > 0) items.push(qty + ' × ' + LABELS[k] + ' (₹' + (qty * PRICES[k]) + ')');
+      });
+
+      clearAllErrors();
+      let valid = true;
+      if (!items.length) { setFieldError('err-qty', 'Please select at least one quantity.'); valid = false; }
+      if (!name) { setFieldError('err-name', 'Please enter your name.'); valid = false; }
+      if (!/^\d{10}$/.test(phone)) { setFieldError('err-phone', 'Please enter a valid 10-digit number.'); valid = false; }
+      if (!/^\d{6}$/.test(pincode)) { setFieldError('err-pincode', 'Please enter a valid 6-digit pincode.'); valid = false; }
+      if (!address) { setFieldError('err-address', 'Please enter your delivery address.'); valid = false; }
+      if (!valid) return;
+
+      const total = Object.keys(PRICES).reduce((s,k) => s + parseInt(document.getElementById(k).textContent)*PRICES[k], 0);
+      let msg = 'Hi Dairy Bliss, I\'d like to place an order:\n\n';
+      msg += items.join('\n');
+      msg += '\n\nTotal: ₹' + total;
+      msg += '\n\nName: ' + name;
+      msg += '\nPhone: ' + phone;
+      msg += '\nAddress: ' + address;
+      msg += '\nPincode: ' + pincode;
+      if (_placeUrl) msg += '\nMap: ' + _placeUrl;
+
+      window.open('https://wa.me/918861000100?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    /* ── GOOGLE PLACES AUTOCOMPLETE ── */
+    function initAutocomplete() {
+      const input = document.getElementById('o-address');
+      if (!input || !window.google) return;
+      const ac = new google.maps.places.Autocomplete(input, {
+        types: ['geocode', 'establishment'],
+        componentRestrictions: { country: 'in' },
+        fields: ['address_components', 'formatted_address', 'geometry', 'url']
+      });
+      // Keep Places dropdown above the modal
+      ac.setFields(['address_components', 'formatted_address', 'geometry', 'url']);
+      ac.addListener('place_changed', () => {
+        const place = ac.getPlace();
+        if (!place.geometry) return;
+        // Fill address field with full formatted address
+        input.value = place.formatted_address || input.value;
+        setFieldError('err-address', '');
+        // Auto-fill pincode if found in address components
+        const postal = (place.address_components || []).find(c => c.types.includes('postal_code'));
+        if (postal) {
+          const pc = document.getElementById('o-pincode');
+          if (!pc.value) { // only fill if empty
+            pc.value = postal.long_name;
+            setFieldError('err-pincode', '');
+          }
+        }
+        // Store the Google Maps link for the WhatsApp message
+        if (place.url) {
+          _placeUrl = place.url;
+        } else {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          _placeUrl = `https://maps.google.com/?q=${lat},${lng}`;
+        }
+      });
+    }
+
+    /* ── PINCODE MODAL ── */
+    const SERVICEABLE = new Set([
+      '560064','560063','560097', // Yelahanka
+      '560045',                   // Jakkur, Thanisandra
+      '560077',                   // Kogilu, HBR Layout
+      '560092',                   // Sahakara Nagar
+      '560024',                   // Hebbal, Nagavara
+      '560043',                   // Nagawara
+      '560065',                   // Vidyaranyapura
+    ]);
+
+    function closePincodeModal() {
+      document.getElementById('pincode-modal').classList.remove('is-open');
+      document.getElementById('pincode-result').innerHTML = '';
+      document.getElementById('pincode-input').value = '';
+    }
+
+    document.getElementById('pincode-modal').addEventListener('click', function(e) {
+      if (e.target === this) closePincodeModal();
+    });
+
+    document.getElementById('pincode-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') checkPincode();
+    });
+
+    function checkPincode() {
+      const pin = document.getElementById('pincode-input').value.trim();
+      const resultEl = document.getElementById('pincode-result');
+      if (!/^\d{6}$/.test(pin)) {
+        resultEl.innerHTML = '<p class="pincode-error">Please enter a valid 6-digit pincode.</p>';
+        return;
+      }
+      if (SERVICEABLE.has(pin)) {
+        resultEl.innerHTML = `
+          <div class="pincode-yes">
+            <span class="pincode-badge yes">✓ We deliver to ${pin}</span>
+            <p>Fresh paneer, Wednesday &amp; Saturday, to your door.</p>
+            <a class="button primary" href="https://wa.me/918861000100?text=Hi%20Dairy%20Bliss%2C%20I%27d%20like%20to%20order%20fresh%20paneer.%20My%20pincode%20is%20${pin}." rel="noopener" target="_blank">Order on WhatsApp →</a>
+          </div>`;
+      } else {
+        resultEl.innerHTML = `
+          <div class="pincode-no">
+            <span class="pincode-badge no">We don't deliver to ${pin} yet</span>
+            <p>We're expanding fast. Let us know your area and we'll notify you when we arrive.</p>
+            <a class="button secondary" href="https://wa.me/918861000100?text=Hi%20Dairy%20Bliss%2C%20I%27m%20interested%20in%20fresh%20paneer%20delivery%20to%20pincode%20${pin}.%20Do%20let%20me%20know%20when%20you%20start%20delivering%20here." rel="noopener" target="_blank">Notify me →</a>
+          </div>`;
+      }
+    }
+  </script>
+</body>
+</html>
