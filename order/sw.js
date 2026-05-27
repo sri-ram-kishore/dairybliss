@@ -5,14 +5,12 @@
 //  localStorage and retried via Background Sync.
 // ============================================================
 
-const CACHE_NAME = 'dairy-bliss-v3';
+const CACHE_NAME = 'dairy-bliss-v5';
 
 // Assets to precache on install
 const PRECACHE_ASSETS = [
-  './',
-  './index.html',
+  './app.html',
   './manifest.json',
-  './icons/Logo.png',
 ];
 
 // ── INSTALL ──────────────────────────────────────────────────
@@ -80,9 +78,9 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(() => {
-          // Offline fallback: serve index.html for navigation requests
+          // Offline fallback: serve app.html for navigation requests
           if (request.mode === 'navigate') {
-            return caches.match('./index.html');
+            return caches.match('./app.html');
           }
           // For other failed requests, return empty 503
           return new Response('Offline', { status: 503 });
@@ -114,8 +112,8 @@ self.addEventListener('push', event => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: './icons/icon-192.png',
-      badge: './icons/icon-192.png',
+      icon: '../assets/favicon-192.png',
+      badge: '../assets/favicon-192.png',
     })
   );
 });

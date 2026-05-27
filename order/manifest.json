@@ -2,36 +2,35 @@
   "name": "Dairy Bliss",
   "short_name": "Dairy Bliss",
   "description": "Order fresh paneer from Dairy Bliss — Pure Paneer Delight. Delivering every Wednesday and Saturday.",
-  "start_url": "./index.html",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#fbf8f2",
-  "background_color": "#fbf8f2",
+  "theme_color": "#faf8f4",
+  "background_color": "#faf8f4",
   "lang": "en",
   "categories": ["food", "shopping"],
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "../assets/favicon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "../assets/favicon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "Order Paneer",
       "short_name": "Order",
       "description": "Place a new paneer order",
-      "url": "./index.html",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "url": "./app.html",
+      "icons": [{ "src": "../assets/favicon-192.png", "sizes": "192x192" }]
     }
   ]
 }
