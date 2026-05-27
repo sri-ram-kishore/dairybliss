@@ -1158,10 +1158,9 @@ function showConfirmation(d, payStatus) {
   goTop();
 
   document.getElementById('confirm-msg').textContent =
-    `Your paneer is confirmed for ${d.fullDate}. ` +
-    `We've sent your details to ${assignedLabel(d.aptKey)}.`;
+    `Your order is confirmed for ${d.fullDate}. Fresh paneer on its way! 🥛`;
 
-  const pmDisplay = d.payKey === 'upi' ? `UPI — ${payStatus}` : 'Cash on Delivery';
+  const pmDisplay = d.payKey === 'upi' ? `UPI — Paid` : 'Cash on Delivery';
 
   document.getElementById('order-summary').innerHTML = `
     <div class="cr"><span class="ck">Name</span><span class="cv">${esc(d.name)}</span></div>
@@ -1172,8 +1171,6 @@ function showConfirmation(d, payStatus) {
     <div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(d.fullDate)}</span></div>
     <div class="cr"><span class="ck">Payment</span><span class="cv">${esc(pmDisplay)}</span></div>
   `;
-
-  notifyOwners(d, pmDisplay);
 }
 
 // ── reset ─────────────────────────────────────────────────────
