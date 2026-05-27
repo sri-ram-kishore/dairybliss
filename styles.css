@@ -921,7 +921,7 @@ h1 {
 
 .footer-social a,
 .footer-contact .footer-social a {
-  color: var(--green-mid);
+  color: #4e9522 !important;
   display: flex;
   align-items: center;
   transition: color 150ms ease, transform 150ms ease;
@@ -929,7 +929,7 @@ h1 {
 
 .footer-social a:hover,
 .footer-contact .footer-social a:hover {
-  color: #6abf3a;
+  color: #6abf3a !important;
   transform: translateY(-2px);
 }
 
