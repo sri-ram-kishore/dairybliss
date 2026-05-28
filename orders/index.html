@@ -157,7 +157,7 @@
       background: #fff;
     }
     input::placeholder { color: var(--text-soft); }
-    input.is-error, select.is-error { border-color: var(--ink); }
+    input.is-error, select.is-error { /* no red — required fields speak for themselves */ }
 
     @keyframes shake {
       0%,100% { transform: translateX(0); }
@@ -182,7 +182,7 @@
     /* ── ERROR MSG ── */
     .em { display: none; font-size: 12px; color: var(--text-mid); margin-top: 5px; }
     .em.v { display: block; }
-    .cards-error { outline: 1.5px solid var(--ink); outline-offset: 6px; border-radius: 12px; }
+    .cards-error { /* no red outline */ }
 
     /* ── DELIVERY DAY CARDS ── */
     .day-cards { display: flex; flex-direction: column; gap: 8px; }
