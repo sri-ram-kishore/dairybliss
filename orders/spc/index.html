@@ -139,11 +139,6 @@
       box-shadow: 0 0 0 3px rgba(26,92,42,0.1); background: #fff;
     }
     input::placeholder { color: var(--text-soft); }
-    input.is-error {
-      border-color: var(--err);
-      box-shadow: 0 0 0 3px rgba(192,57,43,0.10);
-    }
-
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       20% { transform: translateX(-5px); }
@@ -153,10 +148,6 @@
     }
     .shake { animation: shake 0.38s ease; }
 
-    /* ── ERROR MSG ── */
-    .em { display: none; font-size: 12px; color: var(--err); margin-top: 5px; font-weight: 500; }
-    .em.v { display: block; }
-    .cards-error { outline: 2px solid var(--err); outline-offset: 2px; border-radius: 12px; }
 
     /* ── APT DISPLAY ── */
     .apt-display {
@@ -535,14 +526,12 @@ const APT = {
       <label class="fl" for="f-name">Your name</label>
       <input type="text" id="f-name" placeholder="Full name"
              autocomplete="name" required>
-      <span class="em" id="e-name">Please enter your full name.</span>
     </div>
 
     <div class="field">
       <label class="fl" for="f-phone">Mobile number</label>
       <input type="tel" id="f-phone" placeholder="10-digit number"
              maxlength="10" inputmode="numeric" autocomplete="tel" required>
-      <span class="em" id="e-phone">Enter a valid 10-digit number.</span>
     </div>
   </div>
 
@@ -564,7 +553,6 @@ const APT = {
     <div class="field">
       <label class="fl" for="f-flat">Flat / unit number</label>
       <input type="text" id="f-flat" required placeholder="e.g. 3162">
-      <span class="em" id="e-flat">Please enter your flat number.</span>
     </div>
   </div>
 
@@ -592,7 +580,6 @@ const APT = {
       </label>
     </div>
 
-    <span class="em" id="e-day" style="margin-top:6px;">Please choose a delivery date.</span>
   </div>
 
   <!-- ── STEP 4: QUANTITY ── -->
@@ -637,7 +624,6 @@ const APT = {
       </label>
     </div>
 
-    <span class="em" id="e-qty" style="margin-top:6px;">Please select a quantity.</span>
 
     <div class="amt-row" id="amount-pill">
       <span class="amt-lbl">Total amount</span>
@@ -669,7 +655,6 @@ const APT = {
       </label>
     </div>
 
-    <span class="em" id="e-pay" style="margin-top:6px;">Please select a payment method.</span>
   </div>
 
   <button type="submit" class="btn-submit" id="btn-submit">Place Order →</button>
@@ -890,7 +875,6 @@ function wireCards(name) {
         x.closest('label')?.classList.remove('chosen'));
       r.closest('label')?.classList.add('chosen');
       const ids = { delivery_day: 'day-cards', quantity: 'qty-cards', payment: 'pay-cards' };
-      if (ids[name]) document.getElementById(ids[name])?.classList.remove('cards-error');
     });
   });
 }
@@ -914,37 +898,14 @@ document.getElementById('f-phone').addEventListener('input', function () {
 });
 
 // ── validation ────────────────────────────────────────────────
-function setErr(fid, eid, bad) {
-  document.getElementById(fid)?.classList.toggle('is-error', bad);
-  document.getElementById(eid)?.classList.toggle('v', bad);
-}
-
 function validateAll() {
-  let ok = true;
-
-  const name = document.getElementById('f-name').value.trim();
-  setErr('f-name','e-name', !name); if (!name) ok = false;
-
+  const name  = document.getElementById('f-name').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
-  const pOk = /^[6-9]\d{9}$/.test(phone);
-  setErr('f-phone','e-phone', !pOk); if (!pOk) ok = false;
-
-  const flat = document.getElementById('f-flat').value.trim();
-  setErr('f-flat','e-flat', !flat); if (!flat) ok = false;
-
-  const day = document.querySelector('input[name="delivery_day"]:checked');
-  document.getElementById('e-day').classList.toggle('v', !day);
-  if (!day) ok = false;
-
-  const qty = document.querySelector('input[name="quantity"]:checked');
-  document.getElementById('e-qty').classList.toggle('v', !qty);
-  if (!qty) ok = false;
-
-  const pay = document.querySelector('input[name="payment"]:checked');
-  document.getElementById('e-pay').classList.toggle('v', !pay);
-  if (!pay) ok = false;
-
-  return ok;
+  const flat  = document.getElementById('f-flat').value.trim();
+  const day   = document.querySelector('input[name="delivery_day"]:checked');
+  const qty   = document.querySelector('input[name="quantity"]:checked');
+  const pay   = document.querySelector('input[name="payment"]:checked');
+  return name && /^[6-9]\d{9}$/.test(phone) && flat && day && qty && pay;
 }
 
 // ── collect form data ─────────────────────────────────────────
@@ -1028,8 +989,6 @@ function resetForm() {
   document.getElementById('orderForm').reset();
   document.querySelectorAll('.day-card, .qty-card, .pay-card').forEach(c => c.classList.remove('chosen'));
   document.getElementById('amount-pill').classList.remove('v');
-  document.querySelectorAll('.em').forEach(e => e.classList.remove('v'));
-  document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
   hide('screen-confirm'); hide('screen-upi');
   show('screen-form'); goTop();
 }
@@ -1085,8 +1044,6 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
     const btn = document.getElementById('btn-submit');
     btn.classList.remove('shake'); void btn.offsetWidth; btn.classList.add('shake');
     btn.addEventListener('animationend', () => btn.classList.remove('shake'), { once: true });
-    const first = document.querySelector('.is-error');
-    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
   const d = collectData();
