@@ -113,7 +113,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const { unit } = parseApt(data.address);
 
   const msg = [
-    `${meta.emoji} <b>[${meta.key}] New Order — ${esc(orderId)}</b>`,
+    `${meta.emoji} <b>[${meta.key}]</b>  New Order — ${esc(orderId)}`,
     ``,
     `👤 ${esc(data.name)}${unit ? '  · ' + esc(unit) : ''}  ·  📱 ${esc(data.phone)}`,
     `📅 ${esc(data.deliveryLabel)}`,
@@ -160,7 +160,7 @@ function checkStockAlerts(prevGrams, newGrams, label, meta) {
 
 const APARTMENTS = [
   { key: 'SPC', label: 'Sobha Palm Court',   emoji: '🟢' },
-  { key: 'BNR', label: 'Brigade North Ridge', emoji: '🏢 🔵' }
+  { key: 'BNR', label: 'Brigade North Ridge', emoji: '🔵' }
 ];
 
 const APT_PATTERNS = {
