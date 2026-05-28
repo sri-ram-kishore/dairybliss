@@ -1302,11 +1302,11 @@ h1 {
 
 .order-field input.is-error,
 .order-field select.is-error {
-  border-color: #a62b1f;
+  border-color: var(--ink);
 }
 
 .order-items.is-error {
-  outline: 1.5px solid #a62b1f;
+  outline: 1.5px solid var(--ink);
   border-radius: 8px;
 }
 
