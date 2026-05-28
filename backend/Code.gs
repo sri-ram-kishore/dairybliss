@@ -119,7 +119,8 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const msg = [
     `${meta.emoji} <b>[${meta.key}] New Order — ${esc(orderId)}</b>`,
     ``,
-    `${esc(data.name)}${unit ? '  ·  ' + esc(unit) : ''}  ·  ${esc(data.phone)}`,
+    `${esc(data.name)}${unit ? '  ·  ' + esc(unit) : ''}`,
+    `${esc(data.phone)}`,
     `${esc(data.deliveryLabel)}`,
     ``,
     items.map(esc).join('\n'),
