@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=23">
+  <link rel="stylesheet" href="styles.css?v=24">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -61,7 +61,7 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
               Order Now
             </a>
-            <a class="button ghost-btn reveal reveal-delay-2" href="#" onclick="openWhatsApp('https://wa.me/918861000100?text=Hi!%20I%27d%20like%20to%20try%20a%20sample%20of%20your%20fresh%20paneer.%20I%27m%20in%20');return false;">Try a sample</a>
+            <a class="button ghost-btn reveal reveal-delay-2" href="#" onclick="openWhatsApp('https://wa.me/918861000100?text=Hi!%20I%27d%20like%20to%20try%20a%20sample%20of%20your%20fresh%20paneer.%20I%27m%20in%20_enter%20your%20address_');return false;">Try a sample</a>
           </div>
         </div>
 
@@ -632,9 +632,10 @@ function openOrderModalPrefilled() {
     function openWhatsApp(url) {
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
-        // On mobile the OS intercepts the wa.me deep link and opens WhatsApp;
-        // the browser never leaves the current page.
-        window.location.href = url;
+        // Use whatsapp:// app scheme — opens WhatsApp directly without
+        // a redirect page, browser stays on dairybliss.com.
+        const text = url.split('?text=')[1] || '';
+        window.location.href = 'whatsapp://send?phone=918861000100&text=' + text;
       } else {
         // On desktop open a new tab and close it once WhatsApp Web has launched.
         const w = window.open(url, '_blank');
