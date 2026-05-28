@@ -160,7 +160,7 @@ function checkStockAlerts(prevGrams, newGrams, label, meta) {
 
 const APARTMENTS = [
   { key: 'SPC', label: 'Sobha Palm Court',   emoji: '🟢' },
-  { key: 'BNR', label: 'Brigade North Ridge', emoji: '🔵' }
+  { key: 'BNR', label: 'Brigade North Ridge', emoji: '🏢 🔵' }
 ];
 
 const APT_PATTERNS = {

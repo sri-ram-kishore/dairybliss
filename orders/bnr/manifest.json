@@ -1,6 +1,6 @@
 {
   "name": "Dairy Bliss · BNR",
-  "short_name": "DB Orders",
+  "short_name": "DairyBliss",
   "description": "Order fresh paneer — Brigade North Ridge. Delivered every Wednesday and Saturday.",
   "start_url": "/orders/bnr/",
   "scope": "/orders/bnr/",
