@@ -2,8 +2,8 @@
 // DairyBliss Backend — Google Apps Script
 // ============================================================
 
-const TELEGRAM_TOKEN   = '8730232930:AAFJiCH9u-dhH1PsRJiWTTnhoJhAHTVc9mg';
-const TELEGRAM_CHAT_ID = '-5262308031';
+const TELEGRAM_TOKEN   = '***REMOVED***';
+const TELEGRAM_CHAT_ID = '-5080336839';
 const SHEET_ID         = '1tVjZbBq2U3MzuudS2MMWG0Ko4bGB7feefAojYJ0g1P0';
 
 const BLOCK_KG        = 3;     // stock bought in 3 kg blocks
@@ -400,7 +400,7 @@ function setOrdersEnabled(val) {
 
 // ── ONE-TIME SETUP FUNCTIONS ──────────────────────────────────
 
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzcviGEaLUHZMjXKEZr_643vGmgRQr1Edm8YNuNOhlM3rx5bjBbKo37RfRuPFOVwSSWNA/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbznd6XpMErYDx-0SlvFiEzSa5RCSjAoWd2UqMTG6tL02MTTZHja_hpvlARj9ctNaV_ErA/exec';
 
 function setupTelegramWebhook() {
   // Always use the hardcoded /exec URL — ScriptApp.getService().getUrl()
