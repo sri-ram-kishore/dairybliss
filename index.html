@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=31">
+  <link rel="stylesheet" href="styles.css?v=32">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -634,9 +634,9 @@ function openOrderModalPrefilled() {
       } else if (isServiceable === false) {
         resultEl.innerHTML = `
           <div class="pincode-no">
-            <span class="pincode-badge no">Not in our delivery zone yet</span>
-            <p>We're expanding fast. Let us know and we'll notify you when we arrive.</p>
-            <a class="button secondary" href="https://wa.me/918861000100?text=Hi%20Dairy%20Bliss%2C%20please%20notify%20me%20when%20you%20deliver%20to%20${encodeURIComponent(areaName)}." rel="noopener" target="_blank">Notify me →</a>
+            <span class="pincode-badge no">Not here yet — but we're getting there</span>
+            <p>We're a small team still growing our routes. Tell us you're interested and you'll be the first to know when we reach you.</p>
+            <a class="button secondary" href="https://wa.me/918861000100?text=Hi%20Dairy%20Bliss%2C%20please%20notify%20me%20when%20you%20deliver%20to%20${encodeURIComponent(areaName)}." rel="noopener" target="_blank">Yes, let me know →</a>
           </div>`;
       } else {
         // No pincode found from Places — show a soft yes (we'll confirm on WhatsApp)
