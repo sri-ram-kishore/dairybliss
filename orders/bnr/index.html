@@ -528,19 +528,19 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">1</span>
-      <span class="step-title">Your Details</span>
+      <span class="step-title">Who's ordering?</span>
     </div>
 
     <div class="field">
-      <label class="fl" for="f-name">Full Name</label>
-      <input type="text" id="f-name" placeholder="e.g. Priya Sharma"
+      <label class="fl" for="f-name">Your name</label>
+      <input type="text" id="f-name" placeholder="Full name"
              autocomplete="name" required>
       <span class="em" id="e-name">Please enter your full name.</span>
     </div>
 
     <div class="field">
-      <label class="fl" for="f-phone">Phone Number</label>
-      <input type="tel" id="f-phone" placeholder="10-digit mobile number"
+      <label class="fl" for="f-phone">Mobile number</label>
+      <input type="tel" id="f-phone" placeholder="10-digit number"
              maxlength="10" inputmode="numeric" autocomplete="tel" required>
       <span class="em" id="e-phone">Enter a valid 10-digit number.</span>
     </div>
@@ -550,7 +550,7 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">2</span>
-      <span class="step-title">Delivery Address</span>
+      <span class="step-title">Where should we deliver?</span>
     </div>
 
     <!-- Apartment pre-filled — no dropdown needed -->
@@ -562,7 +562,7 @@ const APT = {
     </div>
 
     <div class="field">
-      <label class="fl" for="f-flat">Flat Number</label>
+      <label class="fl" for="f-flat">Flat / unit number</label>
       <input type="text" id="f-flat" required placeholder="e.g. A-304">
       <span class="em" id="e-flat">Please enter your flat number.</span>
     </div>
@@ -572,12 +572,8 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">3</span>
-      <span class="step-title">Delivery</span>
+      <span class="step-title">When do you need it?</span>
     </div>
-
-    <p style="font-size:13px;font-weight:700;color:var(--text-mid);margin-bottom:10px;">
-      Choose delivery date
-    </p>
 
     <div class="day-cards" id="day-cards">
       <label class="day-card" id="dc-wed">
@@ -603,7 +599,7 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">4</span>
-      <span class="step-title">Quantity</span>
+      <span class="step-title">How much paneer?</span>
     </div>
 
     <div class="qty-cards" id="qty-cards">
@@ -653,7 +649,7 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">5</span>
-      <span class="step-title">Payment</span>
+      <span class="step-title">How would you like to pay?</span>
     </div>
 
     <div class="pay-cards" id="pay-cards">
