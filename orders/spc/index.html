@@ -104,7 +104,7 @@
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
       font-size: 13px; font-weight: 700; flex-shrink: 0;
     }
-    .step-title { font-size: 17px; font-weight: 500; color: var(--text); }
+    .step-title { font-size: 17px; font-weight: 700; color: var(--text); }
     .req::after { content: ' *'; color: var(--err); font-size: 13px; }
 
     /* ── FIELD ── */
@@ -163,7 +163,7 @@
       flex-shrink: 0; cursor: pointer;
     }
     .day-card-body { flex: 1; }
-    .day-name { font-size: 15px; font-weight: 500; color: var(--text); }
+    .day-name { font-size: 15px; font-weight: 700; color: var(--text); }
     .day-sub  { font-size: 12.5px; color: var(--text-soft); margin-top: 1px; }
 
     /* ── QUANTITY CARDS ── */
@@ -183,9 +183,9 @@
       width: 20px; height: 20px; accent-color: var(--green);
       flex-shrink: 0; cursor: pointer;
     }
-    .qty-label { flex: 1; font-size: 15px; font-weight: 500; color: var(--text); }
+    .qty-label { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); }
     .qty-desc  { font-size: 12px; color: var(--text-soft); font-weight: 400; margin-top: 1px; }
-    .qty-price { font-size: 14px; font-weight: 400; color: var(--green); }
+    .qty-price { font-size: 14px; font-weight: 600; color: var(--green); }
 
     .amt-row {
       display: none; align-items: center; justify-content: space-between;
@@ -195,7 +195,7 @@
     }
     .amt-row.v { display: flex; }
     .amt-lbl { font-size: 13px; color: var(--text-soft); }
-    .amt-val { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; color: var(--green); }
+    .amt-val { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; color: var(--green); }
 
     /* ── PAYMENT CARDS ── */
     .pay-cards { display: flex; flex-direction: column; gap: 8px; }
@@ -215,7 +215,7 @@
       flex-shrink: 0; cursor: pointer;
     }
     .pay-body { flex: 1; }
-    .pay-name { font-size: 15px; font-weight: 500; color: var(--text); }
+    .pay-name { font-size: 15px; font-weight: 700; color: var(--text); }
     .pay-sub  { font-size: 12.5px; color: var(--text-soft); margin-top: 1px; }
 
     /* ── SUBMIT ── */
@@ -337,7 +337,7 @@
     }
     .cr:last-child { border-bottom: none; }
     .ck { color: var(--text-mid); }
-    .cv { font-weight: 500; color: var(--text); text-align: right; max-width: 60%; }
+    .cv { font-weight: 600; color: var(--text); text-align: right; max-width: 60%; }
 
     .btn-again {
       display: block; width: 100%; padding: 14px;
@@ -480,13 +480,13 @@ const APT = {
 <div id="screen-form">
 <div class="page">
 <div class="page-title-row">
-  <p class="page-title">Order fresh paneer</p>
   <a class="apt-back" href="../">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </a>
+  <p class="page-title">Order fresh paneer</p>
 </div>
 <form id="orderForm" novalidate autocomplete="on">
 
