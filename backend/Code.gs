@@ -102,27 +102,29 @@ function notifyNewOrder(orderId, data, q250, q500, q750, q1kg, totalGrams, total
   const newKg  = (newGrams / 1000).toFixed(2);
 
   const items = [];
-  if (q250) items.push(`250g × ${q250} — ₹${q250*145}`);
-  if (q500) items.push(`500g × ${q500} — ₹${q500*280}`);
-  if (q750) items.push(`750g × ${q750} — ₹${q750*420}`);
-  if (q1kg) items.push(`1kg × ${q1kg} — ₹${q1kg*550}`);
+  if (q250) items.push(`250g × ${q250}  —  ₹${q250*145}`);
+  if (q500) items.push(`500g × ${q500}  —  ₹${q500*280}`);
+  if (q750) items.push(`750g × ${q750}  —  ₹${q750*420}`);
+  if (q1kg) items.push(`1kg × ${q1kg}  —  ₹${q1kg*550}`);
 
   // Which block we're in and how far through it
   const blockNum    = Math.floor(newGrams / (BLOCK_KG * 1000)) + 1;
   const nextAlertKg = BLOCK_KG * blockNum - ALERT_BEFORE_KG;
 
+  const aptInfo = parseApt(data.address);
+  const aptTag  = aptInfo.apt !== 'Other' ? ` · ${aptInfo.apt}` : '';
+
   const msg = [
-    `🧀 *New Order — ${orderId}*`,
+    `🧀 <b>New Order — ${esc(orderId)}</b>`,
     ``,
-    `👤 ${esc(data.name)}  |  📱 ${data.phone}`,
+    `👤 ${esc(data.name)}${aptTag}  ·  📱 ${esc(data.phone)}`,
     `📍 ${esc(data.address)}`,
-    `🗓 ${data.deliveryLabel}`,
+    `📅 ${esc(data.deliveryLabel)}`,
     ``,
     items.map(esc).join('\n'),
-    `─────────────────`,
-    `*Total: ₹${totalRs}  |  ${(totalGrams/1000).toFixed(2)} kg*`,
     ``,
-    `📦 ${data.deliveryLabel} total: *${newKg} kg*  (next alert at ${nextAlertKg} kg)`
+    `<b>Total: ₹${totalRs}  ·  ${(totalGrams/1000).toFixed(2)} kg</b>`,
+    `📦 ${esc(data.deliveryLabel)} running total: <b>${newKg} kg</b>  (next alert at ${nextAlertKg} kg)`
   ].join('\n');
 
   tg(msg);
@@ -147,8 +149,8 @@ function checkStockAlerts(prevGrams, newGrams, label) {
 
     if (prevKg < threshold && newKg >= threshold) {
       tg([
-        `⚠️ *Stock Alert — ${label}*`,
-        `Running total: *${newKg.toFixed(2)} kg* — approaching ${nextBlock} kg`,
+        `⚠️ <b>Stock Alert — ${esc(label)}</b>`,
+        `Running total: <b>${newKg.toFixed(2)} kg</b>  (approaching ${nextBlock} kg block)`,
         ``,
         `Time to order the next ${BLOCK_KG} kg block.`,
         `Send /pause to stop new orders.`
@@ -216,7 +218,7 @@ function sendCutoffSummary() {
   const orders = ordersForDate(sheet, deliveryDate);
 
   if (orders.length === 0) {
-    tg(`📋 Orders closed for *${deliveryLabel}* — no orders received.`);
+    tg(`📋 Orders closed for <b>${esc(deliveryLabel)}</b> — no orders received.`);
     return;
   }
 
@@ -241,10 +243,10 @@ function sendCutoffSummary() {
   }, { orders:0, q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 });
 
   const lines = [
-    `📋 *Orders closed — ${deliveryLabel}*`,
+    `📋 <b>Orders closed — ${esc(deliveryLabel)}</b>`,
     ``,
-    `*Total: ${total.orders} orders  |  ${(total.grams/1000).toFixed(2)} kg  |  ₹${total.rs}*`,
-    `250g × ${total.q250}  |  500g × ${total.q500}  |  750g × ${total.q750}  |  1kg × ${total.q1kg}`,
+    `<b>${total.orders} orders  ·  ${(total.grams/1000).toFixed(2)} kg  ·  ₹${total.rs}</b>`,
+    `250g × ${total.q250}  ·  500g × ${total.q500}  ·  750g × ${total.q750}  ·  1kg × ${total.q1kg}`,
   ];
 
   // One section per apartment in a fixed order
@@ -266,8 +268,8 @@ function sendCutoffSummary() {
     }, { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 });
 
     lines.push(``);
-    lines.push(`▸ *${label} (${aptKey})*`);
-    lines.push(`${list.length} orders  |  ${(s.grams/1000).toFixed(2)} kg  |  ₹${s.rs}`);
+    lines.push(`▸ <b>${esc(label)} (${aptKey})</b>`);
+    lines.push(`${list.length} orders  ·  ${(s.grams/1000).toFixed(2)} kg  ·  ₹${s.rs}`);
     lines.push(`250g:${s.q250}  500g:${s.q500}  750g:${s.q750}  1kg:${s.q1kg}`);
     lines.push(``);
 
@@ -277,7 +279,7 @@ function sendCutoffSummary() {
       if (o.q500) items.push(`500g×${o.q500}`);
       if (o.q750) items.push(`750g×${o.q750}`);
       if (o.q1kg) items.push(`1kg×${o.q1kg}`);
-      lines.push(`${i+1}\\. ${esc(o.name)} — ${items.join(', ')} — ${aptKey} ${esc(o._unit)}`);
+      lines.push(`${i+1}. ${esc(o.name)}  —  ${items.join(', ')}  —  ${aptKey} ${esc(o._unit)}`);
     });
   });
 
@@ -298,12 +300,12 @@ function handleTelegramUpdate(update) {
   switch (cmd) {
     case '/pause':
       setOrdersEnabled(false);
-      tg('⏸ *Orders paused.* The website will show a paused message until you /resume.');
+      tg('⏸ <b>Orders paused.</b> The website will show a paused message until you /resume.');
       break;
 
     case '/resume':
       setOrdersEnabled(true);
-      tg('▶️ *Orders resumed.* The website is accepting orders again.');
+      tg('▶️ <b>Orders resumed.</b> The website is accepting orders again.');
       break;
 
     case '/status':
@@ -316,7 +318,7 @@ function handleTelegramUpdate(update) {
 
     case '/help':
       tg([
-        '*DairyBliss Bot — Commands*',
+        `<b>DairyBliss Bot — Commands</b>`,
         `/status — Running totals for upcoming deliveries`,
         `/summary — Full order list for next delivery`,
         `/pause — Stop accepting orders`,
@@ -335,7 +337,7 @@ function sendStatus() {
   const now   = new Date();
   const dates = nextDeliveryDates(2);
 
-  const lines = [`📊 *Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}*`, ``];
+  const lines = [`📊 <b>Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}</b>`, ``];
   let any = false;
 
   dates.forEach(({date, label, open}) => {
@@ -346,11 +348,11 @@ function sendStatus() {
     const nextAlertKg = BLOCK_KG * blockNum - ALERT_BEFORE_KG;
     const status      = open ? '🟢 open' : '🔴 closed';
 
-    lines.push(`*${label}* (${status})`);
+    lines.push(`<b>${esc(label)}</b>  (${status})`);
     if (s.orders === 0) {
       lines.push(`No orders yet`);
     } else {
-      lines.push(`${s.orders} orders  |  *${kg} kg*  |  ₹${s.totalRs}`);
+      lines.push(`${s.orders} orders  ·  <b>${kg} kg</b>  ·  ₹${s.totalRs}`);
       lines.push(`250g:${s.q250}  500g:${s.q500}  750g:${s.q750}  1kg:${s.q1kg}`);
       lines.push(`Next block alert at ${nextAlertKg} kg`);
     }
@@ -414,7 +416,7 @@ function tg(text) {
     payload: JSON.stringify({
       chat_id: TELEGRAM_CHAT_ID,
       text: text,
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML',
       disable_web_page_preview: true
     })
   });
@@ -494,7 +496,10 @@ function nextDeliveryDates(n) {
 }
 
 function esc(s) {
-  return String(s || '').replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function clip(s, len) {
