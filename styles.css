@@ -1945,7 +1945,7 @@ address {
 }
 
 @media (max-width: 680px) {
-  body { overflow-x: hidden; }
+  body { overflow-x: clip; }
 
   .scroll-indicator { display: none; }
 
