@@ -117,15 +117,15 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const { unit } = parseApt(data.address);
 
   const msg = [
-    `${meta.emoji} <b>[${meta.key}]</b>  New Order — ${esc(orderId)}`,
+    `${meta.emoji} <b>[${meta.key}] New Order — ${esc(orderId)}</b>`,
     ``,
-    `👤 ${esc(data.name)}${unit ? '  · ' + esc(unit) : ''}  ·  📱 ${esc(data.phone)}`,
-    `📅 ${esc(data.deliveryLabel)}`,
+    `${esc(data.name)}${unit ? '  ·  ' + esc(unit) : ''}  ·  ${esc(data.phone)}`,
+    `${esc(data.deliveryLabel)}`,
     ``,
     items.map(esc).join('\n'),
     ``,
     `<b>Total: ₹${totalRs}  ·  ${(totalGrams/1000).toFixed(2)} kg</b>`,
-    `📦 ${esc(meta.key)} running total: <b>${newKg} kg</b>`
+    `${esc(meta.key)} running total: <b>${newKg} kg</b>`
   ].join('\n');
 
   tg(msg);
@@ -489,30 +489,28 @@ function matchDate(cell, dateStr) {
 
 /**
  * Returns the next n delivery dates (Wed=3, Sat=6) with an open/closed flag.
- * Wed orders close Tue 9pm; Sat orders close Fri 9pm.
+ * Wed cutoff: the Tuesday before at 9pm IST.
+ * Sat cutoff: the Friday before at 9pm IST.
+ * A date is "open" if now is before its cutoff.
  */
 function nextDeliveryDates(n) {
   const result = [];
   const now    = new Date();
-  const day    = now.getDay();
-  const hour   = parseInt(fmt(now, 'H'));
-
-  // Is Wednesday currently open?  Open: Sat 0am → Tue 9pm
-  // Is Saturday currently open?   Open: Wed 0am → Fri 9pm
-  const wedOpen = !((day === 2 && hour >= 21) || day === 3 || day === 4 || day === 5 || day === 6 || (day === 0));
-  // Wed closed after Tue 9pm through end of Wed delivery day (Sat morning reopens)
-  // Simplified: Wed open if day is Sat(6), Sun(0), Mon(1), or Tue before 9pm
-  const wedOpenSimple = (day === 6) || (day === 0) || (day === 1) || (day === 2 && hour < 21);
-  const satOpenSimple = (day === 3) || (day === 4) || (day === 5 && hour < 21);
 
   for (let offset = 1; result.length < n && offset < 15; offset++) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+    const d  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
     const wd = d.getDay();
-    if (wd === 3) {
-      result.push({ date: fmt(d,'yyyy-MM-dd'), label: fmt(d,'EEE, d MMM'), open: wedOpenSimple });
-    } else if (wd === 6) {
-      result.push({ date: fmt(d,'yyyy-MM-dd'), label: fmt(d,'EEE, d MMM'), open: satOpenSimple });
-    }
+    if (wd !== 3 && wd !== 6) continue;
+
+    // Cutoff = 2 days before (Tue for Wed, Fri for Sat) at 21:00 IST
+    const cutoffDay = wd === 3 ? d.getDate() - 2 : d.getDate() - 1;
+    const cutoff    = new Date(d.getFullYear(), d.getMonth(), cutoffDay, 21, 0, 0);
+
+    result.push({
+      date:  fmt(d, 'yyyy-MM-dd'),
+      label: fmt(d, 'EEE, d MMM'),
+      open:  now < cutoff
+    });
   }
   return result;
 }
