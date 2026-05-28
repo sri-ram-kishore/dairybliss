@@ -611,8 +611,8 @@ const APT = {
         </div>
         <span class="qty-price">₹145</span>
       </label>
-      <label class="qty-card" id="qc-500">
-        <input type="radio" name="quantity" value="500g">
+      <label class="qty-card chosen" id="qc-500">
+        <input type="radio" name="quantity" value="500g" checked>
         <div style="flex:1">
           <div class="qty-label">500g</div>
           <div class="qty-desc">Perfect for a family</div>
@@ -850,6 +850,10 @@ function reorderCards() {
 
 populateDates();
 reorderCards();
+
+// Pre-select 500g amount pill
+document.getElementById('amount-val').textContent = '₹280';
+document.getElementById('amount-pill').classList.add('v');
 
 // ── cutoff popup ──────────────────────────────────────────────
 (function checkCutoff() {
