@@ -322,7 +322,17 @@ function handleTelegramUpdate(update) {
         `/status — Running totals for upcoming deliveries`,
         `/summary — Full order list for next delivery`,
         `/pause — Stop accepting orders`,
-        `/resume — Resume accepting orders`
+        `/resume — Resume accepting orders`,
+        `/debug — Confirm bot is alive`
+      ].join('\n'));
+      break;
+
+    case '/debug':
+      tg([
+        `✅ <b>Bot is alive</b>`,
+        `Chat ID: <code>${chatId}</code>`,
+        `Expected: <code>${TELEGRAM_CHAT_ID}</code>`,
+        `Match: ${chatId === TELEGRAM_CHAT_ID ? '✅ yes' : '❌ no — update TELEGRAM_CHAT_ID in Code.gs'}`
       ].join('\n'));
       break;
   }
