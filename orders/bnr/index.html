@@ -912,7 +912,6 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
     return;
   }
   const d = collectData();
-  setBusy(true);
 
   if (d.payKey === 'rzp') {
     await openRazorpay(d);
