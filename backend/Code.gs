@@ -199,12 +199,12 @@ function aptMeta(key) {
   return APARTMENTS.find(a => a.key === key) || { key: 'Other', label: 'Other', emoji: '⚪' };
 }
 
-// ── CUTOFF SUMMARY (Tue 9pm → Wed orders, Fri 9pm → Sat orders) ──
+// ── CUTOFF SUMMARY (Tue 10pm → Wed orders, Fri 10pm → Sat orders) ──
 
 /**
- * Triggered at 9pm every day; only sends on Tuesday and Friday.
- * Tuesday   → final summary of Wednesday's orders (cutoff just hit)
- * Friday    → final summary of Saturday's orders  (cutoff just hit)
+ * Triggered at 10pm every day; only fires on Tuesday and Friday.
+ * Scheduled trigger (no aptFilter): sends ONE combined order-to-place message.
+ * Manual /summary SPC|BNR: sends per-apartment detail (names + flats).
  */
 function sendCutoffSummary(aptFilter) {
   const now = new Date();
@@ -212,70 +212,100 @@ function sendCutoffSummary(aptFilter) {
 
   let deliveryDate, deliveryLabel;
   if (day === 2) {
-    const wed = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    deliveryDate  = fmt(wed, 'yyyy-MM-dd');
-    deliveryLabel = fmt(wed, 'EEE, d MMM');
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    deliveryDate  = fmt(d, 'yyyy-MM-dd');
+    deliveryLabel = fmt(d, 'EEE, d MMM');
   } else if (day === 5) {
-    const sat = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    deliveryDate  = fmt(sat, 'yyyy-MM-dd');
-    deliveryLabel = fmt(sat, 'EEE, d MMM');
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    deliveryDate  = fmt(d, 'yyyy-MM-dd');
+    deliveryLabel = fmt(d, 'EEE, d MMM');
   } else if (!aptFilter) {
-    // Only skip non-Tue/Fri when called by the scheduled trigger (no filter)
-    return;
+    return; // scheduled trigger on non-Tue/Fri — do nothing
   } else {
-    // Manual /summary SPC or /summary BNR — show next delivery date
+    // Manual /summary SPC|BNR on any day — use next delivery date
     const next = nextDeliveryDates(1)[0];
     if (!next) { tg('No upcoming delivery dates.'); return; }
     deliveryDate  = next.date;
     deliveryLabel = next.label;
   }
 
-  const ss   = SpreadsheetApp.openById(SHEET_ID);
-  const apts = aptFilter ? APARTMENTS.filter(a => a.key === aptFilter) : APARTMENTS;
+  const ss = SpreadsheetApp.openById(SHEET_ID);
 
-  if (aptFilter && apts.length === 0) {
-    tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
-  }
-
-  // Send one summary message per apartment
-  apts.forEach(({ key, label, emoji }) => {
-    const sheet  = getOrCreate(ss, key);
-    const orders = ordersForDate(sheet, deliveryDate);
-
-    if (orders.length === 0) {
-      tg(`${emoji} <b>${esc(label)}</b>\n📋 Orders closed for <b>${esc(deliveryLabel)}</b> — no orders.`);
-      return;
+  if (aptFilter) {
+    // ── Manual /summary SPC or /summary BNR — per-apartment detail ──
+    const apts = APARTMENTS.filter(a => a.key === aptFilter);
+    if (apts.length === 0) {
+      tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
     }
-    anyOrders = true;
-
-    const s = orders.reduce((acc, o) => {
-      acc.q250 += o.q250; acc.q500 += o.q500;
-      acc.q750 += o.q750; acc.q1kg += o.q1kg;
-      acc.grams += o.q250*250 + o.q500*500 + o.q750*750 + o.q1kg*1000;
-      acc.rs    += o.q250*145 + o.q500*280 + o.q750*420 + o.q1kg*550;
-      return acc;
-    }, { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 });
-
-    const lines = [
-      `${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>`,
-      ``,
-      `<b>${orders.length} orders  ·  ${(s.grams/1000).toFixed(2)} kg  ·  ₹${s.rs}</b>`,
-      `250g × ${s.q250}  ·  500g × ${s.q500}  ·  750g × ${s.q750}  ·  1kg × ${s.q1kg}`,
-      ``,
-    ];
-
-    orders.forEach((o, i) => {
-      const { unit } = parseApt(o.address);
-      const items = [];
-      if (o.q250) items.push(`250g×${o.q250}`);
-      if (o.q500) items.push(`500g×${o.q500}`);
-      if (o.q750) items.push(`750g×${o.q750}`);
-      if (o.q1kg) items.push(`1kg×${o.q1kg}`);
-      lines.push(`${i+1}. ${esc(o.name)}${unit ? ' · ' + esc(unit) : ''}  —  ${items.join(', ')}`);
+    apts.forEach(({ key, label, emoji }) => {
+      const sheet  = getOrCreate(ss, key);
+      const orders = ordersForDate(sheet, deliveryDate);
+      if (orders.length === 0) {
+        tg(`${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>\nNo orders.`);
+        return;
+      }
+      const s = sumOrders(orders);
+      const lines = [
+        `${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>`,
+        `${orders.length} orders  ·  ${(s.grams/1000).toFixed(2)} kg  ·  ₹${s.rs}`,
+        ``,
+      ];
+      orders.forEach((o, i) => {
+        const { unit } = parseApt(o.address);
+        const items = [];
+        if (o.q250) items.push(`250g×${o.q250}`);
+        if (o.q500) items.push(`500g×${o.q500}`);
+        if (o.q750) items.push(`750g×${o.q750}`);
+        if (o.q1kg) items.push(`1kg×${o.q1kg}`);
+        lines.push(`${i+1}. ${esc(o.name)}${unit ? ', ' + esc(unit) : ''}  —  ${items.join(', ')}`);
+      });
+      tg(lines.join('\n'));
     });
 
+  } else {
+    // ── Scheduled trigger — combined order-to-place summary ──
+    const combined = { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 };
+    const aptLines = [];
+
+    APARTMENTS.forEach(({ key, emoji }) => {
+      const sheet  = getOrCreate(ss, key);
+      const orders = ordersForDate(sheet, deliveryDate);
+      const s      = sumOrders(orders);
+      combined.q250  += s.q250;  combined.q500  += s.q500;
+      combined.q750  += s.q750;  combined.q1kg  += s.q1kg;
+      combined.grams += s.grams; combined.rs    += s.rs;
+      const kg = (s.grams / 1000).toFixed(2);
+      aptLines.push(`${emoji} ${key}: ${orders.length} orders · ${kg} kg · ₹${s.rs}`);
+    });
+
+    if (combined.grams === 0) {
+      tg(`No orders for <b>${esc(deliveryLabel)}</b>.`);
+      return;
+    }
+
+    const lines = [
+      `<b>Place order — ${esc(deliveryLabel)}</b>`,
+      ``,
+    ];
+    if (combined.q250) lines.push(`250g × ${combined.q250}`);
+    if (combined.q500) lines.push(`500g × ${combined.q500}`);
+    if (combined.q750) lines.push(`750g × ${combined.q750}`);
+    if (combined.q1kg) lines.push(`1kg  × ${combined.q1kg}`);
+    lines.push(``, `<b>${(combined.grams/1000).toFixed(2)} kg total · ₹${combined.rs}</b>`, ``);
+    aptLines.forEach(l => lines.push(l));
+
     tg(lines.join('\n'));
-  });
+  }
+}
+
+function sumOrders(orders) {
+  return orders.reduce((acc, o) => {
+    acc.q250  += o.q250;  acc.q500  += o.q500;
+    acc.q750  += o.q750;  acc.q1kg  += o.q1kg;
+    acc.grams += o.q250*250 + o.q500*500 + o.q750*750 + o.q1kg*1000;
+    acc.rs    += o.q250*145 + o.q500*280 + o.q750*420 + o.q1kg*550;
+    return acc;
+  }, { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 });
 }
 
 // ── TELEGRAM COMMAND HANDLING ─────────────────────────────────
@@ -403,9 +433,9 @@ function setupTriggers() {
   ScriptApp.newTrigger('pollTelegram')
     .timeBased().everyMinutes(1).create();
 
-  // Cutoff summary: 9pm every day — function checks if it's Tue or Fri inside
+  // Cutoff summary: 10pm every day — function checks if it's Tue or Fri inside
   ScriptApp.newTrigger('sendCutoffSummary')
-    .timeBased().atHour(21).everyDays(1).create();
+    .timeBased().atHour(22).everyDays(1).create();
 
   Logger.log('Triggers set up successfully.');
 }
