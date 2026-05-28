@@ -146,21 +146,6 @@
 
 
     /* ── APT DISPLAY ── */
-    .apt-display {
-      display: flex; align-items: center; gap: 14px;
-      padding: 14px 16px;
-      background: var(--cream-card);
-      border: 1px solid var(--green);
-      box-shadow: 0 0 0 1px rgba(61,122,26,0.15);
-      border-radius: 11px;
-      margin-bottom: 14px;
-    }
-    .apt-display input[type="radio"] {
-      width: 20px; height: 20px; accent-color: var(--green);
-      flex-shrink: 0; pointer-events: none;
-    }
-    .apt-display-text { font-size: 15px; font-weight: 700; color: var(--text); }
-    .apt-display-sub { font-size: 12px; color: var(--text-soft); margin-top: 1px; }
 
     /* ── DELIVERY DAY CARDS ── */
     .day-cards { display: flex; flex-direction: column; gap: 8px; }
@@ -532,13 +517,7 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">2</span>
-      <span class="step-title">Where in SPC should we deliver?</span>
-    </div>
-
-    <!-- Apartment pre-filled — no dropdown needed -->
-    <div class="apt-display">
-      <input type="radio" checked tabindex="-1">
-      <div class="apt-display-text">Sobha Palm Court</div>
+      <span class="step-title">Where in Sobha Palm Court?</span>
     </div>
 
     <div class="field">
