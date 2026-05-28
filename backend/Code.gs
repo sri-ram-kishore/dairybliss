@@ -400,24 +400,37 @@ function setOrdersEnabled(val) {
 
 // ── ONE-TIME SETUP FUNCTIONS ──────────────────────────────────
 
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyDuHkkBIanz-6Qp-aRzCFZKbOdNTcW_IRtvYIy0UTvNO88Enguyaikxkk_mFPW9yFC1A/exec';
-
-function setupTelegramWebhook() {
-  // Always use the hardcoded /exec URL — ScriptApp.getService().getUrl()
-  // can return the /dev URL which requires auth and breaks Telegram webhooks.
-  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook?url=${encodeURIComponent(WEB_APP_URL)}`;
-  const res = UrlFetchApp.fetch(url);
-  Logger.log(res.getContentText());
-}
-
 function setupTriggers() {
   ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
+
+  // Poll Telegram for commands every minute
+  ScriptApp.newTrigger('pollTelegram')
+    .timeBased().everyMinutes(1).create();
 
   // Cutoff summary: 9pm every day — function checks if it's Tue or Fri inside
   ScriptApp.newTrigger('sendCutoffSummary')
     .timeBased().atHour(21).everyDays(1).create();
 
   Logger.log('Triggers set up successfully.');
+}
+
+// ── TELEGRAM POLLING ──────────────────────────────────────────
+
+function pollTelegram() {
+  const props  = PropertiesService.getScriptProperties();
+  const offset = parseInt(props.getProperty('tg_offset') || '0');
+
+  const res  = UrlFetchApp.fetch(
+    `https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?offset=${offset}&limit=10&timeout=0`
+  );
+  const data = JSON.parse(res.getContentText());
+
+  if (!data.ok || !data.result.length) return;
+
+  data.result.forEach(update => {
+    try { handleTelegramUpdate(update); } catch(e) { Logger.log(e); }
+    props.setProperty('tg_offset', String(update.update_id + 1));
+  });
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
