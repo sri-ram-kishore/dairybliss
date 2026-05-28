@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=33">
+  <link rel="stylesheet" href="styles.css?v=34">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -328,7 +328,7 @@
       <button class="pincode-modal-close" onclick="closePincodeModal()" aria-label="Close">✕</button>
       <p class="eyebrow" style="justify-content:flex-start;margin-bottom:12px;">Delivery Check</p>
       <h3 id="pincode-modal-title">Do we deliver to you?</h3>
-      <p class="pincode-modal-sub">We currently deliver to select apartments in North Bangalore. Search your address and we'll let you know.</p>
+      <p class="pincode-modal-sub">Currently covering parts of North Bangalore. Search your building or address to check.</p>
       <div class="pincode-input-row">
         <input class="pincode-input" id="pincode-input" type="text" placeholder="Search your area or building…" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
       </div>
@@ -529,12 +529,14 @@
         const ac = new google.maps.places.Autocomplete(input, {
           types: ['geocode', 'establishment'],
           componentRestrictions: { country: 'in' },
-          fields: ['formatted_address', 'geometry', 'url']
+          fields: ['name', 'formatted_address', 'geometry', 'url']
         });
         ac.addListener('place_changed', () => {
           const place = ac.getPlace();
           if (!place.geometry) return;
-          input.value = place.formatted_address || input.value;
+          const name = place.name || '';
+          const addr = place.formatted_address || input.value;
+          input.value = (name && !addr.startsWith(name)) ? name + ', ' + addr : addr;
           setFieldError('err-address', '');
           _placeUrl = place.url || `https://maps.google.com/?q=${place.geometry.location.lat()},${place.geometry.location.lng()}`;
         });
@@ -546,7 +548,7 @@
         _areaAc = new google.maps.places.Autocomplete(areaInput, {
           types: ['geocode', 'establishment'],
           componentRestrictions: { country: 'in' },
-          fields: ['address_components', 'formatted_address', 'geometry', 'url']
+          fields: ['name', 'address_components', 'formatted_address', 'geometry', 'url']
         });
         _areaAc.addListener('place_changed', () => checkArea());
         attachPacEscape(areaInput);
@@ -554,6 +556,10 @@
     }
 
     /* ── AREA CHECKER MODAL ── */
+    // Rate limit: max checks per page load to prevent API abuse
+    let _areaCheckCount = 0;
+    const MAX_AREA_CHECKS = 6;
+
     // Delivery centre & radius
     const CENTRE = { lat: 13.10344346702602, lng: 77.6073246915141 };
     const RADIUS_KM = 5;
@@ -590,6 +596,11 @@ function openOrderModalPrefilled() {
 
     function checkArea() {
       const resultEl = document.getElementById('pincode-result');
+      if (_areaCheckCount >= MAX_AREA_CHECKS) {
+        resultEl.innerHTML = '<p class="pincode-error">Too many searches. Please refresh the page and try again.</p>';
+        return;
+      }
+      _areaCheckCount++;
       const place = _areaAc && _areaAc.getPlace && _areaAc.getPlace();
 
       // Try to get pincode from Places result
@@ -631,15 +642,11 @@ function openOrderModalPrefilled() {
       }
 
       if (isServiceable === true) {
-        const sampleText = encodeURIComponent('Hi! I\'d like to try a sample of your fresh paneer. My address is: ' + areaName);
         resultEl.innerHTML = `
           <div class="pincode-yes">
             <span class="pincode-badge yes">✓ We deliver to your area</span>
             <p>Fresh paneer, Wednesday &amp; Saturday, to your door.</p>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-              <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
-              <a class="button ghost-btn" href="#" onclick="openWhatsApp('https://wa.me/918861000100?text=${sampleText}');return false;" style="margin-left:0;">Try a sample</a>
-            </div>
+            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
           </div>`;
       } else if (isServiceable === false) {
         resultEl.innerHTML = `
@@ -650,15 +657,11 @@ function openOrderModalPrefilled() {
           </div>`;
       } else {
         // No coordinates from Places — show a soft yes (we'll confirm on WhatsApp)
-        const sampleText2 = encodeURIComponent('Hi! I\'d like to try a sample of your fresh paneer. My address is: ' + areaName);
         resultEl.innerHTML = `
           <div class="pincode-yes">
             <span class="pincode-badge yes">Looks like we might cover your area</span>
             <p>Place an order and we'll confirm delivery on WhatsApp.</p>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-              <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
-              <a class="button ghost-btn" href="#" onclick="openWhatsApp('https://wa.me/918861000100?text=${sampleText2}');return false;" style="margin-left:0;">Try a sample</a>
-            </div>
+            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
           </div>`;
       }
     }
