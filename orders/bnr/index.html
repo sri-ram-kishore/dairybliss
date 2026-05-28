@@ -140,6 +140,10 @@
       box-shadow: 0 0 0 3px rgba(26,92,42,0.1); background: #fff;
     }
     input::placeholder { color: var(--text-soft); }
+    input.is-error { border-color: var(--ink); }
+    .field-err { color: #a62b1f; font-size: 12px; margin-top: 4px; display: none; }
+    .field-err.v { display: block; }
+    .cards-error { outline: 1.5px solid var(--ink); outline-offset: 6px; border-radius: 12px; }
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       20% { transform: translateX(-5px); }
@@ -527,12 +531,14 @@ const APT = {
       <label class="fl" for="f-name">Your name</label>
       <input type="text" id="f-name" placeholder="Full name"
              autocomplete="name" required>
+      <p class="field-err" id="e-name">Please enter your full name.</p>
     </div>
 
     <div class="field">
       <label class="fl" for="f-phone">Mobile number</label>
       <input type="tel" id="f-phone" placeholder="10-digit number"
              maxlength="10" inputmode="numeric" autocomplete="tel" required>
+      <p class="field-err" id="e-phone">Enter a valid 10-digit number.</p>
     </div>
   </div>
 
@@ -554,6 +560,7 @@ const APT = {
     <div class="field">
       <label class="fl" for="f-flat">Flat / unit number</label>
       <input type="text" id="f-flat" required placeholder="e.g. A-801">
+      <p class="field-err" id="e-flat">Please enter your flat number.</p>
     </div>
   </div>
 
@@ -580,6 +587,7 @@ const APT = {
         </div>
       </label>
     </div>
+    <p class="field-err" id="e-day" style="margin-top:6px;">Please choose a delivery date.</p>
 
   </div>
 
@@ -626,6 +634,7 @@ const APT = {
     </div>
 
 
+    <p class="field-err" id="e-qty" style="margin-top:6px;">Please select a quantity.</p>
     <div class="amt-row" id="amount-pill">
       <span class="amt-lbl">Total amount</span>
       <span class="amt-val" id="amount-val">₹0</span>
@@ -655,6 +664,7 @@ const APT = {
         </div>
       </label>
     </div>
+    <p class="field-err" id="e-pay" style="margin-top:6px;">Please select a payment method.</p>
 
   </div>
 
@@ -875,7 +885,8 @@ function wireCards(name) {
       document.querySelectorAll(`input[name="${name}"]`).forEach(x =>
         x.closest('label')?.classList.remove('chosen'));
       r.closest('label')?.classList.add('chosen');
-      const ids = { delivery_day: 'day-cards', quantity: 'qty-cards', payment: 'pay-cards' };
+      const errIds = { delivery_day: ['day-cards','e-day'], quantity: ['qty-cards','e-qty'], payment: ['pay-cards','e-pay'] };
+      if (errIds[name]) { setCardsErr(errIds[name][0], errIds[name][1], false); }
     });
   });
 }
@@ -893,20 +904,46 @@ document.querySelectorAll('input[name="quantity"]').forEach(r => {
   });
 });
 
-// phone: digits only
+// phone: digits only + clear error
 document.getElementById('f-phone').addEventListener('input', function () {
   this.value = this.value.replace(/\D/g,'').slice(0,10);
+  setErr('f-phone','e-phone', false);
 });
+document.getElementById('f-name').addEventListener('input', () => setErr('f-name','e-name', false));
+document.getElementById('f-flat').addEventListener('input', () => setErr('f-flat','e-flat', false));
 
 // ── validation ────────────────────────────────────────────────
+function setErr(fid, eid, bad) {
+  document.getElementById(fid)?.classList.toggle('is-error', bad);
+  document.getElementById(eid)?.classList.toggle('v', bad);
+}
+function setCardsErr(containerId, eid, bad) {
+  document.getElementById(containerId)?.classList.toggle('cards-error', bad);
+  document.getElementById(eid)?.classList.toggle('v', bad);
+}
+
 function validateAll() {
+  let ok = true;
   const name  = document.getElementById('f-name').value.trim();
+  setErr('f-name','e-name', !name); if (!name) ok = false;
+
   const phone = document.getElementById('f-phone').value.trim();
+  const pOk = /^[6-9]\d{9}$/.test(phone);
+  setErr('f-phone','e-phone', !pOk); if (!pOk) ok = false;
+
   const flat  = document.getElementById('f-flat').value.trim();
-  const day   = document.querySelector('input[name="delivery_day"]:checked');
-  const qty   = document.querySelector('input[name="quantity"]:checked');
-  const pay   = document.querySelector('input[name="payment"]:checked');
-  return name && /^[6-9]\d{9}$/.test(phone) && flat && day && qty && pay;
+  setErr('f-flat','e-flat', !flat); if (!flat) ok = false;
+
+  const day = document.querySelector('input[name="delivery_day"]:checked');
+  setCardsErr('day-cards','e-day', !day); if (!day) ok = false;
+
+  const qty = document.querySelector('input[name="quantity"]:checked');
+  setCardsErr('qty-cards','e-qty', !qty); if (!qty) ok = false;
+
+  const pay = document.querySelector('input[name="payment"]:checked');
+  setCardsErr('pay-cards','e-pay', !pay); if (!pay) ok = false;
+
+  return ok;
 }
 
 // ── collect form data ─────────────────────────────────────────
@@ -990,6 +1027,9 @@ function resetForm() {
   document.getElementById('orderForm').reset();
   document.querySelectorAll('.day-card, .qty-card, .pay-card').forEach(c => c.classList.remove('chosen'));
   document.getElementById('amount-pill').classList.remove('v');
+  document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));
+  document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
+  document.querySelectorAll('.cards-error').forEach(e => e.classList.remove('cards-error'));
   hide('screen-confirm'); hide('screen-upi');
   show('screen-form'); goTop();
 }
@@ -1045,6 +1085,8 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
     const btn = document.getElementById('btn-submit');
     btn.classList.remove('shake'); void btn.offsetWidth; btn.classList.add('shake');
     btn.addEventListener('animationend', () => btn.classList.remove('shake'), { once: true });
+    const first = document.querySelector('.is-error, .cards-error');
+    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
   const d = collectData();
