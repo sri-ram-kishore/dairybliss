@@ -846,7 +846,7 @@ async function openRazorpay(d) {
       amount:      d.amount * 100,
       currency:    'INR',
       name:        'Dairy Bliss',
-      description: `${d.qtyLabel} paneer — ${d.shortLabel}`,
+      description: `${d.qtyLabel} paneer - ${d.shortLabel}`,
       order_id:    data.rzp_order_id,
       prefill:     { name: d.name, contact: '91' + d.phone },
       theme:       { color: '#3d7a1a' },
