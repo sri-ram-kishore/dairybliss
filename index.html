@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=17">
+  <link rel="stylesheet" href="styles.css?v=18">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -267,33 +267,32 @@
       </div>
       <div class="order-modal-inner">
         <div class="order-modal-right">
-          <p class="order-section-label">Your details</p>
           <div class="order-field">
-            <label for="o-name">Name</label>
-            <input id="o-name" type="text" placeholder="Your name" autocomplete="name">
+            <label for="o-name">Your name</label>
+            <input id="o-name" type="text" placeholder="Full name" autocomplete="name">
             <p class="order-field-error" id="err-name"></p>
           </div>
           <div class="order-field">
-            <label for="o-phone">Phone</label>
-            <input id="o-phone" type="tel" placeholder="10-digit mobile number" inputmode="numeric" maxlength="10" autocomplete="tel">
+            <label for="o-phone">Mobile number</label>
+            <input id="o-phone" type="tel" placeholder="10-digit number" inputmode="numeric" maxlength="10" autocomplete="tel">
             <p class="order-field-error" id="err-phone"></p>
           </div>
           <div class="order-field">
-            <label for="o-loc">Drop-off location</label>
+            <label for="o-loc">Where should we deliver?</label>
             <input id="o-loc" name="dropoff" type="text" placeholder="Building, street, area" autocomplete="off">
             <p class="order-field-error" id="err-address"></p>
           </div>
           <div class="order-field">
-            <label for="o-date">Delivery Date</label>
+            <label for="o-date">When do you need it?</label>
             <select id="o-date" class="ph">
-              <option value="">Select a delivery date</option>
+              <option value="">Pick a delivery date</option>
             </select>
             <p class="order-field-error" id="err-date"></p>
           </div>
         </div>
         <div class="order-modal-left">
           <div class="order-items">
-            <p class="order-section-label">Choose quantity</p>
+            <p class="order-section-label">How much paneer?</p>
             <label class="order-item">
               <div class="order-item-info"><span>250g</span><span class="order-price">₹145</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q250',-1)">−</button><span id="q250">0</span><button type="button" onclick="adjustQty('q250',1)">+</button></div>
