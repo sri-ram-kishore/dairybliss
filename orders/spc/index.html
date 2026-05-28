@@ -916,10 +916,8 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
   if (d.payKey === 'rzp') {
     await openRazorpay(d);
   } else {
-    setBusy(true);
-    await sendToSheet(d, 'Cash on Delivery');
-    setBusy(false);
     showConfirmation(d, 'Cash on Delivery');
+    sendToSheet(d, 'Cash on Delivery');
   }
 });
 
