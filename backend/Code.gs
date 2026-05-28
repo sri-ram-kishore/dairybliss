@@ -113,7 +113,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const { unit } = parseApt(data.address);
 
   const msg = [
-    `${meta.emoji} <b>New Order — ${esc(orderId)}</b>  <b>${esc(meta.label)}</b>`,
+    `${meta.emoji} <b>[${meta.key}] New Order — ${esc(orderId)}</b>`,
     ``,
     `👤 ${esc(data.name)}${unit ? '  · ' + esc(unit) : ''}  ·  📱 ${esc(data.phone)}`,
     `📅 ${esc(data.deliveryLabel)}`,
@@ -121,7 +121,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
     items.map(esc).join('\n'),
     ``,
     `<b>Total: ₹${totalRs}  ·  ${(totalGrams/1000).toFixed(2)} kg</b>`,
-    `📦 ${esc(meta.label)} running total: <b>${newKg} kg</b>`
+    `📦 ${esc(meta.key)} running total: <b>${newKg} kg</b>`
   ].join('\n');
 
   tg(msg);
@@ -202,7 +202,7 @@ function aptMeta(key) {
  * Tuesday   → final summary of Wednesday's orders (cutoff just hit)
  * Friday    → final summary of Saturday's orders  (cutoff just hit)
  */
-function sendCutoffSummary() {
+function sendCutoffSummary(aptFilter) {
   const now = new Date();
   const day = now.getDay();
 
@@ -215,15 +215,26 @@ function sendCutoffSummary() {
     const sat = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     deliveryDate  = fmt(sat, 'yyyy-MM-dd');
     deliveryLabel = fmt(sat, 'EEE, d MMM');
-  } else {
+  } else if (!aptFilter) {
+    // Only skip non-Tue/Fri when called by the scheduled trigger (no filter)
     return;
+  } else {
+    // Manual /summary SPC or /summary BNR — show next delivery date
+    const next = nextDeliveryDates(1)[0];
+    if (!next) { tg('No upcoming delivery dates.'); return; }
+    deliveryDate  = next.date;
+    deliveryLabel = next.label;
   }
 
-  const ss  = SpreadsheetApp.openById(SHEET_ID);
-  let anyOrders = false;
+  const ss   = SpreadsheetApp.openById(SHEET_ID);
+  const apts = aptFilter ? APARTMENTS.filter(a => a.key === aptFilter) : APARTMENTS;
+
+  if (aptFilter && apts.length === 0) {
+    tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
+  }
 
   // Send one summary message per apartment
-  APARTMENTS.forEach(({ key, label, emoji }) => {
+  apts.forEach(({ key, label, emoji }) => {
     const sheet  = getOrCreate(ss, key);
     const orders = ordersForDate(sheet, deliveryDate);
 
@@ -272,7 +283,9 @@ function handleTelegramUpdate(update) {
   const chatId = String(msg.chat.id);
   if (chatId !== TELEGRAM_CHAT_ID) return;
 
-  const cmd = msg.text.split('@')[0].trim().toLowerCase();
+  const parts  = msg.text.trim().split(/\s+/);
+  const cmd    = parts[0].split('@')[0].toLowerCase();
+  const aptArg = parts[1] ? parts[1].toUpperCase() : null; // e.g. SPC or BNR
 
   switch (cmd) {
     case '/pause':
@@ -286,18 +299,20 @@ function handleTelegramUpdate(update) {
       break;
 
     case '/status':
-      sendStatus();
+      sendStatus(aptArg);
       break;
 
     case '/summary':
-      sendCutoffSummary();
+      sendCutoffSummary(aptArg);
       break;
 
     case '/help':
       tg([
         `<b>DairyBliss Bot — Commands</b>`,
-        `/status — Running totals for upcoming deliveries`,
-        `/summary — Full order list for next delivery`,
+        `/status — All apartments running totals`,
+        `/status SPC  or  /status BNR — one apartment`,
+        `/summary — Full order list (both apartments)`,
+        `/summary SPC  or  /summary BNR — one apartment`,
         `/pause — Stop accepting orders`,
         `/resume — Resume accepting orders`,
         `/debug — Confirm bot is alive`
@@ -318,10 +333,15 @@ function handleTelegramUpdate(update) {
 /**
  * /status — running totals for the next two delivery dates
  */
-function sendStatus() {
+function sendStatus(aptFilter) {
   const ss    = SpreadsheetApp.openById(SHEET_ID);
   const now   = new Date();
   const dates = nextDeliveryDates(2);
+  const apts  = aptFilter ? APARTMENTS.filter(a => a.key === aptFilter) : APARTMENTS;
+
+  if (aptFilter && apts.length === 0) {
+    tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
+  }
 
   const lines = [`📊 <b>Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}</b>`, ``];
 
@@ -329,7 +349,7 @@ function sendStatus() {
     const status = open ? '🟢 open' : '🔴 closed';
     lines.push(`<b>${esc(label)}</b>  (${status})`);
 
-    APARTMENTS.forEach(({ key, label: aptLabel, emoji }) => {
+    apts.forEach(({ key, label: aptLabel, emoji }) => {
       const sheet = getOrCreate(ss, key);
       const s     = statsForDate(sheet, date);
       const kg    = (s.totalGrams / 1000).toFixed(2);
