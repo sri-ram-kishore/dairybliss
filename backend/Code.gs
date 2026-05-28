@@ -10,6 +10,22 @@ const BLOCK_KG        = 3;     // stock bought in 3 kg blocks
 const ALERT_BEFORE_KG = 0.5;  // alert this many kg before each block boundary
 const COST_PER_KG     = 335;  // buying price per kg from supplier
 
+const RZP_KEY_ID = '***REMOVED***';
+
+/**
+ * Run ONCE from the Apps Script editor to store the Razorpay secret.
+ * After running, the secret lives in Script Properties — never in code.
+ */
+function setRazorpaySecret() {
+  PropertiesService.getScriptProperties()
+    .setProperty('RZP_SECRET', '***REMOVED***');
+  Logger.log('Razorpay secret stored.');
+}
+
+function getRzpSecret() {
+  return PropertiesService.getScriptProperties().getProperty('RZP_SECRET');
+}
+
 // ── ENTRY POINTS ────────────────────────────────────────────
 
 function doPost(e) {
@@ -24,7 +40,8 @@ function doPost(e) {
       return jsonOk({});
     }
 
-    if (payload.action === 'order') return handleOrder(payload);
+    if (payload.action === 'order')            return handleOrder(payload);
+    if (payload.action === 'create_rzp_order') return handleCreateRzpOrder(payload);
 
     return jsonOk({ message: 'unknown action' });
   } catch (err) {
@@ -89,6 +106,39 @@ function handleOrder(data) {
   notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams);
 
   return jsonOk({ orderId });
+}
+
+// ── RAZORPAY ORDER CREATION ───────────────────────────────────
+
+function handleCreateRzpOrder(data) {
+  const amountPaise = parseInt(data.amount);
+  if (!amountPaise || amountPaise < 100) return jsonError('invalid amount');
+
+  const secret = getRzpSecret();
+  if (!secret) return jsonError('Razorpay not configured — run setRazorpaySecret()');
+
+  const creds    = Utilities.base64Encode(RZP_KEY_ID + ':' + secret);
+  const response = UrlFetchApp.fetch('https://api.razorpay.com/v1/orders', {
+    method:             'post',
+    muteHttpExceptions: true,
+    headers: {
+      'Authorization': 'Basic ' + creds,
+      'Content-Type':  'application/json',
+    },
+    payload: JSON.stringify({
+      amount:   amountPaise,
+      currency: 'INR',
+      receipt:  'db_' + Date.now(),
+    }),
+  });
+
+  const rzp = JSON.parse(response.getContentText());
+  if (!rzp.id) {
+    Logger.log('Razorpay error: ' + JSON.stringify(rzp));
+    return jsonError('Razorpay: ' + (rzp.error?.description || 'unknown error'));
+  }
+
+  return jsonOk({ rzp_order_id: rzp.id, key_id: RZP_KEY_ID });
 }
 
 function ensureOrderHeaders(sheet) {

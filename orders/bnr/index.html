@@ -12,6 +12,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="../icons/favicon.png">
   <link rel="apple-touch-icon" href="../icons/favicon.png">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <style>
     :root {
@@ -245,67 +246,6 @@
     .foot {
       text-align: center; font-size: 13px; color: var(--text-soft);
       font-style: italic; padding: 14px 20px 0;
-    }
-
-    /* ── UPI SCREEN ── */
-    #screen-upi { display: none; }
-    .upi-wrap { padding: 16px 14px 48px; }
-
-    .upi-card {
-      background: var(--white); border-radius: 14px;
-      padding: 28px 20px 24px; box-shadow: var(--shadow);
-      border: 1px solid rgba(221,213,197,0.6);
-      text-align: center; margin-bottom: 12px;
-    }
-    .upi-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; letter-spacing: -0.3px; }
-    .upi-sub   { font-size: 14px; color: var(--text-mid); margin-bottom: 22px; line-height: 1.5; }
-
-    .upi-apps { display: flex; gap: 10px; margin-bottom: 20px; }
-    .upi-app-btn {
-      flex: 1; padding: 12px 6px;
-      background: var(--cream); border: 1.5px solid var(--border);
-      border-radius: 12px; font-size: 11.5px; font-weight: 700;
-      color: var(--text); cursor: pointer; font-family: inherit;
-      display: flex; flex-direction: column; align-items: center; gap: 5px;
-      -webkit-tap-highlight-color: transparent; transition: border-color 0.15s;
-    }
-    .upi-app-btn:hover { border-color: var(--green); }
-    .upi-app-btn:active { opacity: 0.75; }
-    .app-icon-wrap { font-size: 28px; line-height: 1; }
-
-    .upi-details {
-      background: var(--cream); border-radius: 11px;
-      overflow: hidden; margin-bottom: 20px;
-      text-align: left; border: 1px solid var(--border);
-    }
-    .upi-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 13px 16px; font-size: 14px; position: relative;
-    }
-    .upi-row + .upi-row { border-top: 1px solid var(--border); }
-    .uk { color: var(--text-mid); }
-    .uv { font-weight: 600; color: var(--text); }
-    .uv.big { font-size: 20px; color: var(--green); font-weight: 800; }
-
-    .upi-note { font-size: 13px; color: var(--text-soft); margin-bottom: 18px; line-height: 1.5; }
-
-    .btn-primary {
-      display: block; width: 100%; padding: 15px;
-      background: linear-gradient(180deg, var(--green-mid), var(--green));
-      box-shadow: 0 16px 34px rgba(6,57,31,0.18);
-      color: #fff; border: none; border-radius: 12px;
-      font-size: 16px; font-weight: 700; font-family: inherit;
-      cursor: pointer; min-height: 52px;
-      -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
-    }
-    .btn-primary:hover { opacity: 0.9; }
-
-    .btn-back {
-      display: block; width: 100%; padding: 14px;
-      background: rgba(255,255,255,0.7); color: var(--green);
-      border: 1px solid var(--border); border-radius: 12px;
-      font-size: 15px; font-weight: 600; font-family: inherit;
-      cursor: pointer; min-height: 50px; margin-top: 10px;
     }
 
     /* ── CONFIRM SCREEN ── */
@@ -615,11 +555,11 @@ const APT = {
           <div class="pay-sub">Pay when your paneer arrives</div>
         </div>
       </label>
-      <label class="pay-card" id="pc-upi">
-        <input type="radio" name="payment" value="upi">
+      <label class="pay-card" id="pc-rzp">
+        <input type="radio" name="payment" value="rzp">
         <div class="pay-body">
-          <div class="pay-name">Pay via UPI</div>
-          <div class="pay-sub">GPay · PhonePe · Paytm</div>
+          <div class="pay-name">Pay Online</div>
+          <div class="pay-sub">UPI · Cards · Netbanking</div>
         </div>
       </label>
     </div>
@@ -631,81 +571,6 @@ const APT = {
   <p class="foot">Pure paneer. Delivered twice a week.</p>
 
 </form>
-</div>
-</div>
-
-<!-- ═══════════════════════════ UPI SCREEN ════════════════════════════ -->
-<div id="screen-upi">
-<div class="page">
-<div class="upi-wrap">
-  <div class="upi-card">
-    <h2 class="upi-title">Complete Payment</h2>
-    <p class="upi-sub">Tap an app to open it directly, or use the UPI ID to pay manually.</p>
-
-    <div class="upi-apps">
-      <button class="upi-app-btn" onclick="openUPI('gpay')">
-        <span class="app-icon-wrap">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-            <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-        </span>
-        GPay
-      </button>
-      <button class="upi-app-btn" onclick="openUPI('phonepe')">
-        <span class="app-icon-wrap">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
-            <circle cx="50" cy="50" r="50" fill="#5F259F"/>
-            <path fill="#fff" d="M50 20c16.57 0 30 13.43 30 30s-13.43 30-30 30-30-13.43-30-30 13.43-30 30-30m0-4C31.16 16 16 31.16 16 50s15.16 34 34 34 34-15.16 34-34-15.16-34-34-34z"/>
-            <text x="50" y="58" font-size="32" fill="#fff" font-weight="bold" text-anchor="middle">₹</text>
-          </svg>
-        </span>
-        PhonePe
-      </button>
-      <button class="upi-app-btn" onclick="openUPI('paytm')">
-        <span class="app-icon-wrap">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="32" height="32">
-            <rect width="40" height="40" fill="#00B9F1" rx="6"/>
-            <circle cx="20" cy="20" r="8" fill="#fff"/>
-            <circle cx="20" cy="20" r="4" fill="#00B9F1"/>
-          </svg>
-        </span>
-        Paytm
-      </button>
-      <button class="upi-app-btn" onclick="openUPI('any')">
-        <span class="app-icon-wrap">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="32" height="32">
-            <rect width="40" height="40" fill="var(--green)" rx="6"/>
-            <line x1="20" y1="10" x2="20" y2="30" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-            <line x1="10" y1="20" x2="30" y2="20" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-          </svg>
-        </span>
-        Other
-      </button>
-    </div>
-
-    <div class="upi-details">
-      <div class="upi-row">
-        <span class="uk">Pay to</span>
-        <span class="uv" id="upi-name">Dairy Bliss</span>
-      </div>
-      <div class="upi-row">
-        <span class="uk">UPI ID</span>
-        <span class="uv" id="upi-id-display">8861000100@upi</span>
-      </div>
-      <div class="upi-row">
-        <span class="uk">Amount</span>
-        <span class="uv big" id="upi-amount-display">₹0</span>
-      </div>
-    </div>
-
-    <p class="upi-note">Confirm your payment below to complete the order.</p>
-    <button class="btn-primary" onclick="upiDone()">Payment Done? Confirm Order</button>
-  </div>
-  <button class="btn-back" onclick="cancelUPI()">← Go Back</button>
-</div>
 </div>
 </div>
 
@@ -924,12 +789,12 @@ function collectData() {
     shortLabel: dayRad.dataset.shortLabel || dayRad.value,
     qk, qtyLabel: p.label, amount: p.amount, amtDisp: p.display,
     payKey: pay,
-    payLabel: pay === 'cod' ? 'Cash on Delivery' : 'UPI',
+    payLabel: pay === 'cod' ? 'Cash on Delivery' : 'Online',
   };
 }
 
 // ── backend POST ──────────────────────────────────────────────
-async function sendToSheet(d, payStatus) {
+async function sendToSheet(d, payStatus, rzpPaymentId) {
   const payload = {
     action:        'order',
     name:          d.name,
@@ -944,6 +809,7 @@ async function sendToSheet(d, payStatus) {
     q1kg:  d.qk === '1kg'  ? 1 : 0,
     paymentMethod: d.payLabel,
     paymentStatus: payStatus,
+    rzpPaymentId:  rzpPaymentId || '',
   };
   try {
     await fetch(CONFIG.WEBHOOK_URL, {
@@ -961,15 +827,50 @@ async function sendToSheet(d, payStatus) {
   }
 }
 
+// ── Razorpay checkout ─────────────────────────────────────────
+async function openRazorpay(d) {
+  setBusy(true);
+  try {
+    const resp = await fetch(CONFIG.WEBHOOK_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify({ action: 'create_rzp_order', amount: d.amount * 100 }),
+    });
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || 'Could not create order');
+
+    setBusy(false);
+    const rzp = new Razorpay({
+      key:         data.key_id,
+      amount:      d.amount * 100,
+      currency:    'INR',
+      name:        'Dairy Bliss',
+      description: `${d.qtyLabel} paneer — ${d.shortLabel}`,
+      order_id:    data.rzp_order_id,
+      prefill:     { name: d.name, contact: '91' + d.phone },
+      theme:       { color: '#3d7a1a' },
+      handler: async function(response) {
+        await sendToSheet(d, 'Paid Online', response.razorpay_payment_id);
+        showConfirmation(d, 'Paid Online');
+      },
+      modal: { ondismiss: function() { setBusy(false); } },
+    });
+    rzp.open();
+  } catch(err) {
+    setBusy(false);
+    showToast('Payment setup failed — please try Cash on Delivery.');
+  }
+}
+
 // ── confirmation screen ───────────────────────────────────────
 function showConfirmation(d, payStatus) {
-  hide('screen-form'); hide('screen-upi');
+  hide('screen-form');
   show('screen-confirm'); goTop();
 
   document.getElementById('confirm-msg').textContent =
     `Your paneer is confirmed for ${d.fullDate}. We've notified Deepa.`;
 
-  const pmDisplay = d.payKey === 'upi' ? `UPI — ${payStatus}` : 'Cash on Delivery';
+  const pmDisplay = payStatus || d.payLabel;
   document.getElementById('order-summary').innerHTML = `
     <div class="cr"><span class="ck">Name</span><span class="cv">${esc(d.name)}</span></div>
     <div class="cr"><span class="ck">Phone</span><span class="cv">${esc(d.phone)}</span></div>
@@ -989,46 +890,8 @@ function resetForm() {
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));
   document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
   document.querySelectorAll('.cards-error').forEach(e => e.classList.remove('cards-error'));
-  hide('screen-confirm'); hide('screen-upi');
+  hide('screen-confirm');
   show('screen-form'); goTop();
-}
-
-// ── UPI ───────────────────────────────────────────────────────
-let _order = null;
-
-function openUPI(app) {
-  if (!_order) return;
-  const owner = CONFIG.OWNERS[APT.owner];
-  const note  = encodeURIComponent(`Dairy Bliss - ${_order.qtyLabel} Paneer`);
-  const urls  = {
-    gpay:    `tez://upi/pay?pa=${owner.upi}&pn=Dairy+Bliss&am=${_order.amount}&cu=INR&tn=${note}`,
-    phonepe: `phonepe://pay?pa=${owner.upi}&pn=Dairy+Bliss&am=${_order.amount}&cu=INR&tn=${note}`,
-    paytm:   `paytmmp://pay?pa=${owner.upi}&pn=Dairy+Bliss&am=${_order.amount}&cu=INR&tn=${note}`,
-    any:     `upi://pay?pa=${owner.upi}&pn=Dairy+Bliss&am=${_order.amount}&cu=INR&tn=${note}`,
-  };
-  window.location.href = urls[app] || urls.any;
-}
-
-function upiDone() {
-  if (!_order) return;
-  sendToSheet(_order, 'UPI - Customer Confirmed');
-  showConfirmation(_order, 'Paid');
-}
-
-function cancelUPI() {
-  _order = null; hide('screen-upi'); show('screen-form'); goTop();
-}
-
-function showUPIScreen(d) {
-  _order = d;
-  const owner = CONFIG.OWNERS[APT.owner];
-  document.getElementById('upi-name').textContent          = `Dairy Bliss (${owner.name})`;
-  document.getElementById('upi-id-display').textContent    = owner.upi;
-  document.getElementById('upi-amount-display').textContent = d.amtDisp;
-  hide('screen-form'); show('screen-upi'); goTop();
-  const note   = encodeURIComponent(`Dairy Bliss - ${d.qtyLabel} Paneer`);
-  const upiUrl = `upi://pay?pa=${owner.upi}&pn=Dairy+Bliss&am=${d.amount}&cu=INR&tn=${note}`;
-  setTimeout(() => { window.location.href = upiUrl; }, 350);
 }
 
 // ── submit ────────────────────────────────────────────────────
@@ -1051,9 +914,8 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
   const d = collectData();
   setBusy(true);
 
-  if (d.payKey === 'upi') {
-    setBusy(false);
-    showUPIScreen(d);
+  if (d.payKey === 'rzp') {
+    await openRazorpay(d);
   } else {
     await sendToSheet(d, 'Cash on Delivery');
     setBusy(false);
