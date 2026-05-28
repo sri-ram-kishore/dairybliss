@@ -1302,7 +1302,12 @@ h1 {
 
 .order-field input.is-error,
 .order-field select.is-error {
-  border-color: inherit;
+  border-color: #a62b1f;
+}
+
+.order-items.is-error {
+  outline: 1.5px solid #a62b1f;
+  border-radius: 8px;
 }
 
 .order-modal-footer {
