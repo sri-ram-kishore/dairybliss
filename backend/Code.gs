@@ -400,7 +400,7 @@ function setOrdersEnabled(val) {
 
 // ── ONE-TIME SETUP FUNCTIONS ──────────────────────────────────
 
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbznd6XpMErYDx-0SlvFiEzSa5RCSjAoWd2UqMTG6tL02MTTZHja_hpvlARj9ctNaV_ErA/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyDuHkkBIanz-6Qp-aRzCFZKbOdNTcW_IRtvYIy0UTvNO88Enguyaikxkk_mFPW9yFC1A/exec';
 
 function setupTelegramWebhook() {
   // Always use the hardcoded /exec URL — ScriptApp.getService().getUrl()
