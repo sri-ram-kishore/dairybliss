@@ -54,7 +54,7 @@
       background: rgba(255,255,255,0.88);
       backdrop-filter: saturate(180%) blur(22px);
       -webkit-backdrop-filter: saturate(180%) blur(22px);
-      text-align: center;
+      display: flex; justify-content: center;
       padding: max(14px, calc(env(safe-area-inset-top) + 10px)) 14px 10px;
     }
     .logo-wrap {
@@ -498,11 +498,10 @@ const APT = {
 <!-- APT CONTEXT STRIP -->
 <div class="apt-strip">
   <a class="apt-back" href="../">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
-    All apartments
   </a>
   <span class="apt-badge">BNR</span>
 </div>
