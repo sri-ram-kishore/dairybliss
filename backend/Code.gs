@@ -13,7 +13,10 @@ const ALERT_BEFORE_KG = 0.5;  // alert this many kg before each block boundary
 
 function doPost(e) {
   try {
-    const payload = JSON.parse(e.postData.contents);
+    const raw = e.postData ? (e.postData.contents || '') : '';
+    if (!raw) return jsonError('empty body');
+
+    const payload = JSON.parse(raw);
 
     if (payload.message || payload.callback_query) {
       handleTelegramUpdate(payload);
@@ -24,7 +27,8 @@ function doPost(e) {
 
     return jsonOk({ message: 'unknown action' });
   } catch (err) {
-    Logger.log(err);
+    Logger.log('doPost error: ' + err + '\nbody: ' + (e.postData ? e.postData.contents : 'null'));
+    tg('⚠️ Order submission error: ' + esc(err.toString()));
     return jsonError(err.toString());
   }
 }

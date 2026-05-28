@@ -980,7 +980,7 @@ async function sendToSheet(d, payStatus) {
   try {
     await fetch(CONFIG.WEBHOOK_URL, {
       method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload),
     });
   } catch {
@@ -1106,7 +1106,7 @@ if ('serviceWorker' in navigator) {
           try {
             await fetch(CONFIG.WEBHOOK_URL, {
               method: 'POST', mode: 'no-cors',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'text/plain' },
               body: JSON.stringify(order),
             });
           } catch (_) { fail.push(order); }
