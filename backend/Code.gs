@@ -10,16 +10,17 @@ const BLOCK_KG        = 3;     // stock bought in 3 kg blocks
 const ALERT_BEFORE_KG = 0.5;  // alert this many kg before each block boundary
 const COST_PER_KG     = 335;  // buying price per kg from supplier
 
-const RZP_KEY_ID = '***REMOVED***';
+// Key ID is public-facing (used in frontend checkout). Store in Script Properties if preferred.
+const RZP_KEY_ID = '***REMOVED***'; // replace with new key after rotating
 
 /**
- * Run ONCE from the Apps Script editor to store the Razorpay secret.
- * After running, the secret lives in Script Properties — never in code.
+ * Run ONCE from the Apps Script editor after rotating keys.
+ * Paste the NEW secret directly in the Script Properties UI instead:
+ * Extensions → Apps Script → Project Settings → Script Properties → Add: RZP_SECRET
+ * Never paste the actual secret value here in code.
  */
 function setRazorpaySecret() {
-  PropertiesService.getScriptProperties()
-    .setProperty('RZP_SECRET', '***REMOVED***');
-  Logger.log('Razorpay secret stored.');
+  throw new Error('Do not store the secret in code. Set RZP_SECRET via Script Properties UI directly.');
 }
 
 function getRzpSecret() {
