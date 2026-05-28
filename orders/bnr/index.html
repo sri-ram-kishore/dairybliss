@@ -65,11 +65,10 @@
     .logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
     .hd-sep { margin: 0; border: none; border-top: 1px solid var(--border); }
 
-    /* ── APT BADGE (below header) ── */
+    /* ── BACK NAV ── */
     .apt-strip {
       max-width: 520px; margin: 0 auto;
       padding: 10px 14px 0;
-      display: flex; align-items: center; justify-content: space-between;
     }
     .apt-back {
       display: inline-flex; align-items: center;
@@ -79,13 +78,6 @@
     }
     .apt-back:hover { opacity: 0.9; color: var(--green); }
     .apt-back svg { flex-shrink: 0; }
-    .apt-badge {
-      font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-      color: var(--ink);
-      background: rgba(28,47,92,0.10);
-      border: 1px solid rgba(28,47,92,0.15);
-      padding: 3px 9px; border-radius: 20px;
-    }
 
     /* ── PAGE TITLE ── */
     .page-title {
@@ -155,16 +147,25 @@
 
     /* ── APT DISPLAY ── */
     .apt-display {
-      display: flex; align-items: center; gap: 8px;
-      padding: 11px 14px;
-      background: var(--green-light);
-      border-radius: 10px;
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      background: var(--cream-card);
+      border: 1.5px solid var(--green);
+      box-shadow: 0 0 0 2px rgba(61,122,26,0.12);
+      border-radius: 11px;
       margin-bottom: 14px;
-      border: 1.5px solid rgba(61,122,26,0.15);
     }
-    .apt-display-icon { font-size: 18px; line-height: 1; }
-    .apt-display-text { font-size: 15px; font-weight: 700; color: var(--green); }
-    .apt-display-sub { font-size: 12px; color: var(--green); opacity: 0.7; margin-top: 1px; }
+    .apt-display-radio {
+      width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid var(--green);
+      background: var(--green);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .apt-display-radio::after {
+      content: ''; width: 7px; height: 7px; border-radius: 50%; background: #fff;
+    }
+    .apt-display-text { font-size: 15px; font-weight: 700; color: var(--text); }
+    .apt-display-sub { font-size: 12px; color: var(--text-soft); margin-top: 1px; }
 
     /* ── DELIVERY DAY CARDS ── */
     .day-cards { display: flex; flex-direction: column; gap: 8px; }
@@ -504,7 +505,6 @@ const APT = {
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </a>
-  <span class="apt-badge">BNR</span>
 </div>
 
 <!-- ═══════════════════════════ FORM SCREEN ═══════════════════════════ -->
@@ -542,10 +542,8 @@ const APT = {
 
     <!-- Apartment pre-filled — no dropdown needed -->
     <div class="apt-display">
-      <span class="apt-display-icon">🏢</span>
-      <div>
-        <div class="apt-display-text">Brigade North Ridge</div>
-      </div>
+      <div class="apt-display-radio"></div>
+      <div class="apt-display-text">Brigade North Ridge</div>
     </div>
 
     <div class="field">
