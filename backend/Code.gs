@@ -2,8 +2,13 @@
 // DairyBliss Backend — Google Apps Script
 // ============================================================
 
-const TELEGRAM_TOKEN   = '***REMOVED***';
-const TELEGRAM_CHAT_ID = '-5080336839';
+// Secrets are stored in Script Properties — never hardcode them here.
+// Set via: Extensions → Apps Script → Project Settings → Script Properties
+//   TG_TOKEN   = <your Telegram bot token>
+//   TG_CHAT_ID = <your Telegram group chat ID>
+const props         = PropertiesService.getScriptProperties();
+const TELEGRAM_TOKEN   = props.getProperty('TG_TOKEN')   || '';
+const TELEGRAM_CHAT_ID = props.getProperty('TG_CHAT_ID') || '';
 const SHEET_ID         = '12GmEb14sM0YC40TkpeyK2eBF2VxKPniCskIMzAWD-P0';
 
 const BLOCK_KG        = 3;     // stock bought in 3 kg blocks
