@@ -1307,6 +1307,7 @@ h1 {
 
 .order-items.is-error {
   outline: 1.5px solid var(--ink);
+  outline-offset: 10px;
   border-radius: 8px;
 }
 

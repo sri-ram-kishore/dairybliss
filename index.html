@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=32">
+  <link rel="stylesheet" href="styles.css?v=33">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -600,7 +600,13 @@ function openOrderModalPrefilled() {
       if (place && place.address_components) {
         const postal = place.address_components.find(c => c.types.includes('postal_code'));
         if (postal) pin = postal.long_name;
-        if (place.formatted_address) areaName = place.formatted_address;
+        if (place.formatted_address) {
+          // Prepend place name (e.g. "Sobha Palm Court") if not already in the address
+          const name = place.name || '';
+          areaName = (name && !place.formatted_address.startsWith(name))
+            ? name + ', ' + place.formatted_address
+            : place.formatted_address;
+        }
         if (place.url) areaPlaceUrl = place.url;
         else if (place.geometry) areaPlaceUrl = `https://maps.google.com/?q=${place.geometry.location.lat()},${place.geometry.location.lng()}`;
       }
@@ -625,11 +631,15 @@ function openOrderModalPrefilled() {
       }
 
       if (isServiceable === true) {
+        const sampleText = encodeURIComponent('Hi! I\'d like to try a sample of your fresh paneer. My address is: ' + areaName);
         resultEl.innerHTML = `
           <div class="pincode-yes">
             <span class="pincode-badge yes">✓ We deliver to your area</span>
             <p>Fresh paneer, Wednesday &amp; Saturday, to your door.</p>
-            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+              <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
+              <a class="button ghost-btn" href="#" onclick="openWhatsApp('https://wa.me/918861000100?text=${sampleText}');return false;" style="margin-left:0;">Try a sample</a>
+            </div>
           </div>`;
       } else if (isServiceable === false) {
         resultEl.innerHTML = `
@@ -639,12 +649,16 @@ function openOrderModalPrefilled() {
             <a class="button secondary" href="https://wa.me/918861000100?text=Hi%20Dairy%20Bliss%2C%20please%20notify%20me%20when%20you%20deliver%20to%20${encodeURIComponent(areaName)}." rel="noopener" target="_blank">Yes, let me know →</a>
           </div>`;
       } else {
-        // No pincode found from Places — show a soft yes (we'll confirm on WhatsApp)
+        // No coordinates from Places — show a soft yes (we'll confirm on WhatsApp)
+        const sampleText2 = encodeURIComponent('Hi! I\'d like to try a sample of your fresh paneer. My address is: ' + areaName);
         resultEl.innerHTML = `
           <div class="pincode-yes">
             <span class="pincode-badge yes">Looks like we might cover your area</span>
             <p>Place an order and we'll confirm delivery on WhatsApp.</p>
-            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+              <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
+              <a class="button ghost-btn" href="#" onclick="openWhatsApp('https://wa.me/918861000100?text=${sampleText2}');return false;" style="margin-left:0;">Try a sample</a>
+            </div>
           </div>`;
       }
     }
