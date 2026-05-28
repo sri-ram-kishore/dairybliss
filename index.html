@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -630,8 +630,16 @@ function openOrderModalPrefilled() {
     }
 
     function openWhatsApp(url) {
-      const w = window.open(url, '_blank', 'noopener');
-      setTimeout(function() { try { w && w.close(); } catch(e) {} }, 2000);
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        // On mobile the OS intercepts the wa.me deep link and opens WhatsApp;
+        // the browser never leaves the current page.
+        window.location.href = url;
+      } else {
+        // On desktop open a new tab and close it once WhatsApp Web has launched.
+        const w = window.open(url, '_blank');
+        setTimeout(function() { try { w && w.close(); } catch(e) {} }, 1500);
+      }
     }
   </script>
 </body>
