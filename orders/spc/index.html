@@ -116,6 +116,7 @@
       font-size: 13px; font-weight: 700; flex-shrink: 0;
     }
     .step-title { font-size: 17px; font-weight: 700; color: var(--text); }
+    .req::after { content: ' *'; color: var(--err); font-size: 13px; }
 
     /* ── FIELD ── */
     .field { margin-bottom: 14px; }
@@ -560,7 +561,7 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">3</span>
-      <span class="step-title">When do you need it?</span>
+      <span class="step-title req">When do you need it?</span>
     </div>
 
     <div class="day-cards" id="day-cards">
@@ -635,7 +636,7 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">5</span>
-      <span class="step-title">How would you like to pay?</span>
+      <span class="step-title req">How would you like to pay?</span>
     </div>
 
     <div class="pay-cards" id="pay-cards">
