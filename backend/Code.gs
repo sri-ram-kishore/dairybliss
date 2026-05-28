@@ -124,7 +124,7 @@ function notifyNewOrder(orderId, data, q250, q500, q750, q1kg, totalGrams, total
     items.map(esc).join('\n'),
     ``,
     `<b>Total: ₹${totalRs}  ·  ${(totalGrams/1000).toFixed(2)} kg</b>`,
-    `📦 ${esc(data.deliveryLabel)} running total: <b>${newKg} kg</b>  (next alert at ${nextAlertKg} kg)`
+    `📦 ${esc(data.deliveryLabel)} running total: <b>${newKg} kg</b>`
   ].join('\n');
 
   tg(msg);
