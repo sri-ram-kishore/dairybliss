@@ -841,7 +841,6 @@ async function openRazorpay(d) {
     if (!data.ok) throw new Error(data.error || 'Could not create order');
 
     setBusy(false);
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const rzp = new Razorpay({
       key:         data.key_id,
       amount:      d.amount * 100,
@@ -851,7 +850,6 @@ async function openRazorpay(d) {
       order_id:    data.rzp_order_id,
       prefill:     { name: d.name, contact: '91' + d.phone },
       theme:       { color: '#3d7a1a' },
-      config:      isIOS ? { display: { hide: [{ method: 'upi' }] } } : {},
       handler: async function(response) {
         await sendToSheet(d, 'Paid Online', response.razorpay_payment_id);
         showConfirmation(d, 'Paid Online');
