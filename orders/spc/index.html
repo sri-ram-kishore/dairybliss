@@ -68,7 +68,7 @@
     /* ── PAGE TITLE ROW ── */
     .page-title-row {
       max-width: 520px; margin: 0 auto;
-      display: flex; align-items: center; gap: 6px;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 16px 14px 4px;
     }
     .apt-back {
@@ -480,13 +480,13 @@ const APT = {
 <div id="screen-form">
 <div class="page">
 <div class="page-title-row">
+  <p class="page-title">Order fresh paneer</p>
   <a class="apt-back" href="../">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </a>
-  <p class="page-title">Order fresh paneer</p>
 </div>
 <form id="orderForm" novalidate autocomplete="on">
 
