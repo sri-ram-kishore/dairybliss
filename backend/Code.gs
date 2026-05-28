@@ -433,9 +433,9 @@ function setupTriggers() {
   ScriptApp.newTrigger('pollTelegram')
     .timeBased().everyMinutes(1).create();
 
-  // Cutoff summary: 10pm every day — function checks if it's Tue or Fri inside
+  // Cutoff summary: 9pm every day — function checks if it's Tue or Fri inside
   ScriptApp.newTrigger('sendCutoffSummary')
-    .timeBased().atHour(22).everyDays(1).create();
+    .timeBased().atHour(21).everyDays(1).create();
 
   Logger.log('Triggers set up successfully.');
 }
