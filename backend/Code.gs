@@ -8,6 +8,7 @@ const SHEET_ID         = '12GmEb14sM0YC40TkpeyK2eBF2VxKPniCskIMzAWD-P0';
 
 const BLOCK_KG        = 3;     // stock bought in 3 kg blocks
 const ALERT_BEFORE_KG = 0.5;  // alert this many kg before each block boundary
+const COST_PER_KG     = 335;  // buying price per kg from supplier
 
 // ── ENTRY POINTS ────────────────────────────────────────────
 
@@ -283,6 +284,9 @@ function sendCutoffSummary(aptFilter) {
       return;
     }
 
+    const totalKg   = combined.grams / 1000;
+    const buyCost   = Math.round(totalKg * COST_PER_KG);
+
     const lines = [
       `<b>Place order — ${esc(deliveryLabel)}</b>`,
       ``,
@@ -291,7 +295,12 @@ function sendCutoffSummary(aptFilter) {
     if (combined.q500) lines.push(`500g × ${combined.q500}`);
     if (combined.q750) lines.push(`750g × ${combined.q750}`);
     if (combined.q1kg) lines.push(`1kg  × ${combined.q1kg}`);
-    lines.push(``, `<b>${(combined.grams/1000).toFixed(2)} kg total · ₹${combined.rs}</b>`, ``);
+    lines.push(
+      ``,
+      `<b>${totalKg.toFixed(2)} kg total</b>`,
+      `Cost ₹${buyCost}  ·  Collect ₹${combined.rs}`,
+      ``
+    );
     aptLines.forEach(l => lines.push(l));
 
     tg(lines.join('\n'));
