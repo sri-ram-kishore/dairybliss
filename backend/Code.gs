@@ -4,7 +4,7 @@
 
 const TELEGRAM_TOKEN   = '***REMOVED***';
 const TELEGRAM_CHAT_ID = '-5080336839';
-const SHEET_ID         = '1tVjZbBq2U3MzuudS2MMWG0Ko4bGB7feefAojYJ0g1P0';
+const SHEET_ID         = '12GmEb14sM0YC40TkpeyK2eBF2VxKPniCskIMzAWD-P0';
 
 const BLOCK_KG        = 3;     // stock bought in 3 kg blocks
 const ALERT_BEFORE_KG = 0.5;  // alert this many kg before each block boundary
