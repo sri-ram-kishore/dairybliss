@@ -44,11 +44,13 @@ function handleOrder(data) {
       message: "We're not taking orders right now. Check back soon!" });
   }
 
-  const ss    = SpreadsheetApp.openById(SHEET_ID);
-  const sheet = getOrCreate(ss, 'Orders');
+  const ss       = SpreadsheetApp.openById(SHEET_ID);
+  const aptKey   = parseApt(data.address).apt;           // 'SPC', 'BNR', or 'Other'
+  const tabName  = aptKey !== 'Other' ? aptKey : 'Other';
+  const sheet    = getOrCreate(ss, tabName);
   ensureOrderHeaders(sheet);
 
-  const orderId = 'DB-' + String(sheet.getLastRow()).padStart(3, '0');
+  const orderId = tabName + '-' + String(sheet.getLastRow()).padStart(3, '0');
   const now     = new Date();
 
   const q250 = parseInt(data.q250) || 0;
@@ -59,7 +61,7 @@ function handleOrder(data) {
   const totalGrams = q250*250 + q500*500 + q750*750 + q1kg*1000;
   const totalRs    = q250*145 + q500*280 + q750*420 + q1kg*550;
 
-  // Running total BEFORE this order
+  // Running total BEFORE this order (for this apartment's sheet)
   const prevGrams = getRunningTotalGrams(sheet, data.deliveryDate);
 
   sheet.appendRow([
@@ -79,7 +81,7 @@ function handleOrder(data) {
 
   const newGrams = prevGrams + totalGrams;
 
-  notifyNewOrder(orderId, data, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams);
+  notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams);
 
   return jsonOk({ orderId });
 }
@@ -98,8 +100,9 @@ function ensureOrderHeaders(sheet) {
 
 // ── ORDER NOTIFICATION ────────────────────────────────────────
 
-function notifyNewOrder(orderId, data, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams) {
+function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams) {
   const newKg  = (newGrams / 1000).toFixed(2);
+  const meta   = aptMeta(aptKey);
 
   const items = [];
   if (q250) items.push(`250g × ${q250}  —  ₹${q250*145}`);
@@ -107,30 +110,24 @@ function notifyNewOrder(orderId, data, q250, q500, q750, q1kg, totalGrams, total
   if (q750) items.push(`750g × ${q750}  —  ₹${q750*420}`);
   if (q1kg) items.push(`1kg × ${q1kg}  —  ₹${q1kg*550}`);
 
-  // Which block we're in and how far through it
-  const blockNum    = Math.floor(newGrams / (BLOCK_KG * 1000)) + 1;
-  const nextAlertKg = BLOCK_KG * blockNum - ALERT_BEFORE_KG;
-
-  const aptInfo = parseApt(data.address);
-  const aptTag  = aptInfo.apt !== 'Other' ? ` · ${aptInfo.apt}` : '';
+  const { unit } = parseApt(data.address);
 
   const msg = [
-    `🧀 <b>New Order — ${esc(orderId)}</b>`,
+    `${meta.emoji} <b>New Order — ${esc(orderId)}</b>  <b>${esc(meta.label)}</b>`,
     ``,
-    `👤 ${esc(data.name)}${aptTag}  ·  📱 ${esc(data.phone)}`,
-    `📍 ${esc(data.address)}`,
+    `👤 ${esc(data.name)}${unit ? '  · ' + esc(unit) : ''}  ·  📱 ${esc(data.phone)}`,
     `📅 ${esc(data.deliveryLabel)}`,
     ``,
     items.map(esc).join('\n'),
     ``,
     `<b>Total: ₹${totalRs}  ·  ${(totalGrams/1000).toFixed(2)} kg</b>`,
-    `📦 ${esc(data.deliveryLabel)} running total: <b>${newKg} kg</b>`
+    `📦 ${esc(meta.label)} running total: <b>${newKg} kg</b>`
   ].join('\n');
 
   tg(msg);
 
   // Stock alert if we just crossed a block-boundary warning threshold
-  checkStockAlerts(prevGrams, newGrams, data.deliveryLabel);
+  checkStockAlerts(prevGrams, newGrams, data.deliveryLabel, meta);
 }
 
 // ── STOCK ALERTS ─────────────────────────────────────────────
@@ -139,7 +136,7 @@ function notifyNewOrder(orderId, data, q250, q500, q750, q1kg, totalGrams, total
  * Fires once each time the running total crosses a warning threshold:
  * 2.5 kg, 5.5 kg, 8.5 kg, 11.5 kg … (0.5 kg before each 3 kg block)
  */
-function checkStockAlerts(prevGrams, newGrams, label) {
+function checkStockAlerts(prevGrams, newGrams, label, meta) {
   const prevKg = prevGrams / 1000;
   const newKg  = newGrams  / 1000;
 
@@ -149,7 +146,7 @@ function checkStockAlerts(prevGrams, newGrams, label) {
 
     if (prevKg < threshold && newKg >= threshold) {
       tg([
-        `⚠️ <b>Stock Alert — ${esc(label)}</b>`,
+        `⚠️ <b>Stock Alert — ${esc(meta.label)} · ${esc(label)}</b>`,
         `Running total: <b>${newKg.toFixed(2)} kg</b>  (approaching ${nextBlock} kg block)`,
         ``,
         `Time to order the next ${BLOCK_KG} kg block.`,
@@ -162,9 +159,14 @@ function checkStockAlerts(prevGrams, newGrams, label) {
 // ── APARTMENT HELPERS ────────────────────────────────────────
 
 const APARTMENTS = [
-  { key: 'SPC', patterns: ['sobha palm court'] },
-  { key: 'BNR', patterns: ['brigade north ridge', 'brigade northridge', 'brigade north-ridge'] }
+  { key: 'SPC', label: 'Sobha Palm Court',   emoji: '🟢' },
+  { key: 'BNR', label: 'Brigade North Ridge', emoji: '🔵' }
 ];
+
+const APT_PATTERNS = {
+  SPC: ['sobha palm court'],
+  BNR: ['brigade north ridge', 'brigade northridge', 'brigade north-ridge']
+};
 
 /**
  * Returns { apt: 'SPC'|'BNR'|'Other', unit: 'A-301' } from a raw address string.
@@ -174,8 +176,8 @@ function parseApt(address) {
   const lower = String(address || '').toLowerCase();
 
   let apt = 'Other';
-  for (const a of APARTMENTS) {
-    if (a.patterns.some(p => lower.includes(p))) { apt = a.key; break; }
+  for (const key of Object.keys(APT_PATTERNS)) {
+    if (APT_PATTERNS[key].some(p => lower.includes(p))) { apt = key; break; }
   }
 
   // Extract the unit — first short segment that doesn't contain the complex name or city
@@ -187,6 +189,10 @@ function parseApt(address) {
     || '';
 
   return { apt, unit };
+}
+
+function aptMeta(key) {
+  return APARTMENTS.find(a => a.key === key) || { key: 'Other', label: 'Other', emoji: '⚪' };
 }
 
 // ── CUTOFF SUMMARY (Tue 9pm → Wed orders, Fri 9pm → Sat orders) ──
@@ -213,53 +219,21 @@ function sendCutoffSummary() {
     return;
   }
 
-  const ss     = SpreadsheetApp.openById(SHEET_ID);
-  const sheet  = getOrCreate(ss, 'Orders');
-  const orders = ordersForDate(sheet, deliveryDate);
+  const ss  = SpreadsheetApp.openById(SHEET_ID);
+  let anyOrders = false;
 
-  if (orders.length === 0) {
-    tg(`📋 Orders closed for <b>${esc(deliveryLabel)}</b> — no orders received.`);
-    return;
-  }
+  // Send one summary message per apartment
+  APARTMENTS.forEach(({ key, label, emoji }) => {
+    const sheet  = getOrCreate(ss, key);
+    const orders = ordersForDate(sheet, deliveryDate);
 
-  // Group by apartment
-  const groups = {};
-  orders.forEach(o => {
-    const { apt, unit } = parseApt(o.address);
-    o._apt  = apt;
-    o._unit = unit;
-    if (!groups[apt]) groups[apt] = [];
-    groups[apt].push(o);
-  });
+    if (orders.length === 0) {
+      tg(`${emoji} <b>${esc(label)}</b>\n📋 Orders closed for <b>${esc(deliveryLabel)}</b> — no orders.`);
+      return;
+    }
+    anyOrders = true;
 
-  // Overall totals
-  const total = orders.reduce((acc, o) => {
-    acc.orders++;
-    acc.q250 += o.q250; acc.q500 += o.q500;
-    acc.q750 += o.q750; acc.q1kg += o.q1kg;
-    acc.grams += o.q250*250 + o.q500*500 + o.q750*750 + o.q1kg*1000;
-    acc.rs    += o.q250*145 + o.q500*280 + o.q750*420 + o.q1kg*550;
-    return acc;
-  }, { orders:0, q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 });
-
-  const lines = [
-    `📋 <b>Orders closed — ${esc(deliveryLabel)}</b>`,
-    ``,
-    `<b>${total.orders} orders  ·  ${(total.grams/1000).toFixed(2)} kg  ·  ₹${total.rs}</b>`,
-    `250g × ${total.q250}  ·  500g × ${total.q500}  ·  750g × ${total.q750}  ·  1kg × ${total.q1kg}`,
-  ];
-
-  // One section per apartment in a fixed order
-  const aptOrder = ['SPC', 'BNR', 'Other'];
-  aptOrder.forEach(aptKey => {
-    const list = groups[aptKey];
-    if (!list || list.length === 0) return;
-
-    const label = aptKey === 'SPC' ? 'Sobha Palm Court'
-                : aptKey === 'BNR' ? 'Brigade North Ridge'
-                : 'Other';
-
-    const s = list.reduce((acc, o) => {
+    const s = orders.reduce((acc, o) => {
       acc.q250 += o.q250; acc.q500 += o.q500;
       acc.q750 += o.q750; acc.q1kg += o.q1kg;
       acc.grams += o.q250*250 + o.q500*500 + o.q750*750 + o.q1kg*1000;
@@ -267,23 +241,26 @@ function sendCutoffSummary() {
       return acc;
     }, { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 });
 
-    lines.push(``);
-    lines.push(`▸ <b>${esc(label)} (${aptKey})</b>`);
-    lines.push(`${list.length} orders  ·  ${(s.grams/1000).toFixed(2)} kg  ·  ₹${s.rs}`);
-    lines.push(`250g:${s.q250}  500g:${s.q500}  750g:${s.q750}  1kg:${s.q1kg}`);
-    lines.push(``);
+    const lines = [
+      `${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>`,
+      ``,
+      `<b>${orders.length} orders  ·  ${(s.grams/1000).toFixed(2)} kg  ·  ₹${s.rs}</b>`,
+      `250g × ${s.q250}  ·  500g × ${s.q500}  ·  750g × ${s.q750}  ·  1kg × ${s.q1kg}`,
+      ``,
+    ];
 
-    list.forEach((o, i) => {
+    orders.forEach((o, i) => {
+      const { unit } = parseApt(o.address);
       const items = [];
       if (o.q250) items.push(`250g×${o.q250}`);
       if (o.q500) items.push(`500g×${o.q500}`);
       if (o.q750) items.push(`750g×${o.q750}`);
       if (o.q1kg) items.push(`1kg×${o.q1kg}`);
-      lines.push(`${i+1}. ${esc(o.name)}  —  ${items.join(', ')}  —  ${aptKey} ${esc(o._unit)}`);
+      lines.push(`${i+1}. ${esc(o.name)}${unit ? ' · ' + esc(unit) : ''}  —  ${items.join(', ')}`);
     });
-  });
 
-  tg(lines.join('\n'));
+    tg(lines.join('\n'));
+  });
 }
 
 // ── TELEGRAM COMMAND HANDLING ─────────────────────────────────
@@ -343,33 +320,28 @@ function handleTelegramUpdate(update) {
  */
 function sendStatus() {
   const ss    = SpreadsheetApp.openById(SHEET_ID);
-  const sheet = getOrCreate(ss, 'Orders');
   const now   = new Date();
   const dates = nextDeliveryDates(2);
 
   const lines = [`📊 <b>Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}</b>`, ``];
-  let any = false;
 
   dates.forEach(({date, label, open}) => {
-    const s = statsForDate(sheet, date);
-    any = true;
-    const kg = (s.totalGrams / 1000).toFixed(2);
-    const blockNum    = Math.floor(s.totalGrams / (BLOCK_KG * 1000)) + 1;
-    const nextAlertKg = BLOCK_KG * blockNum - ALERT_BEFORE_KG;
-    const status      = open ? '🟢 open' : '🔴 closed';
-
+    const status = open ? '🟢 open' : '🔴 closed';
     lines.push(`<b>${esc(label)}</b>  (${status})`);
-    if (s.orders === 0) {
-      lines.push(`No orders yet`);
-    } else {
-      lines.push(`${s.orders} orders  ·  <b>${kg} kg</b>  ·  ₹${s.totalRs}`);
-      lines.push(`250g:${s.q250}  500g:${s.q500}  750g:${s.q750}  1kg:${s.q1kg}`);
-      lines.push(`Next block alert at ${nextAlertKg} kg`);
-    }
+
+    APARTMENTS.forEach(({ key, label: aptLabel, emoji }) => {
+      const sheet = getOrCreate(ss, key);
+      const s     = statsForDate(sheet, date);
+      const kg    = (s.totalGrams / 1000).toFixed(2);
+      if (s.orders === 0) {
+        lines.push(`  ${emoji} ${esc(aptLabel)}: no orders yet`);
+      } else {
+        lines.push(`  ${emoji} ${esc(aptLabel)}: ${s.orders} orders · <b>${kg} kg</b> · ₹${s.totalRs}`);
+      }
+    });
     lines.push(``);
   });
 
-  if (!any) lines.push('No upcoming delivery dates found.');
   tg(lines.join('\n'));
 }
 
