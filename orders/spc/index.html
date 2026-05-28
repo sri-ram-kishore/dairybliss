@@ -69,22 +69,22 @@
     .apt-strip {
       max-width: 520px; margin: 0 auto;
       padding: 10px 14px 0;
-      display: flex; align-items: center;
+      display: flex; align-items: center; justify-content: space-between;
     }
     .apt-back {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 11px; color: var(--text-soft); opacity: 0.6;
+      display: inline-flex; align-items: center;
+      color: var(--text-soft); opacity: 0.5;
       text-decoration: none;
       -webkit-tap-highlight-color: transparent;
     }
-    .apt-back:hover { opacity: 1; color: var(--green); }
+    .apt-back:hover { opacity: 0.9; color: var(--green); }
     .apt-back svg { flex-shrink: 0; }
     .apt-badge {
       font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-      color: var(--text-mid);
-      background: rgba(28,47,92,0.07);
+      color: var(--ink);
+      background: rgba(28,47,92,0.10);
+      border: 1px solid rgba(28,47,92,0.15);
       padding: 3px 9px; border-radius: 20px;
-      margin-left: 4px;
     }
 
     /* ── PAGE TITLE ── */
