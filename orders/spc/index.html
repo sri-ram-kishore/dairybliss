@@ -574,6 +574,16 @@ const APT = {
 </div>
 </div>
 
+<!-- ═══════════════════════════ PAYING SCREEN ════════════════════════ -->
+<div id="screen-paying" style="display:none">
+<div class="page" style="display:flex;align-items:center;justify-content:center;min-height:60vh">
+  <div style="text-align:center">
+    <div class="spin" style="width:28px;height:28px;border-width:3px;border-color:rgba(61,122,26,0.2);border-top-color:var(--green);display:inline-block;margin-bottom:16px"></div>
+    <p style="font-size:15px;color:var(--text-mid)">Completing payment…</p>
+  </div>
+</div>
+</div>
+
 <!-- ═══════════════════════════ CONFIRM SCREEN ═══════════════════════ -->
 <div id="screen-confirm">
 <div class="page">
@@ -851,11 +861,13 @@ async function openRazorpay(d) {
       prefill:     { name: d.name, contact: '91' + d.phone },
       theme:       { color: '#3d7a1a' },
       handler: function(response) {
+        hide('screen-paying');
         showConfirmation(d, 'Paid Online');
         sendToSheet(d, 'Paid Online', response.razorpay_payment_id);
       },
-      modal: { ondismiss: function() { setBusy(false); } },
+      modal: { ondismiss: function() { hide('screen-paying'); show('screen-form'); setBusy(false); } },
     });
+    hide('screen-form'); show('screen-paying'); goTop();
     rzp.open();
   } catch(err) {
     setBusy(false);
