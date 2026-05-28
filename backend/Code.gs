@@ -400,9 +400,12 @@ function setOrdersEnabled(val) {
 
 // ── ONE-TIME SETUP FUNCTIONS ──────────────────────────────────
 
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby6hBQ549WWZxdNZuSGbd31pSsQlQHdemBh0IyPKCl2eB6szCay-EI47cwLEYTFAWjMjQ/exec';
+
 function setupTelegramWebhook() {
-  const webAppUrl = ScriptApp.getService().getUrl();
-  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook?url=${encodeURIComponent(webAppUrl)}`;
+  // Always use the hardcoded /exec URL — ScriptApp.getService().getUrl()
+  // can return the /dev URL which requires auth and breaks Telegram webhooks.
+  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook?url=${encodeURIComponent(WEB_APP_URL)}`;
   const res = UrlFetchApp.fetch(url);
   Logger.log(res.getContentText());
 }
