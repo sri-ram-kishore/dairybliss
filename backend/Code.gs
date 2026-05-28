@@ -1,0 +1,506 @@
+// ============================================================
+// DairyBliss Backend — Google Apps Script
+// ============================================================
+
+const TELEGRAM_TOKEN   = '8730232930:AAFJiCH9u-dhH1PsRJiWTTnhoJhAHTVc9mg';
+const TELEGRAM_CHAT_ID = '-5262308031';
+const SHEET_ID         = '1tVjZbBq2U3MzuudS2MMWG0Ko4bGB7feefAojYJ0g1P0';
+
+const BLOCK_KG        = 3;     // stock bought in 3 kg blocks
+const ALERT_BEFORE_KG = 0.5;  // alert this many kg before each block boundary
+
+// ── ENTRY POINTS ────────────────────────────────────────────
+
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+
+    if (payload.message || payload.callback_query) {
+      handleTelegramUpdate(payload);
+      return jsonOk({});
+    }
+
+    if (payload.action === 'order') return handleOrder(payload);
+
+    return jsonOk({ message: 'unknown action' });
+  } catch (err) {
+    Logger.log(err);
+    return jsonError(err.toString());
+  }
+}
+
+function doGet(e) {
+  if (e.parameter.action === 'status') {
+    return jsonOk({ ordersEnabled: isOrdersEnabled() });
+  }
+  return ContentService.createTextOutput('DairyBliss API ok');
+}
+
+// ── ORDER HANDLING ───────────────────────────────────────────
+
+function handleOrder(data) {
+  if (!isOrdersEnabled()) {
+    return jsonOk({ ok: false, paused: true,
+      message: "We're not taking orders right now. Check back soon!" });
+  }
+
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = getOrCreate(ss, 'Orders');
+  ensureOrderHeaders(sheet);
+
+  const orderId = 'DB-' + String(sheet.getLastRow()).padStart(3, '0');
+  const now     = new Date();
+
+  const q250 = parseInt(data.q250) || 0;
+  const q500 = parseInt(data.q500) || 0;
+  const q750 = parseInt(data.q750) || 0;
+  const q1kg = parseInt(data.q1kg) || 0;
+
+  const totalGrams = q250*250 + q500*500 + q750*750 + q1kg*1000;
+  const totalRs    = q250*145 + q500*280 + q750*420 + q1kg*550;
+
+  // Running total BEFORE this order
+  const prevGrams = getRunningTotalGrams(sheet, data.deliveryDate);
+
+  sheet.appendRow([
+    now,
+    orderId,
+    data.name,
+    data.phone,
+    data.address,
+    data.mapUrl || '',
+    data.deliveryDate,
+    data.deliveryLabel,
+    q250, q500, q750, q1kg,
+    totalGrams,
+    totalRs,
+    'New'
+  ]);
+
+  const newGrams = prevGrams + totalGrams;
+
+  notifyNewOrder(orderId, data, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams);
+
+  return jsonOk({ orderId });
+}
+
+function ensureOrderHeaders(sheet) {
+  if (sheet.getLastRow() > 0) return;
+  const headers = ['Timestamp','Order ID','Name','Phone','Address','Map URL',
+    'Delivery Date','Delivery Label','250g','500g','750g','1kg',
+    'Total (g)','Total (₹)','Status'];
+  sheet.appendRow(headers);
+  const r = sheet.getRange(1, 1, 1, headers.length);
+  r.setFontWeight('bold');
+  r.setBackground('#2d5a1b');
+  r.setFontColor('#ffffff');
+}
+
+// ── ORDER NOTIFICATION ────────────────────────────────────────
+
+function notifyNewOrder(orderId, data, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams) {
+  const newKg  = (newGrams / 1000).toFixed(2);
+
+  const items = [];
+  if (q250) items.push(`250g × ${q250} — ₹${q250*145}`);
+  if (q500) items.push(`500g × ${q500} — ₹${q500*280}`);
+  if (q750) items.push(`750g × ${q750} — ₹${q750*420}`);
+  if (q1kg) items.push(`1kg × ${q1kg} — ₹${q1kg*550}`);
+
+  // Which block we're in and how far through it
+  const blockNum    = Math.floor(newGrams / (BLOCK_KG * 1000)) + 1;
+  const nextAlertKg = BLOCK_KG * blockNum - ALERT_BEFORE_KG;
+
+  const msg = [
+    `🧀 *New Order — ${orderId}*`,
+    ``,
+    `👤 ${esc(data.name)}  |  📱 ${data.phone}`,
+    `📍 ${esc(data.address)}`,
+    `🗓 ${data.deliveryLabel}`,
+    ``,
+    items.map(esc).join('\n'),
+    `─────────────────`,
+    `*Total: ₹${totalRs}  |  ${(totalGrams/1000).toFixed(2)} kg*`,
+    ``,
+    `📦 ${data.deliveryLabel} total: *${newKg} kg*  (next alert at ${nextAlertKg} kg)`
+  ].join('\n');
+
+  tg(msg);
+
+  // Stock alert if we just crossed a block-boundary warning threshold
+  checkStockAlerts(prevGrams, newGrams, data.deliveryLabel);
+}
+
+// ── STOCK ALERTS ─────────────────────────────────────────────
+
+/**
+ * Fires once each time the running total crosses a warning threshold:
+ * 2.5 kg, 5.5 kg, 8.5 kg, 11.5 kg … (0.5 kg before each 3 kg block)
+ */
+function checkStockAlerts(prevGrams, newGrams, label) {
+  const prevKg = prevGrams / 1000;
+  const newKg  = newGrams  / 1000;
+
+  for (let n = 1; n <= 20; n++) {
+    const threshold = BLOCK_KG * n - ALERT_BEFORE_KG;  // 2.5, 5.5, 8.5 …
+    const nextBlock = BLOCK_KG * n;                      // 3, 6, 9 …
+
+    if (prevKg < threshold && newKg >= threshold) {
+      tg([
+        `⚠️ *Stock Alert — ${label}*`,
+        `Running total: *${newKg.toFixed(2)} kg* — approaching ${nextBlock} kg`,
+        ``,
+        `Time to order the next ${BLOCK_KG} kg block.`,
+        `Send /pause to stop new orders.`
+      ].join('\n'));
+    }
+  }
+}
+
+// ── APARTMENT HELPERS ────────────────────────────────────────
+
+const APARTMENTS = [
+  { key: 'SPC', patterns: ['sobha palm court'] },
+  { key: 'BNR', patterns: ['brigade north ridge', 'brigade northridge', 'brigade north-ridge'] }
+];
+
+/**
+ * Returns { apt: 'SPC'|'BNR'|'Other', unit: 'A-301' } from a raw address string.
+ * The unit is the first short comma-segment that isn't the complex name or city.
+ */
+function parseApt(address) {
+  const lower = String(address || '').toLowerCase();
+
+  let apt = 'Other';
+  for (const a of APARTMENTS) {
+    if (a.patterns.some(p => lower.includes(p))) { apt = a.key; break; }
+  }
+
+  // Extract the unit — first short segment that doesn't contain the complex name or city
+  const skipWords = ['sobha', 'brigade', 'bangalore', 'bengaluru', 'karnataka', 'india'];
+  const unit = String(address || '')
+    .split(',')
+    .map(p => p.trim())
+    .find(p => p.length < 25 && !skipWords.some(w => p.toLowerCase().includes(w)))
+    || '';
+
+  return { apt, unit };
+}
+
+// ── CUTOFF SUMMARY (Tue 9pm → Wed orders, Fri 9pm → Sat orders) ──
+
+/**
+ * Triggered at 9pm every day; only sends on Tuesday and Friday.
+ * Tuesday   → final summary of Wednesday's orders (cutoff just hit)
+ * Friday    → final summary of Saturday's orders  (cutoff just hit)
+ */
+function sendCutoffSummary() {
+  const now = new Date();
+  const day = now.getDay();
+
+  let deliveryDate, deliveryLabel;
+  if (day === 2) {
+    const wed = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    deliveryDate  = fmt(wed, 'yyyy-MM-dd');
+    deliveryLabel = fmt(wed, 'EEE, d MMM');
+  } else if (day === 5) {
+    const sat = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    deliveryDate  = fmt(sat, 'yyyy-MM-dd');
+    deliveryLabel = fmt(sat, 'EEE, d MMM');
+  } else {
+    return;
+  }
+
+  const ss     = SpreadsheetApp.openById(SHEET_ID);
+  const sheet  = getOrCreate(ss, 'Orders');
+  const orders = ordersForDate(sheet, deliveryDate);
+
+  if (orders.length === 0) {
+    tg(`📋 Orders closed for *${deliveryLabel}* — no orders received.`);
+    return;
+  }
+
+  // Group by apartment
+  const groups = {};
+  orders.forEach(o => {
+    const { apt, unit } = parseApt(o.address);
+    o._apt  = apt;
+    o._unit = unit;
+    if (!groups[apt]) groups[apt] = [];
+    groups[apt].push(o);
+  });
+
+  // Overall totals
+  const total = orders.reduce((acc, o) => {
+    acc.orders++;
+    acc.q250 += o.q250; acc.q500 += o.q500;
+    acc.q750 += o.q750; acc.q1kg += o.q1kg;
+    acc.grams += o.q250*250 + o.q500*500 + o.q750*750 + o.q1kg*1000;
+    acc.rs    += o.q250*145 + o.q500*280 + o.q750*420 + o.q1kg*550;
+    return acc;
+  }, { orders:0, q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 });
+
+  const lines = [
+    `📋 *Orders closed — ${deliveryLabel}*`,
+    ``,
+    `*Total: ${total.orders} orders  |  ${(total.grams/1000).toFixed(2)} kg  |  ₹${total.rs}*`,
+    `250g × ${total.q250}  |  500g × ${total.q500}  |  750g × ${total.q750}  |  1kg × ${total.q1kg}`,
+  ];
+
+  // One section per apartment in a fixed order
+  const aptOrder = ['SPC', 'BNR', 'Other'];
+  aptOrder.forEach(aptKey => {
+    const list = groups[aptKey];
+    if (!list || list.length === 0) return;
+
+    const label = aptKey === 'SPC' ? 'Sobha Palm Court'
+                : aptKey === 'BNR' ? 'Brigade North Ridge'
+                : 'Other';
+
+    const s = list.reduce((acc, o) => {
+      acc.q250 += o.q250; acc.q500 += o.q500;
+      acc.q750 += o.q750; acc.q1kg += o.q1kg;
+      acc.grams += o.q250*250 + o.q500*500 + o.q750*750 + o.q1kg*1000;
+      acc.rs    += o.q250*145 + o.q500*280 + o.q750*420 + o.q1kg*550;
+      return acc;
+    }, { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 });
+
+    lines.push(``);
+    lines.push(`▸ *${label} (${aptKey})*`);
+    lines.push(`${list.length} orders  |  ${(s.grams/1000).toFixed(2)} kg  |  ₹${s.rs}`);
+    lines.push(`250g:${s.q250}  500g:${s.q500}  750g:${s.q750}  1kg:${s.q1kg}`);
+    lines.push(``);
+
+    list.forEach((o, i) => {
+      const items = [];
+      if (o.q250) items.push(`250g×${o.q250}`);
+      if (o.q500) items.push(`500g×${o.q500}`);
+      if (o.q750) items.push(`750g×${o.q750}`);
+      if (o.q1kg) items.push(`1kg×${o.q1kg}`);
+      lines.push(`${i+1}\\. ${esc(o.name)} — ${items.join(', ')} — ${aptKey} ${esc(o._unit)}`);
+    });
+  });
+
+  tg(lines.join('\n'));
+}
+
+// ── TELEGRAM COMMAND HANDLING ─────────────────────────────────
+
+function handleTelegramUpdate(update) {
+  const msg = update.message;
+  if (!msg || !msg.text) return;
+
+  const chatId = String(msg.chat.id);
+  if (chatId !== TELEGRAM_CHAT_ID) return;
+
+  const cmd = msg.text.split('@')[0].trim().toLowerCase();
+
+  switch (cmd) {
+    case '/pause':
+      setOrdersEnabled(false);
+      tg('⏸ *Orders paused.* The website will show a paused message until you /resume.');
+      break;
+
+    case '/resume':
+      setOrdersEnabled(true);
+      tg('▶️ *Orders resumed.* The website is accepting orders again.');
+      break;
+
+    case '/status':
+      sendStatus();
+      break;
+
+    case '/summary':
+      sendCutoffSummary();
+      break;
+
+    case '/help':
+      tg([
+        '*DairyBliss Bot — Commands*',
+        `/status — Running totals for upcoming deliveries`,
+        `/summary — Full order list for next delivery`,
+        `/pause — Stop accepting orders`,
+        `/resume — Resume accepting orders`
+      ].join('\n'));
+      break;
+  }
+}
+
+/**
+ * /status — running totals for the next two delivery dates
+ */
+function sendStatus() {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = getOrCreate(ss, 'Orders');
+  const now   = new Date();
+  const dates = nextDeliveryDates(2);
+
+  const lines = [`📊 *Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}*`, ``];
+  let any = false;
+
+  dates.forEach(({date, label, open}) => {
+    const s = statsForDate(sheet, date);
+    any = true;
+    const kg = (s.totalGrams / 1000).toFixed(2);
+    const blockNum    = Math.floor(s.totalGrams / (BLOCK_KG * 1000)) + 1;
+    const nextAlertKg = BLOCK_KG * blockNum - ALERT_BEFORE_KG;
+    const status      = open ? '🟢 open' : '🔴 closed';
+
+    lines.push(`*${label}* (${status})`);
+    if (s.orders === 0) {
+      lines.push(`No orders yet`);
+    } else {
+      lines.push(`${s.orders} orders  |  *${kg} kg*  |  ₹${s.totalRs}`);
+      lines.push(`250g:${s.q250}  500g:${s.q500}  750g:${s.q750}  1kg:${s.q1kg}`);
+      lines.push(`Next block alert at ${nextAlertKg} kg`);
+    }
+    lines.push(``);
+  });
+
+  if (!any) lines.push('No upcoming delivery dates found.');
+  tg(lines.join('\n'));
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────
+
+function isOrdersEnabled() {
+  try {
+    const ss    = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = getOrCreate(ss, 'Settings');
+    const rows  = sheet.getDataRange().getValues();
+    for (const row of rows) {
+      if (row[0] === 'orders_enabled') return row[1] === true || row[1] === 'TRUE';
+    }
+    setOrdersEnabled(true);
+    return true;
+  } catch (e) { return true; }
+}
+
+function setOrdersEnabled(val) {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = getOrCreate(ss, 'Settings');
+  const rows  = sheet.getDataRange().getValues();
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i][0] === 'orders_enabled') { sheet.getRange(i+1, 2).setValue(val); return; }
+  }
+  sheet.appendRow(['orders_enabled', val]);
+}
+
+// ── ONE-TIME SETUP FUNCTIONS ──────────────────────────────────
+
+function setupTelegramWebhook() {
+  const webAppUrl = ScriptApp.getService().getUrl();
+  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook?url=${encodeURIComponent(webAppUrl)}`;
+  const res = UrlFetchApp.fetch(url);
+  Logger.log(res.getContentText());
+}
+
+function setupTriggers() {
+  ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
+
+  // Cutoff summary: 9pm every day — function checks if it's Tue or Fri inside
+  ScriptApp.newTrigger('sendCutoffSummary')
+    .timeBased().atHour(21).everyDays(1).create();
+
+  Logger.log('Triggers set up successfully.');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+
+function tg(text) {
+  UrlFetchApp.fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({
+      chat_id: TELEGRAM_CHAT_ID,
+      text: text,
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true
+    })
+  });
+}
+
+function getOrCreate(ss, name) {
+  return ss.getSheetByName(name) || ss.insertSheet(name);
+}
+
+function fmt(date, pattern) {
+  return Utilities.formatDate(date, 'Asia/Kolkata', pattern);
+}
+
+function getRunningTotalGrams(sheet, deliveryDate) {
+  return statsForDate(sheet, deliveryDate).totalGrams;
+}
+
+function statsForDate(sheet, dateStr) {
+  const s = { orders:0, totalGrams:0, totalRs:0, q250:0, q500:0, q750:0, q1kg:0 };
+  if (sheet.getLastRow() < 2) return s;
+  sheet.getRange(2, 1, sheet.getLastRow()-1, 15).getValues().forEach(row => {
+    if (!matchDate(row[6], dateStr)) return;
+    s.orders++;
+    s.q250       += parseInt(row[8])  || 0;
+    s.q500       += parseInt(row[9])  || 0;
+    s.q750       += parseInt(row[10]) || 0;
+    s.q1kg       += parseInt(row[11]) || 0;
+    s.totalGrams += parseInt(row[12]) || 0;
+    s.totalRs    += parseInt(row[13]) || 0;
+  });
+  return s;
+}
+
+function ordersForDate(sheet, dateStr) {
+  if (sheet.getLastRow() < 2) return [];
+  return sheet.getRange(2, 1, sheet.getLastRow()-1, 15).getValues()
+    .filter(r => matchDate(r[6], dateStr))
+    .map(r => ({ name:r[2], phone:r[3], address:r[4],
+      q250:parseInt(r[8])||0, q500:parseInt(r[9])||0,
+      q750:parseInt(r[10])||0, q1kg:parseInt(r[11])||0 }));
+}
+
+function matchDate(cell, dateStr) {
+  if (!cell) return false;
+  if (cell instanceof Date) return fmt(cell, 'yyyy-MM-dd') === dateStr;
+  return String(cell).includes(dateStr);
+}
+
+/**
+ * Returns the next n delivery dates (Wed=3, Sat=6) with an open/closed flag.
+ * Wed orders close Tue 9pm; Sat orders close Fri 9pm.
+ */
+function nextDeliveryDates(n) {
+  const result = [];
+  const now    = new Date();
+  const day    = now.getDay();
+  const hour   = parseInt(fmt(now, 'H'));
+
+  // Is Wednesday currently open?  Open: Sat 0am → Tue 9pm
+  // Is Saturday currently open?   Open: Wed 0am → Fri 9pm
+  const wedOpen = !((day === 2 && hour >= 21) || day === 3 || day === 4 || day === 5 || day === 6 || (day === 0));
+  // Wed closed after Tue 9pm through end of Wed delivery day (Sat morning reopens)
+  // Simplified: Wed open if day is Sat(6), Sun(0), Mon(1), or Tue before 9pm
+  const wedOpenSimple = (day === 6) || (day === 0) || (day === 1) || (day === 2 && hour < 21);
+  const satOpenSimple = (day === 3) || (day === 4) || (day === 5 && hour < 21);
+
+  for (let offset = 1; result.length < n && offset < 15; offset++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+    const wd = d.getDay();
+    if (wd === 3) {
+      result.push({ date: fmt(d,'yyyy-MM-dd'), label: fmt(d,'EEE, d MMM'), open: wedOpenSimple });
+    } else if (wd === 6) {
+      result.push({ date: fmt(d,'yyyy-MM-dd'), label: fmt(d,'EEE, d MMM'), open: satOpenSimple });
+    }
+  }
+  return result;
+}
+
+function esc(s) {
+  return String(s || '').replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+}
+
+function clip(s, len) {
+  return s && s.length > len ? s.slice(0, len) + '…' : (s || '');
+}
+
+function jsonOk(data)   { return res(JSON.stringify({ ok:true,  ...data })); }
+function jsonError(msg) { return res(JSON.stringify({ ok:false, error:msg })); }
+function res(body)      { return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON); }
