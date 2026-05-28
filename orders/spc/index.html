@@ -420,13 +420,13 @@ const APT = {
 <div id="screen-form">
 <div class="page">
 <div class="page-title-row">
+  <p class="page-title">Order fresh paneer</p>
   <a class="apt-back" href="../">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </a>
-  <p class="page-title">Order fresh paneer</p>
 </div>
 <form id="orderForm" novalidate autocomplete="on">
 
@@ -832,9 +832,10 @@ async function openRazorpay(d) {
   setBusy(true);
   try {
     const resp = await fetch(CONFIG.WEBHOOK_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body:    JSON.stringify({ action: 'create_rzp_order', amount: d.amount * 100 }),
+      method:   'POST',
+      redirect: 'follow',
+      headers:  { 'Content-Type': 'text/plain' },
+      body:     JSON.stringify({ action: 'create_rzp_order', amount: d.amount * 100 }),
     });
     const data = await resp.json();
     if (!data.ok) throw new Error(data.error || 'Could not create order');
