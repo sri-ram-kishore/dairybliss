@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#faf8f4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DairyBliss">
+  <title>DairyBliss — Dashboard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="../orders/icons/favicon.png">
+  <link rel="apple-touch-icon" href="../orders/icons/favicon.png">
+
+  <style>
+    :root {
+      --green:       #3d7a1a;
+      --green-mid:   #4e9522;
+      --green-light: #e6f3de;
+      --cream:       #faf8f4;
+      --white:       #ffffff;
+      --text:        #1c2f5c;
+      --text-mid:    #4a5f7a;
+      --text-soft:   #7a8fa8;
+      --border:      rgba(28,47,92,0.10);
+      --shadow:      0 1px 3px rgba(0,0,0,0.07), 0 2px 10px rgba(0,0,0,0.04);
+      --err:         #c0392b;
+      --orange:      #e67e22;
+      --orange-light:#fef3e2;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+                   "Segoe UI", sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── PIN SCREEN ── */
+    #screen-pin {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 24px;
+      padding-top: max(32px, env(safe-area-inset-top));
+    }
+    .pin-logo {
+      width: min(50vw, 180px); margin-bottom: 32px;
+    }
+    .pin-logo img { width: 100%; }
+    .pin-title { font-size: 22px; font-weight: 760; color: var(--text); margin-bottom: 6px; }
+    .pin-sub   { font-size: 14px; color: var(--text-soft); margin-bottom: 32px; }
+
+    .pin-dots {
+      display: flex; gap: 14px; margin-bottom: 36px;
+    }
+    .pin-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--cream);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .pin-dot.filled { background: var(--green); border-color: var(--green); }
+    .pin-dot.error  { background: var(--err);   border-color: var(--err); }
+
+    .pin-pad {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; width: min(100%, 300px);
+    }
+    .pin-btn {
+      height: 64px; border-radius: 14px;
+      background: var(--white); border: 1.5px solid var(--border);
+      font-size: 22px; font-weight: 600; color: var(--text);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow);
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s, background 0.1s;
+      user-select: none;
+    }
+    .pin-btn:active { transform: scale(0.94); background: var(--green-light); }
+    .pin-btn.del { font-size: 18px; color: var(--text-soft); }
+    .pin-btn.empty { background: transparent; border-color: transparent; box-shadow: none; pointer-events: none; }
+
+    .pin-err { font-size: 13px; color: var(--err); margin-top: 16px; min-height: 20px; text-align: center; }
+
+    /* ── APP SHELL ── */
+    #screen-app { display: none; flex-direction: column; min-height: 100vh; }
+
+    .hd {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: saturate(180%) blur(22px);
+      -webkit-backdrop-filter: saturate(180%) blur(22px);
+      border-bottom: 1px solid var(--border);
+      padding: max(12px, calc(env(safe-area-inset-top) + 8px)) 14px 10px;
+    }
+    .hd-row {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 520px; margin: 0 auto;
+    }
+    .logo-wrap {
+      width: min(40vw, 150px); aspect-ratio: 1300/580;
+      display: flex; align-items: center;
+    }
+    .logo-wrap img { width: 100%; object-fit: contain; }
+
+    .hd-right { display: flex; align-items: center; gap: 10px; }
+    .btn-refresh {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--green-light); border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--green);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-refresh:active { opacity: 0.7; }
+    .btn-refresh svg { transition: transform 0.4s; }
+    .btn-refresh.spinning svg { transform: rotate(360deg); }
+    .btn-lock {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: none; border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-soft);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── APT TOGGLE ── */
+    .apt-toggle-wrap {
+      max-width: 520px; margin: 0 auto;
+      padding: 12px 14px 0;
+    }
+    .apt-toggle {
+      display: inline-flex; background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      overflow: hidden; box-shadow: var(--shadow);
+    }
+    .apt-btn {
+      padding: 7px 20px; font-size: 13px; font-weight: 700;
+      color: var(--text-soft); cursor: pointer; border: none;
+      background: transparent; font-family: inherit;
+      letter-spacing: 0.04em;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+    .apt-btn.active {
+      background: var(--green); color: #fff; border-radius: 8px;
+    }
+
+    /* ── TAB CONTENT ── */
+    .tab-content {
+      flex: 1; overflow-y: auto;
+      padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .page { max-width: 520px; margin: 0 auto; padding: 0 14px; }
+
+    /* ── SECTION HEADER ── */
+    .sec-hd {
+      font-size: 13px; font-weight: 700; color: var(--text-soft);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 20px 0 8px;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--white); border-radius: 14px;
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      margin-bottom: 10px; overflow: hidden;
+    }
+
+    /* ── TODAY TAB ── */
+    .delivery-header {
+      padding: 20px 0 4px;
+    }
+    .delivery-date {
+      font-size: 22px; font-weight: 760; color: var(--text);
+      letter-spacing: -0.4px; line-height: 1.1;
+    }
+    .delivery-count {
+      font-size: 14px; color: var(--text-soft); margin-top: 3px;
+    }
+
+    .buy-card { padding: 16px 18px; }
+    .buy-title {
+      font-size: 12px; font-weight: 700; color: var(--text-soft);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;
+    }
+    .buy-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .buy-pill {
+      background: var(--green-light); color: var(--green);
+      font-size: 13px; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px;
+    }
+    .buy-summary {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 10px; border-top: 1px solid var(--border);
+    }
+    .buy-kg { font-size: 17px; font-weight: 760; color: var(--text); letter-spacing: -0.3px; }
+    .buy-blocks { font-size: 13px; color: var(--text-soft); margin-top: 1px; }
+    .buy-cost { font-size: 17px; font-weight: 700; color: var(--green); }
+
+    /* ── ORDER CARD ── */
+    .order-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .order-card:last-child { border-bottom: none; }
+
+    .order-check {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--border); background: var(--cream);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .order-check.done { background: var(--green); border-color: var(--green); }
+    .order-check svg { display: none; }
+    .order-check.done svg { display: block; color: #fff; }
+
+    .order-body { flex: 1; min-width: 0; }
+    .order-name {
+      font-size: 15px; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .order-flat { font-size: 13px; color: var(--text-soft); margin-top: 1px; }
+
+    .order-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .order-qty { font-size: 13px; font-weight: 600; color: var(--text); }
+
+    .badge {
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+      letter-spacing: 0.02em;
+    }
+    .badge-paid { background: var(--green-light); color: var(--green); }
+    .badge-cod  { background: var(--orange-light); color: var(--orange); }
+    .badge-collected { background: #e8f5e9; color: #2e7d32; }
+
+    /* Pay collected tap */
+    .order-pay-tap {
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center; padding: 48px 24px;
+      color: var(--text-soft); font-size: 14px; line-height: 1.6;
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+    /* ── DAY TOGGLE (Today tab) ── */
+    .day-toggle-wrap { padding: 16px 0 0; }
+    .day-toggle {
+      display: inline-flex; background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      overflow: hidden; box-shadow: var(--shadow);
+    }
+    .day-btn {
+      padding: 7px 20px; font-size: 13px; font-weight: 700;
+      color: var(--text-soft); cursor: pointer; border: none;
+      background: transparent; font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+    .day-btn.active { background: var(--green); color: #fff; border-radius: 8px; }
+
+    /* ── ORDERS TAB ── */
+    .search-wrap { padding: 16px 0 8px; }
+    .search-input {
+      width: 100%; padding: 10px 14px 10px 38px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 15px; font-family: inherit; color: var(--text);
+      background: var(--white); -webkit-appearance: none;
+      position: relative;
+    }
+    .search-input:focus { outline: none; border-color: var(--green); }
+    .search-wrap { position: relative; padding: 16px 0 8px; }
+    .search-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-soft); pointer-events: none;
+    }
+
+    .filters { display: flex; gap: 8px; padding-bottom: 8px; overflow-x: auto; }
+    .filters::-webkit-scrollbar { display: none; }
+    .filter-btn {
+      white-space: nowrap; padding: 6px 14px;
+      border: 1.5px solid var(--border); border-radius: 20px;
+      font-size: 12px; font-weight: 700; color: var(--text-soft);
+      background: var(--white); cursor: pointer; font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s;
+    }
+    .filter-btn.active {
+      background: var(--green); color: #fff; border-color: var(--green);
+    }
+
+    .history-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 16px; border-bottom: 1px solid var(--border);
+    }
+    .history-row:last-child { border-bottom: none; }
+    .history-body { flex: 1; min-width: 0; }
+    .history-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .history-meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+    .history-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .history-amt { font-size: 13px; font-weight: 700; color: var(--text); }
+    .history-date { font-size: 11px; color: var(--text-soft); }
+
+    /* ── SUMMARY TAB ── */
+    .stat-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; padding: 16px 0 0;
+    }
+    .stat-card {
+      background: var(--white); border-radius: 14px;
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .stat-value { font-size: 22px; font-weight: 760; color: var(--text); letter-spacing: -0.5px; }
+    .stat-value.green { color: var(--green); }
+    .stat-value.orange { color: var(--orange); }
+    .stat-sub { font-size: 12px; color: var(--text-soft); margin-top: 3px; }
+
+    .divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 20px 0 0;
+    }
+
+    /* ── BOTTOM TAB BAR ── */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: saturate(180%) blur(22px);
+      -webkit-backdrop-filter: saturate(180%) blur(22px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .tab-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 10px 0 8px;
+      cursor: pointer; border: none; background: transparent;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--text-soft); font-family: inherit;
+      transition: color 0.15s;
+    }
+    .tab-item.active { color: var(--green); }
+    .tab-label { font-size: 10px; font-weight: 700; margin-top: 3px; letter-spacing: 0.02em; text-transform: uppercase; }
+
+    /* ── LOADING ── */
+    .loading {
+      text-align: center; padding: 48px 24px; color: var(--text-soft);
+    }
+    .spin {
+      display: inline-block; width: 22px; height: 22px;
+      border: 2.5px solid var(--border); border-top-color: var(--green);
+      border-radius: 50%; animation: sp 0.7s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes sp { to { transform: rotate(360deg); } }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: calc(70px + env(safe-area-inset-bottom, 0px) + 10px);
+      left: 50%; transform: translateX(-50%) translateY(60px);
+      background: rgba(20,20,20,0.88); backdrop-filter: blur(16px);
+      color: #fff; padding: 9px 18px; border-radius: 20px;
+      font-size: 13px; z-index: 900; pointer-events: none;
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      white-space: nowrap;
+    }
+    .toast.up { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ PIN SCREEN ══════════════ -->
+<div id="screen-pin">
+  <div class="pin-logo">
+    <img src="../assets/logo.png" alt="DairyBliss" onerror="this.style.display='none'">
+  </div>
+  <p class="pin-title">DairyBliss</p>
+  <p class="pin-sub">Enter PIN to continue</p>
+
+  <div class="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinKey('1')">1</button>
+    <button class="pin-btn" onclick="pinKey('2')">2</button>
+    <button class="pin-btn" onclick="pinKey('3')">3</button>
+    <button class="pin-btn" onclick="pinKey('4')">4</button>
+    <button class="pin-btn" onclick="pinKey('5')">5</button>
+    <button class="pin-btn" onclick="pinKey('6')">6</button>
+    <button class="pin-btn" onclick="pinKey('7')">7</button>
+    <button class="pin-btn" onclick="pinKey('8')">8</button>
+    <button class="pin-btn" onclick="pinKey('9')">9</button>
+    <button class="pin-btn empty"></button>
+    <button class="pin-btn" onclick="pinKey('0')">0</button>
+    <button class="pin-btn del" onclick="pinKey('del')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+      </svg>
+    </button>
+  </div>
+  <p class="pin-err" id="pin-err"></p>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="screen-app">
+
+  <!-- Header -->
+  <header class="hd">
+    <div class="hd-row">
+      <div class="logo-wrap">
+        <img src="../assets/logo.png" alt="DairyBliss" onerror="this.style.display='none'">
+      </div>
+      <div class="hd-right">
+        <button class="btn-refresh" id="btn-refresh" onclick="fetchOrders(true)" title="Refresh">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </button>
+        <button class="btn-lock" onclick="lockApp()" title="Lock">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Apt toggle (shown on all tabs) -->
+    <div class="apt-toggle-wrap">
+      <div class="apt-toggle">
+        <button class="apt-btn active" id="apt-spc" onclick="setApt('SPC')">SPC</button>
+        <button class="apt-btn"        id="apt-bnr" onclick="setApt('BNR')">BNR</button>
+        <button class="apt-btn"        id="apt-all" onclick="setApt('ALL')">Both</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab content -->
+  <div class="tab-content">
+
+    <!-- ── TODAY TAB ── -->
+    <div class="tab-pane active" id="tab-today">
+      <div class="page">
+        <div class="day-toggle-wrap">
+          <div class="day-toggle">
+            <button class="day-btn active" id="day-wed" onclick="setDay('wed')">Wednesday</button>
+            <button class="day-btn"        id="day-sat" onclick="setDay('sat')">Saturday</button>
+          </div>
+        </div>
+        <div id="today-content"><div class="loading"><div class="spin"></div><br>Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ── ORDERS TAB ── -->
+    <div class="tab-pane" id="tab-orders">
+      <div class="page">
+        <div class="search-wrap">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input class="search-input" id="search-input" type="search"
+                 placeholder="Search by name or flat…" oninput="renderOrders()">
+        </div>
+        <div class="filters">
+          <button class="filter-btn active" onclick="setPayFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setPayFilter('paid',this)">Paid</button>
+          <button class="filter-btn" onclick="setPayFilter('cod',this)">COD</button>
+          <button class="filter-btn" onclick="setPayFilter('pending',this)">Not collected</button>
+        </div>
+        <div id="orders-content"></div>
+      </div>
+    </div>
+
+    <!-- ── SUMMARY TAB ── -->
+    <div class="tab-pane" id="tab-summary">
+      <div class="page" id="summary-content">
+        <div class="loading"><div class="spin"></div><br>Loading…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom tab bar -->
+  <nav class="tab-bar">
+    <button class="tab-item active" id="tb-today" onclick="setTab('today')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <span class="tab-label">Today</span>
+    </button>
+    <button class="tab-item" id="tb-orders" onclick="setTab('orders')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+        <line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      <span class="tab-label">Orders</span>
+    </button>
+    <button class="tab-item" id="tb-summary" onclick="setTab('summary')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+      <span class="tab-label">Summary</span>
+    </button>
+  </nav>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyDuHkkBIanz-6Qp-aRzCFZKbOdNTcW_IRtvYIy0UTvNO88Enguyaikxkk_mFPW9yFC1A/exec';
+const PIN         = '2580'; // change this
+const BLOCK_KG    = 3;
+const COST_PER_KG = 335;
+
+// ── STATE ─────────────────────────────────────────────────────
+let orders      = [];
+let summaryData = null;
+let activeApt   = 'SPC';
+let activeDay   = 'wed';
+let activeTab   = 'today';
+let payFilter   = 'all';
+
+// ── PIN ───────────────────────────────────────────────────────
+let pinEntry = '';
+
+function pinKey(k) {
+  if (k === 'del') {
+    pinEntry = pinEntry.slice(0, -1);
+  } else if (pinEntry.length < 4) {
+    pinEntry += k;
+  }
+  updatePinDots();
+  if (pinEntry.length === 4) setTimeout(checkPin, 80);
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('pd' + i);
+    dot.classList.toggle('filled', i < pinEntry.length);
+  }
+}
+
+function checkPin() {
+  if (pinEntry === PIN) {
+    sessionStorage.setItem('db_auth', '1');
+    showApp();
+  } else {
+    for (let i = 0; i < 4; i++) document.getElementById('pd' + i).classList.add('error');
+    document.getElementById('pin-err').textContent = 'Incorrect PIN. Try again.';
+    setTimeout(() => {
+      pinEntry = '';
+      updatePinDots();
+      for (let i = 0; i < 4; i++) document.getElementById('pd' + i).classList.remove('error');
+      document.getElementById('pin-err').textContent = '';
+    }, 700);
+  }
+}
+
+function showApp() {
+  document.getElementById('screen-pin').style.display = 'none';
+  document.getElementById('screen-app').style.display = 'flex';
+  document.getElementById('screen-app').style.flexDirection = 'column';
+  fetchOrders();
+  fetchSummary();
+}
+
+function lockApp() {
+  sessionStorage.removeItem('db_auth');
+  pinEntry = '';
+  updatePinDots();
+  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('screen-pin').style.display = 'flex';
+}
+
+// ── FETCH ─────────────────────────────────────────────────────
+async function fetchOrders(showSpinner) {
+  if (showSpinner) {
+    const btn = document.getElementById('btn-refresh');
+    btn.classList.add('spinning');
+    setTimeout(() => btn.classList.remove('spinning'), 600);
+  }
+  try {
+    const resp = await fetch(WEBHOOK_URL + '?action=dashboard');
+    const data = await resp.json();
+    if (data.ok) {
+      orders = data.orders;
+      localStorage.setItem('db_orders', JSON.stringify(orders));
+      renderToday();
+      renderOrders();
+    }
+  } catch {
+    const cached = localStorage.getItem('db_orders');
+    if (cached) { orders = JSON.parse(cached); renderToday(); renderOrders(); }
+    showToast('Offline — showing cached data');
+  }
+}
+
+async function fetchSummary() {
+  try {
+    const resp = await fetch(WEBHOOK_URL + '?action=summary');
+    const data = await resp.json();
+    if (data.ok) {
+      summaryData = data;
+      localStorage.setItem('db_summary', JSON.stringify(data));
+      renderSummary();
+    }
+  } catch {
+    const cached = localStorage.getItem('db_summary');
+    if (cached) { summaryData = JSON.parse(cached); renderSummary(); }
+  }
+}
+
+// ── APT / DAY / TAB ───────────────────────────────────────────
+function setApt(apt) {
+  activeApt = apt;
+  ['SPC','BNR','ALL'].forEach(a => {
+    document.getElementById('apt-' + a.toLowerCase()).classList.toggle('active', a === apt);
+  });
+  renderToday(); renderOrders();
+}
+
+function setDay(day) {
+  activeDay = day;
+  document.getElementById('day-wed').classList.toggle('active', day === 'wed');
+  document.getElementById('day-sat').classList.toggle('active', day === 'sat');
+  renderToday();
+}
+
+function setTab(tab) {
+  activeTab = tab;
+  ['today','orders','summary'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tb-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+function setPayFilter(f, el) {
+  payFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderOrders();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function fmt(rs) { return '₹' + rs.toLocaleString('en-IN'); }
+function esc(s)  { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function nextDeliveryDate(weekday) { // 3=Wed, 6=Sat
+  const now   = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let days = (weekday - today.getDay() + 7) % 7 || 7;
+  const d = new Date(today); d.setDate(d.getDate() + days);
+  return d;
+}
+
+function fmtDate(d) {
+  const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+function isoDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function qtyLabel(o) {
+  const parts = [];
+  if (o.q250) parts.push(`250g×${o.q250}`);
+  if (o.q500) parts.push(`500g×${o.q500}`);
+  if (o.q750) parts.push(`750g×${o.q750}`);
+  if (o.q1kg) parts.push(`1kg×${o.q1kg}`);
+  return parts.join(' · ');
+}
+
+function flatFromAddress(address) {
+  const parts = String(address || '').split(',');
+  const skip  = ['sobha','brigade','bangalore','bengaluru','karnataka','india'];
+  return parts.map(p => p.trim()).find(p =>
+    p.length < 25 && !skip.some(w => p.toLowerCase().includes(w))
+  ) || address;
+}
+
+function flatSortKey(flat) {
+  const m = String(flat).match(/^([A-Z])-?(\d+)/i);
+  if (!m) return '999-9999';
+  return m[1].toUpperCase() + '-' + String(parseInt(m[2])).padStart(4,'0');
+}
+
+function computeBuyList(filtered) {
+  const t = { q250:0, q500:0, q750:0, q1kg:0 };
+  filtered.forEach(o => { t.q250+=o.q250; t.q500+=o.q500; t.q750+=o.q750; t.q1kg+=o.q1kg; });
+  const kg     = (t.q250*250 + t.q500*500 + t.q750*750 + t.q1kg*1000) / 1000;
+  const blocks = Math.ceil(kg / BLOCK_KG);
+  const buyKg  = blocks * BLOCK_KG;
+  return { ...t, kg, blocks, buyKg, cost: Math.round(buyKg * COST_PER_KG) };
+}
+
+function isPaid(o) {
+  return o.paymentStatus === 'Paid Online' || o.paymentCollected;
+}
+
+// ── RENDER TODAY ──────────────────────────────────────────────
+function renderToday() {
+  const wedDate = nextDeliveryDate(3);
+  const satDate = nextDeliveryDate(6);
+  const target  = activeDay === 'wed' ? wedDate : satDate;
+  const iso     = isoDate(target);
+
+  // Update day toggle labels
+  document.getElementById('day-wed').textContent = fmtDate(wedDate);
+  document.getElementById('day-sat').textContent = fmtDate(satDate);
+
+  const filtered = orders.filter(o =>
+    o.deliveryDate === iso &&
+    (activeApt === 'ALL' || o.apt === activeApt)
+  ).sort((a, b) => flatSortKey(flatFromAddress(a.address)) < flatSortKey(flatFromAddress(b.address)) ? -1 : 1);
+
+  const buy = computeBuyList(filtered);
+  const el  = document.getElementById('today-content');
+
+  if (!orders.length && !localStorage.getItem('db_orders')) {
+    el.innerHTML = '<div class="loading"><div class="spin"></div><br>Loading orders…</div>';
+    return;
+  }
+
+  let html = `
+    <div class="delivery-header">
+      <div class="delivery-date">${fmtDate(target)}</div>
+      <div class="delivery-count">${filtered.length} order${filtered.length !== 1 ? 's' : ''}</div>
+    </div>`;
+
+  if (filtered.length) {
+    // Buy list
+    const pills = [];
+    if (buy.q250) pills.push(`250g ×${buy.q250}`);
+    if (buy.q500) pills.push(`500g ×${buy.q500}`);
+    if (buy.q750) pills.push(`750g ×${buy.q750}`);
+    if (buy.q1kg) pills.push(`1kg ×${buy.q1kg}`);
+
+    html += `
+    <div class="card buy-card" style="padding:16px 18px">
+      <div class="buy-title">Buy list</div>
+      <div class="buy-pills">${pills.map(p => `<span class="buy-pill">${p}</span>`).join('')}</div>
+      <div class="buy-summary">
+        <div>
+          <div class="buy-kg">${buy.kg.toFixed(2)} kg total</div>
+          <div class="buy-blocks">Buy ${buy.buyKg} kg — ${buy.blocks} block${buy.blocks !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="buy-cost">${fmt(buy.cost)}</div>
+      </div>
+    </div>`;
+
+    // Order cards grouped by apartment
+    const apts = activeApt === 'ALL' ? ['SPC','BNR'] : [activeApt];
+    apts.forEach(apt => {
+      const aptOrders = filtered.filter(o => o.apt === apt);
+      if (!aptOrders.length) return;
+      if (activeApt === 'ALL') html += `<div class="sec-hd">${apt === 'SPC' ? 'Sobha Palm Court' : 'Brigade North Ridge'}</div>`;
+      html += '<div class="card">';
+      aptOrders.forEach(o => {
+        const flat    = flatFromAddress(o.address);
+        const done    = o.delivered;
+        const paid    = isPaid(o);
+        const isCod   = o.paymentStatus !== 'Paid Online';
+        let badge     = '';
+        if (!isCod)      badge = `<span class="badge badge-paid">Paid</span>`;
+        else if (paid)   badge = `<span class="badge badge-collected">Collected</span>`;
+        else             badge = `<span class="badge badge-cod order-pay-tap" onclick="togglePaid('${o.id}','${o.apt}',this)">COD</span>`;
+
+        html += `
+        <div class="order-card" id="oc-${o.id}">
+          <div class="order-check ${done ? 'done' : ''}" onclick="toggleDelivered('${o.id}','${o.apt}',this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="order-body">
+            <div class="order-name">${esc(o.name)}</div>
+            <div class="order-flat">${esc(flat)}</div>
+          </div>
+          <div class="order-right">
+            <div class="order-qty">${qtyLabel(o)}</div>
+            ${badge}
+          </div>
+        </div>`;
+      });
+      html += '</div>';
+    });
+  } else {
+    html += `<div class="empty"><div class="empty-icon">📦</div>No orders yet for this date.</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── RENDER ORDERS ─────────────────────────────────────────────
+function renderOrders() {
+  const q   = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const el  = document.getElementById('orders-content');
+
+  let filtered = orders.filter(o => activeApt === 'ALL' || o.apt === activeApt);
+
+  if (q) filtered = filtered.filter(o =>
+    o.name.toLowerCase().includes(q) || flatFromAddress(o.address).toLowerCase().includes(q)
+  );
+
+  if (payFilter === 'paid')    filtered = filtered.filter(o => isPaid(o));
+  if (payFilter === 'cod')     filtered = filtered.filter(o => o.paymentStatus !== 'Paid Online');
+  if (payFilter === 'pending') filtered = filtered.filter(o => o.paymentStatus !== 'Paid Online' && !o.paymentCollected);
+
+  // Sort newest first
+  filtered = filtered.slice().sort((a, b) => b.id < a.id ? -1 : 1);
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>No orders match your search.</div>';
+    return;
+  }
+
+  let html = '<div class="card" style="margin-top:8px">';
+  filtered.forEach(o => {
+    const flat  = flatFromAddress(o.address);
+    const paid  = isPaid(o);
+    const isCod = o.paymentStatus !== 'Paid Online';
+    let badge   = '';
+    if (!isCod)    badge = `<span class="badge badge-paid">Paid</span>`;
+    else if (paid) badge = `<span class="badge badge-collected">Collected</span>`;
+    else           badge = `<span class="badge badge-cod">COD</span>`;
+
+    html += `
+    <div class="history-row">
+      <div class="history-body">
+        <div class="history-name">${esc(o.name)}</div>
+        <div class="history-meta">${esc(flat)} · ${esc(o.apt)} · ${qtyLabel(o)}</div>
+      </div>
+      <div class="history-right">
+        <div class="history-amt">${fmt(o.totalRs)}</div>
+        <div class="history-date">${esc(o.deliveryLabel || o.deliveryDate)}</div>
+        ${badge}
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── RENDER SUMMARY ────────────────────────────────────────────
+function renderSummary() {
+  const el = document.getElementById('summary-content');
+  if (!summaryData) {
+    el.innerHTML = '<div class="loading"><div class="spin"></div><br>Loading…</div>';
+    return;
+  }
+  const w = summaryData.week;
+  const t = summaryData.total;
+
+  el.innerHTML = `
+    <div class="sec-hd">This week</div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Collected</div>
+        <div class="stat-value green">${fmt(w.collected)}</div>
+        <div class="stat-sub">Online + COD received</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">COD Pending</div>
+        <div class="stat-value orange">${fmt(w.codPending)}</div>
+        <div class="stat-sub">Not yet collected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cost</div>
+        <div class="stat-value">${fmt(w.cost)}</div>
+        <div class="stat-sub">${w.kg} kg × ₹${COST_PER_KG}/kg</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Margin</div>
+        <div class="stat-value ${w.margin >= 0 ? 'green' : ''}">${fmt(w.margin)}</div>
+        <div class="stat-sub">Collected minus cost</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div class="sec-hd">All time</div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total collected</div>
+        <div class="stat-value">${fmt(t.collected)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">COD Pending</div>
+        <div class="stat-value orange">${fmt(t.codPending)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total cost</div>
+        <div class="stat-value">${fmt(t.cost)}</div>
+        <div class="stat-sub">${t.kg} kg total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total margin</div>
+        <div class="stat-value ${t.margin >= 0 ? 'green' : ''}">${fmt(t.margin)}</div>
+      </div>
+    </div>
+    <div style="height:8px"></div>
+  `;
+}
+
+// ── MARK DELIVERED / PAID ─────────────────────────────────────
+async function toggleDelivered(id, apt, el) {
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  const newVal = !order.delivered;
+  order.delivered = newVal;
+  el.classList.toggle('done', newVal);
+  showToast(newVal ? 'Marked as delivered' : 'Unmarked');
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'mark_delivered', orderId: id, apt, value: newVal }),
+    });
+  } catch { showToast('Saved locally — will sync when online'); }
+}
+
+async function togglePaid(id, apt, badgeEl) {
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  order.paymentCollected = true;
+  badgeEl.outerHTML = `<span class="badge badge-collected">Collected</span>`;
+  showToast('Payment marked as collected');
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'mark_paid', orderId: id, apt, value: true }),
+    });
+  } catch { showToast('Saved locally — will sync when online'); }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg, ms = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('up');
+  setTimeout(() => t.classList.remove('up'), ms);
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+(function init() {
+  if (sessionStorage.getItem('db_auth') === '1') {
+    showApp();
+  }
+})();
+</script>
+</body>
+</html>

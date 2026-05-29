@@ -48,6 +48,8 @@ function doPost(e) {
 
     if (payload.action === 'order')            return handleOrder(payload);
     if (payload.action === 'create_rzp_order') return handleCreateRzpOrder(payload);
+    if (payload.action === 'mark_delivered')   return handleMarkDelivered(payload);
+    if (payload.action === 'mark_paid')        return handleMarkPaid(payload);
 
     return jsonOk({ message: 'unknown action' });
   } catch (err) {
@@ -58,9 +60,9 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  if (e.parameter.action === 'status') {
-    return jsonOk({ ordersEnabled: isOrdersEnabled() });
-  }
+  if (e.parameter.action === 'status')    return jsonOk({ ordersEnabled: isOrdersEnabled() });
+  if (e.parameter.action === 'dashboard') return getDashboardOrders();
+  if (e.parameter.action === 'summary')   return getDashboardSummary();
   return ContentService.createTextOutput('DairyBliss API ok');
 }
 
@@ -113,7 +115,12 @@ function handleOrder(data) {
     q250, q500, q750, q1kg,
     totalGrams,
     totalRs,
-    'New'
+    'New',
+    data.paymentMethod || '',
+    data.paymentStatus || '',
+    data.rzpPaymentId  || '',
+    '',   // Delivered
+    '',   // Payment Collected
   ]);
 
   const newGrams = prevGrams + totalGrams;
@@ -160,7 +167,9 @@ function ensureOrderHeaders(sheet) {
   if (sheet.getLastRow() > 0) return;
   const headers = ['Timestamp','Order ID','Name','Phone','Address','Map URL',
     'Delivery Date','Delivery Label','250g','500g','750g','1kg',
-    'Total (g)','Total (₹)','Status'];
+    'Total (g)','Total (₹)','Status',
+    'Payment Method','Payment Status','RZP Payment ID',
+    'Delivered','Payment Collected'];
   sheet.appendRow(headers);
   const r = sheet.getRange(1, 1, 1, headers.length);
   r.setFontWeight('bold');
@@ -224,6 +233,103 @@ function checkStockAlerts(prevGrams, newGrams, label, meta) {
       ].join('\n'));
     }
   }
+}
+
+// ── DASHBOARD READ ───────────────────────────────────────────
+
+function getDashboardOrders() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const orders = [];
+  for (const apt of ['SPC', 'BNR']) {
+    const sheet = ss.getSheetByName(apt);
+    if (!sheet || sheet.getLastRow() < 2) continue;
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 20).getValues();
+    rows.forEach(r => {
+      if (!r[1]) return;
+      orders.push({
+        id:               r[1],
+        name:             r[2],
+        phone:            r[3],
+        address:          r[4],
+        deliveryDate:     r[6] instanceof Date ? fmt(r[6], 'yyyy-MM-dd') : String(r[6]),
+        deliveryLabel:    r[7],
+        q250:             parseInt(r[8])  || 0,
+        q500:             parseInt(r[9])  || 0,
+        q750:             parseInt(r[10]) || 0,
+        q1kg:             parseInt(r[11]) || 0,
+        totalGrams:       parseInt(r[12]) || 0,
+        totalRs:          parseInt(r[13]) || 0,
+        paymentMethod:    r[15] || '',
+        paymentStatus:    r[16] || '',
+        rzpPaymentId:     r[17] || '',
+        delivered:        r[18] === 'Y',
+        paymentCollected: r[19] === 'Y',
+        apt:              apt,
+      });
+    });
+  }
+  return jsonOk({ orders });
+}
+
+function getDashboardSummary() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const now = new Date();
+  // Week starts Monday
+  const dow = now.getDay() === 0 ? 6 : now.getDay() - 1;
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow);
+  weekStart.setHours(0, 0, 0, 0);
+
+  let collected = 0, codPending = 0, cost = 0, totalKg = 0;
+  let allCollected = 0, allCodPending = 0, allCost = 0, allKg = 0;
+
+  for (const apt of ['SPC', 'BNR']) {
+    const sheet = ss.getSheetByName(apt);
+    if (!sheet || sheet.getLastRow() < 2) continue;
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 20).getValues();
+    rows.forEach(r => {
+      if (!r[1]) return;
+      const rs   = parseInt(r[13]) || 0;
+      const kg   = (parseInt(r[12]) || 0) / 1000;
+      const paid = r[16] === 'Paid Online' || r[19] === 'Y';
+      const delivDate = r[6] instanceof Date ? r[6] : new Date(r[6]);
+
+      allKg += kg;
+      if (paid) allCollected += rs; else allCodPending += rs;
+      allCost += kg * COST_PER_KG;
+
+      if (delivDate >= weekStart) {
+        totalKg += kg;
+        if (paid) collected += rs; else codPending += rs;
+        cost += kg * COST_PER_KG;
+      }
+    });
+  }
+
+  return jsonOk({
+    week:  { collected, codPending, cost: Math.round(cost),   margin: Math.round(collected - cost),   kg: Math.round(totalKg * 100) / 100 },
+    total: { collected: allCollected, codPending: allCodPending, cost: Math.round(allCost), margin: Math.round(allCollected - allCost), kg: Math.round(allKg * 100) / 100 },
+  });
+}
+
+function handleMarkDelivered(payload) {
+  return markOrderColumn(payload.orderId, payload.apt, 19, payload.value ? 'Y' : '');
+}
+
+function handleMarkPaid(payload) {
+  return markOrderColumn(payload.orderId, payload.apt, 20, payload.value ? 'Y' : '');
+}
+
+function markOrderColumn(orderId, apt, col, value) {
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(apt);
+  if (!sheet || sheet.getLastRow() < 2) return jsonError('sheet not found');
+  const ids = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i][0] === orderId) {
+      sheet.getRange(i + 2, col).setValue(value);
+      return jsonOk({});
+    }
+  }
+  return jsonError('order not found');
 }
 
 // ── APARTMENT HELPERS ────────────────────────────────────────
@@ -563,7 +669,7 @@ function getRunningTotalGrams(sheet, deliveryDate) {
 function statsForDate(sheet, dateStr) {
   const s = { orders:0, totalGrams:0, totalRs:0, q250:0, q500:0, q750:0, q1kg:0 };
   if (sheet.getLastRow() < 2) return s;
-  sheet.getRange(2, 1, sheet.getLastRow()-1, 15).getValues().forEach(row => {
+  sheet.getRange(2, 1, sheet.getLastRow()-1, 20).getValues().forEach(row => {
     if (!matchDate(row[6], dateStr)) return;
     s.orders++;
     s.q250       += parseInt(row[8])  || 0;
@@ -578,7 +684,7 @@ function statsForDate(sheet, dateStr) {
 
 function ordersForDate(sheet, dateStr) {
   if (sheet.getLastRow() < 2) return [];
-  return sheet.getRange(2, 1, sheet.getLastRow()-1, 15).getValues()
+  return sheet.getRange(2, 1, sheet.getLastRow()-1, 20).getValues()
     .filter(r => matchDate(r[6], dateStr))
     .map(r => ({ name:r[2], phone:r[3], address:r[4],
       q250:parseInt(r[8])||0, q500:parseInt(r[9])||0,
