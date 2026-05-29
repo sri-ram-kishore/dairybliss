@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#faf8f4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DairyBliss">
+  <title>DairyBliss Ops</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="../orders/icons/favicon.png">
+  <link rel="apple-touch-icon" href="../orders/icons/favicon.png">
+
+  <style>
+    :root {
+      --green:       #3d7a1a;
+      --green-mid:   #4e9522;
+      --green-light: #e6f3de;
+      --cream:       #faf8f4;
+      --white:       #ffffff;
+      --text:        #1c2f5c;
+      --text-mid:    #4a5f7a;
+      --text-soft:   #7a8fa8;
+      --border:      rgba(28,47,92,0.10);
+      --shadow:      0 1px 3px rgba(0,0,0,0.07), 0 2px 10px rgba(0,0,0,0.04);
+      --err:         #c0392b;
+      --orange:      #e67e22;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+                   "Segoe UI", sans-serif;
+      background: var(--cream); color: var(--text); min-height: 100vh;
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── PIN SCREEN ── */
+    #screen-pin {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: max(32px, env(safe-area-inset-top)) 24px 32px;
+    }
+    .pin-logo { width: min(50vw, 180px); margin-bottom: 32px; }
+    .pin-logo img { width: 100%; }
+    .pin-title { font-size: 22px; font-weight: 760; margin-bottom: 6px; }
+    .pin-sub   { font-size: 14px; color: var(--text-soft); margin-bottom: 32px; }
+    .pin-dots  { display: flex; gap: 14px; margin-bottom: 36px; }
+    .pin-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid var(--border); background: var(--cream);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .pin-dot.filled { background: var(--green); border-color: var(--green); }
+    .pin-dot.error  { background: var(--err);   border-color: var(--err); }
+    .pin-pad {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; width: min(100%, 300px);
+    }
+    .pin-btn {
+      height: 64px; border-radius: 14px;
+      background: var(--white); border: 1.5px solid var(--border);
+      font-size: 22px; font-weight: 600; color: var(--text);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow); -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s, background 0.1s; user-select: none;
+    }
+    .pin-btn:active { transform: scale(0.94); background: var(--green-light); }
+    .pin-btn.del { font-size: 18px; color: var(--text-soft); }
+    .pin-btn.empty { background: transparent; border-color: transparent; box-shadow: none; pointer-events: none; }
+    .pin-err { font-size: 13px; color: var(--err); margin-top: 16px; min-height: 20px; text-align: center; }
+    .pin-who-btn {
+      display: flex; flex-direction: column; align-items: flex-start;
+      padding: 14px 18px; border-radius: 14px; border: 1.5px solid var(--border);
+      background: var(--white); cursor: pointer; box-shadow: var(--shadow);
+      font-family: inherit; -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, background 0.15s; text-align: left; width: 100%;
+    }
+    .pin-who-btn:active { background: var(--green-light); border-color: var(--green); }
+    .pin-who-btn:disabled { opacity: 0.45; pointer-events: none; }
+    .pin-who-name { font-size: 17px; font-weight: 700; color: var(--text); }
+    .pin-who-apt  { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+    .pin-text-btn {
+      background: none; border: none; color: var(--text-soft); font-size: 13px;
+      cursor: pointer; font-family: inherit; padding: 4px 8px;
+      -webkit-tap-highlight-color: transparent; text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .pin-text-btn:active { opacity: 0.6; }
+
+    /* ── APP SHELL ── */
+    #screen-app { display: none; flex-direction: column; min-height: 100vh; }
+
+    .hd {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: saturate(180%) blur(22px);
+      -webkit-backdrop-filter: saturate(180%) blur(22px);
+      border-bottom: 1px solid var(--border);
+      padding: max(12px, calc(env(safe-area-inset-top) + 8px)) 14px 12px;
+    }
+    .hd-row {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 520px; margin: 0 auto;
+    }
+    .logo-wrap { width: min(40vw, 150px); aspect-ratio: 1300/580; display: flex; align-items: center; }
+    .logo-wrap img { width: 100%; object-fit: contain; }
+    .hd-right { display: flex; align-items: center; gap: 10px; }
+    .hd-user {
+      font-size: 12px; font-weight: 700; color: var(--text-soft);
+      background: var(--green-light); padding: 4px 10px; border-radius: 20px;
+      letter-spacing: 0.03em;
+    }
+    .btn-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; -webkit-tap-highlight-color: transparent; border: none;
+    }
+    .btn-refresh { background: var(--green-light); color: var(--green); }
+    .btn-refresh:active { opacity: 0.7; }
+    .btn-refresh svg { transition: transform 0.4s; }
+    .btn-refresh.spinning svg { transform: rotate(360deg); }
+    .btn-lock { background: none; border: 1.5px solid var(--border) !important; color: var(--text-soft); }
+
+    /* ── TAB CONTENT ── */
+    .tab-content {
+      flex: 1; overflow-y: auto;
+      padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    .page { max-width: 520px; margin: 0 auto; padding: 0 14px; }
+
+    /* ── SECTION HEADER ── */
+    .sec-hd {
+      font-size: 12px; font-weight: 700; color: var(--text-soft);
+      text-transform: uppercase; letter-spacing: 0.07em; padding: 20px 0 8px;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--white); border-radius: 14px;
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      margin-bottom: 10px; overflow: hidden;
+    }
+
+    /* ── TODAY: DATE HEADER ── */
+    .today-header { padding: 20px 0 14px; }
+    .today-label {
+      font-size: 11px; font-weight: 700; color: var(--text-soft);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px;
+    }
+    .today-date {
+      font-size: 26px; font-weight: 760; color: var(--text);
+      letter-spacing: -0.5px; line-height: 1.15;
+    }
+    .today-sub { font-size: 14px; color: var(--text-soft); margin-top: 4px; }
+
+    /* ── TODAY: ORDER COUNT CHIPS ── */
+    .count-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .count-chip {
+      flex: 1; background: var(--white);
+      border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: var(--shadow); padding: 11px 12px; text-align: center;
+    }
+    .count-val   { font-size: 22px; font-weight: 760; color: var(--text); letter-spacing: -0.4px; }
+    .count-label { font-size: 11px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+    /* ── TODAY: APT BREAKDOWN CARD ── */
+    .apt-breakdown {
+      display: grid; grid-template-columns: 1fr 1fr;
+      padding: 14px 16px; gap: 0;
+    }
+    .apt-breakdown-col { padding-right: 12px; }
+    .apt-breakdown-col + .apt-breakdown-col {
+      padding-right: 0; padding-left: 12px;
+      border-left: 1px solid var(--border);
+    }
+    .apt-breakdown-name {
+      font-size: 11px; font-weight: 700; color: var(--text-soft);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
+    }
+    .apt-breakdown-sizes { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+    .apt-size-tag {
+      font-size: 12px; font-weight: 700; color: var(--green);
+      background: var(--green-light); padding: 3px 8px; border-radius: 6px;
+    }
+    .apt-breakdown-kg { font-size: 13px; font-weight: 600; color: var(--text-mid); }
+
+    /* ── TODAY: VENDOR CARD ── */
+    .vendor-card { padding: 16px 18px; }
+    /* Three-stat row: blocks | kg | cost */
+    .vendor-stats {
+      display: flex; align-items: flex-start; margin-bottom: 10px;
+    }
+    .vendor-stat {
+      flex: 1; padding-right: 14px; border-right: 1px solid var(--border);
+      margin-right: 14px;
+    }
+    .vendor-stat:nth-child(2) { text-align: center; }
+    .vendor-stat:last-child   { border-right: none; margin-right: 0; padding-right: 0; text-align: right; }
+    .vendor-stat-val {
+      font-size: 22px; font-weight: 760; letter-spacing: -0.5px; color: var(--text); line-height: 1.1;
+    }
+    .vendor-stat-val.green { color: var(--green); }
+    .vendor-stat-label { font-size: 11px; color: var(--text-soft); margin-top: 3px; }
+    .vendor-detail { font-size: 12px; color: var(--text-soft); margin-bottom: 2px; }
+
+    /* ── TODAY: REFERENCE ORDER LIST ── */
+    .ref-row {
+      display: flex; align-items: center;
+      padding: 11px 16px; border-bottom: 1px solid var(--border);
+    }
+    .ref-row:last-child { border-bottom: none; }
+    .ref-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .ref-flat { font-size: 12px; color: var(--text-soft); }
+    .ref-info { flex: 1; min-width: 0; }
+    .ref-qty  { flex: 1; font-size: 13px; font-weight: 700; color: var(--text-mid); text-align: center; }
+    .ref-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+    .ref-price { font-size: 13px; font-weight: 700; color: var(--text-mid); }
+    .ref-cod, .ref-paid {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+      width: 56px; text-align: center;
+      padding: 3px 0; border-radius: 6px;
+    }
+    .ref-cod  { background: #fef3e2; color: var(--orange); }
+    .ref-paid { background: var(--green-light); color: var(--green); }
+
+    /* ── TODAY: VENDOR ACTIONS ── */
+    .vendor-actions {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 8px;
+      padding-top: 10px; margin-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .vendor-deadline-text { font-size: 12px; color: var(--text-soft); flex: 1; min-width: 0; }
+    .vendor-ordered-done  { font-size: 13px; font-weight: 700; color: var(--green); flex: 1; }
+    .btn-wa {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 8px 13px; border-radius: 9px;
+      background: #25D366; color: #fff;
+      font-size: 12px; font-weight: 700; border: none;
+      cursor: pointer; font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-mark-sent {
+      padding: 8px 13px; border-radius: 9px;
+      background: var(--cream); color: var(--text);
+      font-size: 12px; font-weight: 700;
+      border: 1.5px solid var(--border); cursor: pointer;
+      font-family: inherit; -webkit-tap-highlight-color: transparent;
+    }
+    .btn-vendor-undo {
+      padding: 5px 10px; border-radius: 8px;
+      background: none; color: var(--text-soft);
+      font-size: 11px; font-weight: 700; border: 1.5px solid var(--border);
+      cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent;
+    }
+    .btn-wa:disabled, .btn-mark-sent:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── TODAY: COLLECT ROWS ── */
+    .collect-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 16px; border-bottom: 1px solid var(--border);
+    }
+    .collect-row:last-child { border-bottom: none; }
+    .collect-body { flex: 1; min-width: 0; }
+    .collect-name { font-size: 15px; font-weight: 600; color: var(--text); }
+    .collect-meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+    .collect-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+    .collect-amt   { font-size: 15px; font-weight: 700; color: var(--text); }
+    .collect-phone {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 12px; font-weight: 700; color: var(--green); text-decoration: none;
+    }
+    .btn-collected {
+      font-size: 11px; font-weight: 700; padding: 4px 10px;
+      border-radius: 8px; background: var(--green); color: #fff;
+      border: none; cursor: pointer; font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── ORDERS TAB: DAY TOGGLE ── */
+    .day-toggle-wrap { padding: 16px 0 0; }
+    .day-toggle {
+      display: inline-flex; background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      overflow: hidden; box-shadow: var(--shadow);
+    }
+    .day-btn {
+      padding: 7px 20px; font-size: 13px; font-weight: 700;
+      color: var(--text-soft); cursor: pointer; border: none;
+      background: transparent; font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+    .day-btn.active { background: var(--green); color: #fff; border-radius: 8px; }
+
+    /* ── ORDER CARD ── */
+    .order-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      transition: opacity 0.25s;
+    }
+    .order-card:last-child { border-bottom: none; }
+    .order-card.completed  { opacity: 0.38; }
+    .order-info { flex: 1; min-width: 0; }
+    .order-name {
+      font-size: 15px; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .order-meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+    .order-btns { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    /* Delivery pill — matches Collect pill */
+    .btn-del {
+      width: 100px; padding: 6px 0; border-radius: 20px; white-space: nowrap;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em; text-align: center;
+      border: 1.5px solid var(--border); background: var(--cream);
+      color: var(--text-soft); cursor: pointer; font-family: inherit;
+      -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
+    }
+    .btn-del:active { opacity: 0.7; }
+    .btn-del.done { background: var(--green); color: #fff; border-color: var(--green); }
+    /* Payment pill */
+    .btn-pay {
+      width: 86px; padding: 6px 0; border-radius: 20px; white-space: nowrap;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em; text-align: center;
+      border: 1.5px solid; cursor: pointer; font-family: inherit;
+      -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
+    }
+    .btn-pay:active { opacity: 0.7; }
+    .btn-pay.cod       { background: #fef3e2; color: var(--orange);  border-color: #f5c07a; }
+    .btn-pay.cash-done { background: var(--green-light); color: var(--green); border-color: var(--green); pointer-events: none; }
+    .btn-pay.upi       { background: var(--green-light); color: var(--green); border-color: var(--green); pointer-events: none; }
+
+    /* ── VIEW-ONLY SECTION CHIP ── */
+    .view-only-chip {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-soft); background: var(--border);
+      padding: 2px 8px; border-radius: 6px; margin-left: 8px;
+      vertical-align: middle;
+    }
+    .view-only-card { opacity: 0.72; }
+
+    /* ── ACCOUNTS TAB ── */
+    .period-toggle-wrap { padding: 16px 0 0; }
+    .period-toggle {
+      display: inline-flex; background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      overflow: hidden; box-shadow: var(--shadow);
+    }
+    .period-btn {
+      padding: 7px 20px; font-size: 13px; font-weight: 700;
+      color: var(--text-soft); cursor: pointer; border: none;
+      background: transparent; font-family: inherit;
+      -webkit-tap-highlight-color: transparent; transition: background 0.15s, color 0.15s;
+    }
+    .period-btn.active { background: var(--green); color: #fff; border-radius: 8px; }
+
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 4px 0 0; }
+    .stat-section-label {
+      font-size: 11px; font-weight: 700; color: var(--text-soft);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      padding: 16px 0 4px;
+    }
+    .stat-card {
+      background: var(--white); border-radius: 14px;
+      border: 1px solid var(--border); box-shadow: var(--shadow); padding: 16px;
+    }
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .stat-value { font-size: 22px; font-weight: 760; color: var(--text); letter-spacing: -0.5px; }
+    .stat-value.green  { color: var(--green); }
+    .stat-value.orange { color: var(--orange); }
+    .stat-sub { font-size: 12px; color: var(--text-soft); margin-top: 3px; }
+
+    .expense-form {
+      background: var(--white); border-radius: 14px;
+      border: 1px solid var(--border); box-shadow: var(--shadow); padding: 16px 18px;
+    }
+    .expense-row-form { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px; }
+    .expense-row-form-2 { display: flex; gap: 8px; align-items: flex-end; }
+    .exp-select-wrap { flex: 1; }
+    .exp-input-wrap { flex: 1; }
+    .exp-label { font-size: 11px; font-weight: 700; color: var(--text-soft); margin-bottom: 4px; display: block; }
+    .exp-select, .exp-input {
+      width: 100%; padding: 9px 12px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-family: inherit; color: var(--text);
+      background: var(--cream); -webkit-appearance: none; appearance: none;
+    }
+    .exp-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a8fa8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+    .exp-select:focus, .exp-input:focus { outline: none; border-color: var(--green); }
+    .exp-amt-wrap { width: 90px; }
+    .btn-log-exp {
+      height: 40px; padding: 0 16px; background: var(--green); color: #fff;
+      border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+      font-family: inherit; cursor: pointer; flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .expense-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+    }
+    .expense-row:last-child { border-bottom: none; }
+    .expense-desc { font-size: 14px; color: var(--text); }
+    .expense-date { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+    .expense-amt  { font-size: 14px; font-weight: 700; color: var(--err); flex-shrink: 0; }
+    .expense-edit-icon {
+      width: 28px; height: 28px; border-radius: 8px; background: none; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--text-soft); flex-shrink: 0; -webkit-tap-highlight-color: transparent;
+    }
+    .expense-edit-row {
+      flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 16px;
+    }
+    .expense-edit-row .edit-fields { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .expense-edit-row .edit-actions { display: flex; gap: 8px; }
+    .btn-edit-save {
+      flex: 1; height: 36px; background: var(--green); color: #fff;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+    }
+    .btn-edit-cancel {
+      height: 36px; padding: 0 14px; background: var(--cream); color: var(--text-soft);
+      border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px;
+      font-family: inherit; cursor: pointer;
+    }
+    .receipt-area {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    }
+    .btn-receipt {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 10px 14px; border-radius: 10px;
+      border: 1.5px dashed var(--border); background: var(--cream);
+      color: var(--text-soft); font-size: 13px; font-family: inherit;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .btn-receipt.has-photo {
+      border-style: solid; border-color: var(--green);
+      color: var(--green); background: var(--green-light);
+    }
+    .btn-no-receipt {
+      flex-shrink: 0; height: 40px; padding: 0 14px;
+      background: none; border: 1.5px solid var(--border); border-radius: 10px;
+      color: var(--text-soft); font-size: 12px; font-weight: 600;
+      cursor: pointer; white-space: nowrap; font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-no-receipt:active { opacity: 0.7; }
+    .no-receipt-note {
+      font-size: 11px; color: var(--text-soft); font-style: italic;
+      flex-shrink: 0; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .receipt-link {
+      color: var(--accent, #2d7aee); text-decoration: none; font-size: 14px;
+      flex-shrink: 0; padding: 2px 4px;
+    }
+    /* ── TODAY: per-apt summary strip ── */
+    .today-apt-summary {
+      display: flex; align-items: center;
+      padding: 11px 16px; border-bottom: 1px solid var(--border);
+    }
+    .today-apt-stat {
+      flex: 1; font-size: 14px; font-weight: 700; color: var(--text);
+      text-align: center; padding: 0 10px;
+      border-right: 1px solid var(--border);
+    }
+    .today-apt-stat:first-child { text-align: left; padding-left: 0; }
+    .today-apt-stat:last-child  { border-right: none; text-align: right; padding-right: 0; }
+
+    /* ── EMPTY ── */
+    .empty {
+      text-align: center; padding: 40px 24px;
+      color: var(--text-soft); font-size: 14px; line-height: 1.6;
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 10px; }
+
+    /* ── BOTTOM TAB BAR ── */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: saturate(180%) blur(22px);
+      -webkit-backdrop-filter: saturate(180%) blur(22px);
+      border-top: 1px solid var(--border);
+      display: flex; padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .tab-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 10px 0 8px;
+      cursor: pointer; border: none; background: transparent;
+      -webkit-tap-highlight-color: transparent;
+      color: #b0bec5; font-family: inherit; transition: color 0.18s;
+      gap: 4px;
+    }
+    .tab-item.active { color: var(--green-mid); }
+    .tab-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.01em;
+      transition: font-weight 0.18s;
+    }
+    .tab-item.active .tab-label { font-weight: 800; }
+
+    /* ── LOADING / TOAST ── */
+    .loading { text-align: center; padding: 48px 24px; color: var(--text-soft); }
+    .spin {
+      display: inline-block; width: 22px; height: 22px;
+      border: 2.5px solid var(--border); border-top-color: var(--green);
+      border-radius: 50%; animation: sp 0.7s linear infinite; margin-bottom: 12px;
+    }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    .toast {
+      position: fixed; bottom: calc(70px + env(safe-area-inset-bottom, 0px) + 10px);
+      left: 50%; transform: translateX(-50%) translateY(60px);
+      background: rgba(20,20,20,0.88); backdrop-filter: blur(16px);
+      color: #fff; padding: 9px 18px; border-radius: 20px;
+      font-size: 13px; z-index: 900; pointer-events: none;
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap;
+    }
+    .toast.up { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ PIN SCREEN ══════════════ -->
+<div id="screen-pin">
+  <div class="pin-logo">
+    <img src="../assets/logo.png" alt="DairyBliss" onerror="this.style.display='none'">
+  </div>
+  <p class="pin-sub" id="pin-sub" style="margin-top:8px">Enter PIN to continue</p>
+
+  <!-- Who-are-you (setup only, hidden by default) -->
+  <div id="pin-who-row" style="display:none;flex-direction:column;gap:12px;width:min(100%,300px);margin-bottom:8px">
+    <button class="pin-who-btn" id="who-spc" onclick="requestOtp('SPC')">
+      <span class="pin-who-name">Rekha</span>
+      <span class="pin-who-apt">Sobha Palm Court</span>
+    </button>
+    <button class="pin-who-btn" id="who-bnr" onclick="requestOtp('BNR')">
+      <span class="pin-who-name">Deepa</span>
+      <span class="pin-who-apt">Brigade North Ridge</span>
+    </button>
+  </div>
+
+  <!-- Dots: 6 for OTP, 4 for PIN -->
+  <div class="pin-dots" id="pin-dots-wrap">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+    <div class="pin-dot" id="pd4" style="display:none"></div>
+    <div class="pin-dot" id="pd5" style="display:none"></div>
+  </div>
+  <div class="pin-pad" id="pin-pad">
+    <button class="pin-btn" onclick="pinKey('1')">1</button>
+    <button class="pin-btn" onclick="pinKey('2')">2</button>
+    <button class="pin-btn" onclick="pinKey('3')">3</button>
+    <button class="pin-btn" onclick="pinKey('4')">4</button>
+    <button class="pin-btn" onclick="pinKey('5')">5</button>
+    <button class="pin-btn" onclick="pinKey('6')">6</button>
+    <button class="pin-btn" onclick="pinKey('7')">7</button>
+    <button class="pin-btn" onclick="pinKey('8')">8</button>
+    <button class="pin-btn" onclick="pinKey('9')">9</button>
+    <button class="pin-btn empty"></button>
+    <button class="pin-btn" onclick="pinKey('0')">0</button>
+    <button class="pin-btn del" onclick="pinKey('del')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+        <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+      </svg>
+    </button>
+  </div>
+  <p class="pin-err" id="pin-err"></p>
+
+  <!-- Resend + back links -->
+  <div id="pin-links" style="display:none;margin-top:16px;display:none;flex-direction:column;align-items:center;gap:10px">
+    <button id="pin-resend-btn" class="pin-text-btn" onclick="resendOtp()" style="display:none">Resend code</button>
+    <button class="pin-text-btn" onclick="cancelSetup()">← Back to login</button>
+  </div>
+
+  <!-- First-time setup entry point -->
+  <button id="pin-setup-link" class="pin-text-btn" onclick="showSetupWho()"
+          style="display:none;margin-top:20px">Set up your PIN →</button>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="screen-app">
+
+  <header class="hd">
+    <div class="hd-row">
+      <div class="logo-wrap">
+        <img src="../assets/logo.png" alt="DairyBliss" onerror="this.style.display='none'">
+      </div>
+      <div class="hd-right">
+        <span class="hd-user" id="hd-user"></span>
+        <button class="btn-icon btn-refresh" id="btn-refresh" onclick="fetchOrders(true)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </button>
+        <button class="btn-icon btn-lock" onclick="lockApp()" title="Sign out">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="tab-content">
+
+    <!-- ── TODAY ── -->
+    <div class="tab-pane active" id="tab-today">
+      <div class="page">
+        <div id="today-content"><div class="loading"><div class="spin"></div><br>Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ── ORDERS ── -->
+    <div class="tab-pane" id="tab-orders">
+      <div class="page">
+        <div class="day-toggle-wrap">
+          <div class="day-toggle">
+            <button class="day-btn active" id="day-0" onclick="setDayIdx(0)">—</button>
+            <button class="day-btn"        id="day-1" onclick="setDayIdx(1)">—</button>
+          </div>
+        </div>
+        <div id="orders-content"><div class="loading"><div class="spin"></div><br>Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ── ACCOUNTS ── -->
+    <div class="tab-pane" id="tab-accounts">
+      <div class="page">
+        <div class="period-toggle-wrap">
+          <div class="period-toggle">
+            <button class="period-btn active" id="period-week" onclick="setPeriod('week')">This week</button>
+            <button class="period-btn"        id="period-all"  onclick="setPeriod('all')">All time</button>
+          </div>
+        </div>
+        <div id="accounts-content"><div class="loading"><div class="spin"></div><br>Loading…</div></div>
+        <div class="sec-hd">Log expense</div>
+        <div class="expense-form">
+          <div class="expense-row-form">
+            <div class="exp-select-wrap">
+              <label class="exp-label">Category</label>
+              <select class="exp-select" id="exp-cat" onchange="onExpCatChange()">
+                <option value="Paneer purchase" selected>Paneer purchase</option>
+                <option value="Packaging">Packaging</option>
+                <option value="Stationery">Stationery</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="exp-amt-wrap">
+              <label class="exp-label">Amount ₹</label>
+              <input class="exp-input" id="exp-amt" type="number" placeholder="0" min="0">
+            </div>
+          </div>
+          <div class="expense-row-form-2" id="exp-other-row" style="display:none;margin-bottom:8px">
+            <div class="exp-input-wrap">
+              <label class="exp-label">Describe</label>
+              <input class="exp-input" id="exp-desc" type="text" placeholder="What was it?">
+            </div>
+          </div>
+          <div class="receipt-area" id="exp-receipt-area">
+            <input type="file" id="exp-receipt-input" accept="image/*" capture="environment"
+                   onchange="onReceiptPicked(event)" style="display:none">
+            <button class="btn-receipt" id="exp-receipt-btn"
+                    onclick="document.getElementById('exp-receipt-input').click()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              <span id="exp-receipt-btn-text">Add receipt</span>
+            </button>
+            <button class="btn-no-receipt" id="exp-no-receipt-btn" onclick="skipReceipt()">No receipt?</button>
+          </div>
+          <div id="no-receipt-reason-row" class="receipt-area" style="display:none">
+            <input class="exp-input" id="exp-no-receipt-reason" type="text"
+                   style="flex:1;margin:0;height:40px"
+                   placeholder="Why no receipt? (e.g. vendor didn't give one)">
+            <button onclick="resetReceiptUI()" class="btn-no-receipt">← Photo</button>
+          </div>
+          <div class="expense-row-form-2">
+            <button class="btn-log-exp" style="width:100%" onclick="logExpense()">Add expense</button>
+          </div>
+        </div>
+        <div id="expense-list"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="tab-bar">
+    <button class="tab-item active" id="tb-today" onclick="setTab('today')">
+      <!-- Home: filled house, roof separate so it can be coloured -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10.55 2.533a2 2 0 0 1 2.9 0l7.5 7.948A2 2 0 0 1 22 11.948V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8.052a2 2 0 0 1 .55-1.367l7.5-7.948ZM9 22h6v-6a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v6Z" opacity="0.9"/>
+      </svg>
+      <span class="tab-label">Home</span>
+    </button>
+    <button class="tab-item" id="tb-orders" onclick="setTab('orders')">
+      <!-- Orders: clipboard with list lines -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/>
+        <line x1="9" y1="12" x2="15" y2="12"/>
+        <line x1="9" y1="16" x2="13" y2="16"/>
+      </svg>
+      <span class="tab-label">Orders</span>
+    </button>
+    <button class="tab-item" id="tb-accounts" onclick="setTab('accounts')">
+      <!-- Summary: bar chart -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3"  y="12" width="4" height="9" rx="1" opacity="0.9"/>
+        <rect x="10" y="6"  width="4" height="15" rx="1" opacity="0.9"/>
+        <rect x="17" y="9"  width="4" height="12" rx="1" opacity="0.9"/>
+      </svg>
+      <span class="tab-label">Summary</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyDuHkkBIanz-6Qp-aRzCFZKbOdNTcW_IRtvYIy0UTvNO88Enguyaikxkk_mFPW9yFC1A/exec';
+
+// Vendor details
+const VENDOR_WA_NUMBER   = '919999839093';   // WhatsApp number with country code (no +)
+const VENDOR_DELIVER_TO  = 'Rekha';
+const VENDOR_DELIVER_ADDR= '3162, Sobha Palm Court, Kogilu Main Road, Yelahanka, Bangalore 560064';
+const VENDOR_DELIVER_PH  = '8861000100';
+
+const APT_NAMES = { SPC: 'Sobha Palm Court', BNR: 'Brigade North Ridge' };
+const BLOCK_KG    = 3;
+const COST_PER_KG = 335;
+
+// ── STATE ─────────────────────────────────────────────────────
+let orders        = [];
+let summaryData   = null;
+let vendorOrdered = {};   // { '<iso-date>': true }
+let activeUser    = 'SPC';
+let activeToken   = null;
+let activeDay     = null;
+let activeTab     = 'today';
+let activePeriod  = 'week';
+let expensesCache     = [];   // loaded from backend, localStorage fallback
+let _expReceipt       = { b64: null, skipped: false };
+let _editingExpenseId = null;
+
+// ── PIN AUTH ──────────────────────────────────────────────────
+// Modes: 'login' | 'setup-who' | 'setup-otp' | 'setup-pin' | 'setup-confirm'
+let pinEntry    = '';
+let pinMode     = 'login';
+let pinLen      = 4;         // 6 for OTP entry, 4 for PIN
+let setupApt    = null;      // 'SPC' or 'BNR'
+let setupToken  = null;      // short-lived token returned after OTP verify
+let setupFirst  = '';        // first PIN entry (to confirm)
+let _pinBusy    = false;
+let _pinStatus  = { spcReady: true, bnrReady: true };
+
+function pinKey(k) {
+  if (_pinBusy) return;
+  if (k === 'del') {
+    pinEntry = pinEntry.slice(0, -1);
+  } else if (pinEntry.length < pinLen) {
+    pinEntry += k;
+  }
+  updatePinDots();
+  if (pinEntry.length === pinLen) {
+    _pinBusy = true;
+    setTimeout(handlePinComplete, 80);
+  }
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 6; i++) {
+    const el = document.getElementById('pd' + i);
+    if (!el) continue;
+    if (i < pinLen) {
+      el.style.display = '';
+      el.classList.toggle('filled', i < pinEntry.length);
+    } else {
+      el.style.display = 'none';
+    }
+  }
+}
+
+async function handlePinComplete() {
+  if (pinMode === 'login')          { await checkPin();    return; }
+  if (pinMode === 'setup-otp')      { await verifyOtp();   return; }
+  if (pinMode === 'setup-pin')      {
+    setupFirst = pinEntry; pinEntry = '';
+    setPinMode('setup-confirm'); _pinBusy = false; return;
+  }
+  if (pinMode === 'setup-confirm')  {
+    if (pinEntry === setupFirst) { await savePin(); }
+    else {
+      flashPinError("PINs don't match — try again");
+      setupFirst = ''; pinEntry = '';
+      setPinMode('setup-pin');
+    }
+  }
+}
+
+function setPinMode(mode) {
+  pinMode = mode;
+  pinLen  = (mode === 'setup-otp') ? 6 : 4;
+  pinEntry = '';
+  updatePinDots();
+  document.getElementById('pin-err').textContent = '';
+
+  const whoRow   = document.getElementById('pin-who-row');
+  const pad      = document.getElementById('pin-pad');
+  const dotsWrap = document.getElementById('pin-dots-wrap');
+  const sub      = document.getElementById('pin-sub');
+  const links    = document.getElementById('pin-links');
+  const resend   = document.getElementById('pin-resend-btn');
+  const setupLnk = document.getElementById('pin-setup-link');
+
+  // Hide everything first
+  whoRow.style.display  = 'none';
+  pad.style.display     = 'none';
+  dotsWrap.style.display = 'none';
+  links.style.display   = 'none';
+  resend.style.display  = 'none';
+  setupLnk.style.display = 'none';
+
+  if (mode === 'login') {
+    sub.textContent       = 'Enter PIN to continue';
+    pad.style.display     = 'grid';
+    dotsWrap.style.display = 'flex';
+    if (!_pinStatus.spcReady || !_pinStatus.bnrReady)
+      setupLnk.style.display = 'block';
+  } else if (mode === 'setup-who') {
+    sub.textContent = 'Who are you?';
+    // Show only buttons for users without a PIN set
+    document.getElementById('who-spc').style.display = _pinStatus.spcReady ? 'none' : 'flex';
+    document.getElementById('who-bnr').style.display = _pinStatus.bnrReady ? 'none' : 'flex';
+    whoRow.style.display = 'flex';
+    links.style.display  = 'flex';
+  } else if (mode === 'setup-otp') {
+    const name = setupApt === 'SPC' ? 'Rekha' : 'Deepa';
+    sub.textContent        = `Enter the 6-digit code sent to ${name}'s email`;
+    pad.style.display      = 'grid';
+    dotsWrap.style.display = 'flex';
+    links.style.display    = 'flex';
+    resend.style.display   = 'block';
+  } else if (mode === 'setup-pin') {
+    const name = setupApt === 'SPC' ? 'Rekha' : 'Deepa';
+    sub.textContent        = `Hi ${name}! Choose a 4-digit PIN`;
+    pad.style.display      = 'grid';
+    dotsWrap.style.display = 'flex';
+    links.style.display    = 'flex';
+  } else if (mode === 'setup-confirm') {
+    sub.textContent        = 'Confirm your PIN';
+    pad.style.display      = 'grid';
+    dotsWrap.style.display = 'flex';
+    links.style.display    = 'flex';
+  }
+}
+
+function showSetupWho() { setPinMode('setup-who'); }
+
+function cancelSetup() {
+  setupApt = null; setupToken = null; setupFirst = '';
+  setPinMode('login');
+}
+
+async function requestOtp(apt) {
+  setupApt = apt;
+  const btn = document.getElementById(apt === 'SPC' ? 'who-spc' : 'who-bnr');
+  btn.disabled = true;
+  document.getElementById('pin-err').textContent = '';
+  try {
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'request_otp', apt })
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      setPinMode('setup-otp');
+    } else {
+      document.getElementById('pin-err').textContent = data.message || 'Could not send OTP';
+      btn.disabled = false;
+    }
+  } catch {
+    document.getElementById('pin-err').textContent = 'Connection error — check internet';
+    btn.disabled = false;
+  }
+}
+
+async function resendOtp() {
+  document.getElementById('pin-resend-btn').disabled = true;
+  await requestOtp(setupApt);
+  document.getElementById('pin-resend-btn').disabled = false;
+}
+
+async function verifyOtp() {
+  try {
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'verify_otp', apt: setupApt, otp: pinEntry })
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      setupToken = data.setupToken;
+      setPinMode('setup-pin');
+      _pinBusy = false;
+    } else if (data.expired) {
+      flashPinError('Code expired — tap Resend');
+    } else {
+      flashPinError(data.message || 'Wrong code — try again');
+    }
+  } catch {
+    flashPinError('Connection error — check internet');
+  }
+}
+
+async function savePin() {
+  try {
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'setup_pin', apt: setupApt, pin: pinEntry, setupToken })
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      activeUser  = data.user;
+      activeToken = data.token;
+      sessionStorage.setItem('db_auth', JSON.stringify({ user: data.user, token: data.token }));
+      showApp();
+    } else {
+      flashPinError(data.message || 'Setup failed — try again');
+      setPinMode('setup-pin');
+    }
+  } catch {
+    flashPinError('Connection error — check internet');
+  }
+}
+
+async function checkPin() {
+  try {
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'verify_pin', pin: pinEntry })
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      activeUser  = data.user;
+      activeToken = data.token;
+      sessionStorage.setItem('db_auth', JSON.stringify({ user: data.user, token: data.token }));
+      showApp();
+    } else {
+      flashPinError('Incorrect PIN. Try again.');
+    }
+  } catch {
+    flashPinError('Connection error — check internet');
+  }
+}
+
+function flashPinError(msg) {
+  const dotCount = pinLen;
+  for (let i = 0; i < dotCount; i++) document.getElementById('pd' + i).classList.add('error');
+  document.getElementById('pin-err').textContent = msg;
+  setTimeout(() => {
+    pinEntry = '';
+    updatePinDots();
+    for (let i = 0; i < dotCount; i++) document.getElementById('pd' + i).classList.remove('error');
+    document.getElementById('pin-err').textContent = '';
+    _pinBusy = false;
+  }, 1000);
+}
+
+function showApp() {
+  document.getElementById('screen-pin').style.display = 'none';
+  const app = document.getElementById('screen-app');
+  app.style.display = 'flex'; app.style.flexDirection = 'column';
+  document.getElementById('hd-user').textContent = activeUser;
+  try { expensesCache = JSON.parse(localStorage.getItem('db_expenses') || '[]'); } catch { expensesCache = []; }
+  fetchOrders();
+  fetchSummary();
+  loadExpensesFromBackend();
+  renderExpenseList();
+}
+
+function lockApp() {
+  sessionStorage.removeItem('db_auth');
+  activeToken = null;
+  setupApt = null; setupToken = null; setupFirst = '';
+  setPinMode('login');
+  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('screen-pin').style.display = 'flex';
+}
+
+// ── FETCH ─────────────────────────────────────────────────────
+async function fetchOrders(showSpinner) {
+  if (showSpinner) {
+    const btn = document.getElementById('btn-refresh');
+    btn.classList.add('spinning');
+    setTimeout(() => btn.classList.remove('spinning'), 600);
+  }
+  try {
+    const resp = await fetch(WEBHOOK_URL + '?action=dashboard&token=' + (activeToken || ''));
+    const data = await resp.json();
+    if (data.ok) {
+      orders = data.orders;
+      if (data.vendorOrdered) vendorOrdered = data.vendorOrdered;
+      localStorage.setItem('db_orders', JSON.stringify(orders));
+      renderToday(); renderOrders();
+    } else if (data.error === 'unauthorized') { lockApp(); }
+  } catch {
+    const cached = localStorage.getItem('db_orders');
+    if (cached) { orders = JSON.parse(cached); renderToday(); renderOrders(); }
+    showToast('Offline — showing cached data');
+  }
+}
+async function fetchSummary() {
+  try {
+    const resp = await fetch(WEBHOOK_URL + '?action=summary&token=' + (activeToken || ''));
+    const data = await resp.json();
+    if (data.ok) {
+      summaryData = data;
+      localStorage.setItem('db_summary', JSON.stringify(data));
+      renderAccounts();
+    }
+  } catch {
+    const cached = localStorage.getItem('db_summary');
+    if (cached) { summaryData = JSON.parse(cached); renderAccounts(); }
+  }
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function getDeliveryDates() {
+  const wed = nextDeliveryDate(3), sat = nextDeliveryDate(6);
+  return wed < sat ? [wed, sat] : [sat, wed];
+}
+function setDayIdx(idx) {
+  const dates = getDeliveryDates();
+  activeDay = isoDate(dates[idx]);
+  document.getElementById('day-0').classList.toggle('active', idx === 0);
+  document.getElementById('day-1').classList.toggle('active', idx === 1);
+  renderOrders();
+}
+function setTab(tab) {
+  activeTab = tab;
+  ['today','orders','accounts'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tb-'  + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'accounts') loadExpensesFromBackend();
+}
+function setPeriod(p) {
+  activePeriod = p;
+  document.getElementById('period-week').classList.toggle('active', p === 'week');
+  document.getElementById('period-all').classList.toggle('active',  p === 'all');
+  renderAccounts();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function fmt(rs) { return '₹' + Number(rs || 0).toLocaleString('en-IN'); }
+function esc(s)  { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function nextDeliveryDate(weekday) {
+  const now   = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days  = (weekday - today.getDay() + 7) % 7 || 7;
+  const d = new Date(today); d.setDate(d.getDate() + days); return d;
+}
+function fmtDate(d) {
+  const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+function isoDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function todayISO() { return isoDate(new Date()); }
+
+function qtyLabel(o) {
+  const parts = [];
+  if (o.q250) parts.push(`250g×${o.q250}`);
+  if (o.q500) parts.push(`500g×${o.q500}`);
+  if (o.q750) parts.push(`750g×${o.q750}`);
+  if (o.q1kg) parts.push(`1kg×${o.q1kg}`);
+  return parts.join(' · ');
+}
+function aptQtyBreakdown(list) {
+  const t = { q250:0, q500:0, q750:0, q1kg:0 };
+  list.forEach(o => { t.q250+=o.q250||0; t.q500+=o.q500||0; t.q750+=o.q750||0; t.q1kg+=o.q1kg||0; });
+  const kg = (t.q250*250 + t.q500*500 + t.q750*750 + t.q1kg*1000) / 1000;
+  const tags = [];
+  if (t.q250) tags.push(`250g ×${t.q250}`);
+  if (t.q500) tags.push(`500g ×${t.q500}`);
+  if (t.q750) tags.push(`750g ×${t.q750}`);
+  if (t.q1kg) tags.push(`1kg ×${t.q1kg}`);
+  return { tags, kg };
+}
+function computeBuy(list) {
+  const totalGrams = list.reduce((s, o) =>
+    s + (o.q250||0)*250 + (o.q500||0)*500 + (o.q750||0)*750 + (o.q1kg||0)*1000, 0);
+  const kg     = totalGrams / 1000;
+  const blocks = Math.ceil(kg / BLOCK_KG);
+  const buyKg  = blocks * BLOCK_KG;
+  return { kg, blocks, buyKg, cost: Math.round(buyKg * COST_PER_KG) };
+}
+function flatFromAddress(address) {
+  const parts = String(address || '').split(',');
+  const skip  = ['sobha','brigade','bangalore','bengaluru','karnataka','india'];
+  return parts.map(p => p.trim()).find(p =>
+    p.length < 25 && !skip.some(w => p.toLowerCase().includes(w))
+  ) || address;
+}
+function flatSortKey(flat) {
+  const s = String(flat || '').replace(/\s/g, '').toUpperCase();
+
+  // BNR: single letter + optional dash + digits  (A-1202, D-801, D108)
+  // Structure: last 2 digits = unit number, rest = floor
+  const bnr = s.match(/^([A-Z])-?(\d+)$/);
+  if (bnr) {
+    const digits = bnr[2];
+    const unit   = digits.slice(-2).padStart(2, '0');
+    const floor  = (digits.length > 2 ? digits.slice(0, -2) : digits.slice(0,1)).padStart(3, '0');
+    return `${bnr[1]}${floor}${unit}`;
+  }
+
+  // SPC: 4-digit WFFH (Wing 1–4, Floor 2-digit, House 1-digit), e.g. 3162
+  // Numeric sort already gives wing→floor→house order naturally
+  // Fallback for anything else: pad numbers for natural sort
+  return s.replace(/(\d+)/g, n => n.padStart(6, '0'));
+}
+function isUpiPaid(o) {
+  const s = (o.paymentStatus || '').toLowerCase();
+  return s === 'paid online' || s === 'upi' || s === 'paid';
+}
+function isPaid(o) { return isUpiPaid(o) || !!o.paymentCollected; }
+function sortByFlat(list) {
+  return list.slice().sort((a, b) =>
+    flatSortKey(flatFromAddress(a.address)) < flatSortKey(flatFromAddress(b.address)) ? -1 : 1);
+}
+
+// ── RENDER TODAY ──────────────────────────────────────────────
+function renderToday() {
+  const el = document.getElementById('today-content');
+  const dates  = getDeliveryDates();
+  const iso    = isoDate(dates[0]);
+
+  const upcoming = orders.filter(o => o.deliveryDate === iso);
+  const spcOrders = sortByFlat(upcoming.filter(o => o.apt === 'SPC'));
+  const bnrOrders = sortByFlat(upcoming.filter(o => o.apt === 'BNR'));
+
+  const today = todayISO();
+  const pendingCOD = orders.filter(o =>
+    o.deliveryDate < today &&
+    o.paymentStatus !== 'Paid Online' &&
+    !o.paymentCollected
+  ).sort((a, b) => a.deliveryDate < b.deliveryDate ? 1 : -1);
+
+  const buy = computeBuy(upcoming);
+  const spcB = aptQtyBreakdown(spcOrders);
+  const bnrB = aptQtyBreakdown(bnrOrders);
+
+  let html = `
+    <div class="today-header">
+      <div class="today-label">Next delivery</div>
+      <div class="today-date">${fmtDate(dates[0])}</div>
+      <div class="today-sub">${upcoming.length} order${upcoming.length !== 1 ? 's' : ''} total</div>
+    </div>`;
+
+  if (!upcoming.length && !orders.length && !localStorage.getItem('db_orders')) {
+    el.innerHTML = '<div class="loading"><div class="spin"></div><br>Loading…</div>'; return;
+  }
+
+  // Order count chips
+  html += `
+    <div class="count-row">
+      <div class="count-chip">
+        <div class="count-val">${spcOrders.length}</div>
+        <div class="count-label">SPC orders</div>
+      </div>
+      <div class="count-chip">
+        <div class="count-val">${bnrOrders.length}</div>
+        <div class="count-label">BNR orders</div>
+      </div>
+      <div class="count-chip">
+        <div class="count-val">${buy.kg > 0 ? buy.kg.toFixed(1) + ' kg' : '0'}</div>
+        <div class="count-label">Total qty</div>
+      </div>
+    </div>`;
+
+  if (upcoming.length) {
+    // Vendor order card
+    const vOrdered  = !!vendorOrdered[iso];
+    const vDeadline = vendorOrderDeadline(iso);
+    const inWindow  = isVendorOrderWindow();
+    const waIcon    = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>`;
+    html += `
+    <div class="sec-hd">Place vendor order</div>
+    <div class="card vendor-card">
+      <div class="vendor-stats">
+        <div class="vendor-stat">
+          <div class="vendor-stat-val">${buy.blocks}</div>
+          <div class="vendor-stat-label">block${buy.blocks !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="vendor-stat">
+          <div class="vendor-stat-val">${buy.buyKg} kg</div>
+          <div class="vendor-stat-label">to order</div>
+        </div>
+        <div class="vendor-stat">
+          <div class="vendor-stat-val green">${fmt(buy.cost)}</div>
+          <div class="vendor-stat-label">cost</div>
+        </div>
+      </div>
+      <div class="vendor-detail">${buy.kg.toFixed(2)} kg across ${upcoming.length} orders · ${BLOCK_KG} kg/block</div>
+      <div class="vendor-actions">
+        ${vOrdered
+          ? `<span class="vendor-ordered-done">✅ Order sent to vendor</span>
+             <button class="btn-vendor-undo" onclick="markVendorOrdered('${iso}', false)">Undo</button>`
+          : `<span class="vendor-deadline-text">Order by ${vDeadline}, 8 PM</span>
+             <div style="display:flex;gap:6px;flex-wrap:wrap">
+               <button class="btn-wa" ${inWindow ? `onclick="openVendorWA('${iso}', ${buy.buyKg})"` : 'disabled'}>
+                 ${waIcon} WhatsApp vendor
+               </button>
+               <button class="btn-mark-sent" ${inWindow ? `onclick="markVendorOrdered('${iso}', true)"` : 'disabled'}>
+                 Mark sent
+               </button>
+             </div>`
+        }
+      </div>
+    </div>`;
+
+    // SPC section: summary + breakup tags + order rows
+    if (spcOrders.length) {
+      const spcRs = spcOrders.reduce((s, o) => s + o.totalRs, 0);
+      html += `
+      <div class="sec-hd">Sobha Palm Court</div>
+      <div class="card">
+        <div class="today-apt-summary">
+          <span class="today-apt-stat">${spcOrders.length} order${spcOrders.length !== 1 ? 's' : ''}</span>
+          <span class="today-apt-stat">${spcB.kg.toFixed(2)} kg</span>
+          <span class="today-apt-stat">${fmt(spcRs)}</span>
+        </div>
+        ${spcOrders.map(o => refRow(o)).join('')}
+      </div>`;
+    }
+    // BNR section: summary + breakup tags + order rows
+    if (bnrOrders.length) {
+      const bnrRs = bnrOrders.reduce((s, o) => s + o.totalRs, 0);
+      html += `
+      <div class="sec-hd">Brigade North Ridge</div>
+      <div class="card">
+        <div class="today-apt-summary">
+          <span class="today-apt-stat">${bnrOrders.length} order${bnrOrders.length !== 1 ? 's' : ''}</span>
+          <span class="today-apt-stat">${bnrB.kg.toFixed(2)} kg</span>
+          <span class="today-apt-stat">${fmt(bnrRs)}</span>
+        </div>
+        ${bnrOrders.map(o => refRow(o)).join('')}
+      </div>`;
+    }
+  } else {
+    html += `<div class="empty"><div class="empty-icon">📦</div>No orders yet for ${fmtDate(dates[0])}.</div>`;
+  }
+
+  // Pending COD from previous runs
+  if (pendingCOD.length) {
+    const total = pendingCOD.reduce((s, o) => s + o.totalRs, 0);
+    html += `<div class="sec-hd">Collect from previous run &nbsp;·&nbsp; ${fmt(total)}</div><div class="card">`;
+    pendingCOD.forEach(o => {
+      const flat = flatFromAddress(o.address);
+      html += `
+      <div class="collect-row">
+        <div class="collect-body">
+          <div class="collect-name">${esc(o.name)}</div>
+          <div class="collect-meta">${esc(flat)} · ${esc(o.apt)} · ${esc(o.deliveryLabel || o.deliveryDate)}</div>
+        </div>
+        <div class="collect-right">
+          <div class="collect-amt">${fmt(o.totalRs)}</div>
+          <a href="tel:${esc(o.phone)}" class="collect-phone">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9.7a19.79 19.79 0 0 1-3-8.63A2 2 0 0 1 3.62 0h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 7.91a16 16 0 0 0 6.07 6.07l1.27-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            ${esc(o.phone)}
+          </a>
+          <button class="btn-collected" onclick="collectPaid('${o.id}','${o.apt}')">Collected</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// Read-only reference row (Today tab order lists)
+function refRow(o) {
+  const flat      = flatFromAddress(o.address);
+  const upi       = isUpiPaid(o);
+  const paidCash  = !!o.paymentCollected;
+  const badge     = (upi || paidCash)
+    ? `<span class="ref-paid">${upi ? 'UPI ✓' : 'Paid ✓'}</span>`
+    : `<span class="ref-cod">COD</span>`;
+  return `
+  <div class="ref-row">
+    <div class="ref-info">
+      <div class="ref-name">${esc(o.name)}</div>
+      <div class="ref-flat">${esc(flat)}</div>
+    </div>
+    <div class="ref-qty">${qtyLabel(o)}</div>
+    <div class="ref-right"><span class="ref-price">${fmt(o.totalRs)}</span>${badge}</div>
+  </div>`;
+}
+
+// ── RENDER ORDERS ─────────────────────────────────────────────
+function renderOrders() {
+  const dates = getDeliveryDates();
+  const [d0, d1] = dates;
+
+  document.getElementById('day-0').textContent = fmtDate(d0);
+  document.getElementById('day-1').textContent = fmtDate(d1);
+
+  if (!activeDay || ![isoDate(d0), isoDate(d1)].includes(activeDay)) {
+    activeDay = isoDate(d0);
+    document.getElementById('day-0').classList.add('active');
+    document.getElementById('day-1').classList.remove('active');
+  } else {
+    const idx = activeDay === isoDate(d0) ? 0 : 1;
+    document.getElementById('day-0').classList.toggle('active', idx === 0);
+    document.getElementById('day-1').classList.toggle('active', idx === 1);
+  }
+
+  const iso = activeDay;
+  const filtered = orders.filter(o => o.deliveryDate === iso);
+
+  // My apt (editable) first, other apt (view-only) below
+  const otherApt   = activeUser === 'SPC' ? 'BNR' : 'SPC';
+  const myOrders   = sortByFlat(filtered.filter(o => o.apt === activeUser));
+  const theirOrders= sortByFlat(filtered.filter(o => o.apt === otherApt));
+
+  const el = document.getElementById('orders-content');
+
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📦</div>No orders for this date.</div>`;
+    return;
+  }
+
+  let html = '';
+
+  // My apt — editable
+  if (myOrders.length) {
+    html += `<div class="sec-hd">${APT_NAMES[activeUser]}</div>`;
+    const active    = myOrders.filter(o => !(o.delivered && isPaid(o)));
+    const completed = myOrders.filter(o =>   o.delivered && isPaid(o));
+    html += `<div class="card">`;
+    active.forEach(o    => { html += orderCardHTML(o, true); });
+    completed.forEach(o => { html += orderCardHTML(o, true); });
+    html += `</div>`;
+    if (completed.length && active.length === 0) {/* already inside card */}
+  }
+
+  // Their apt — view only
+  if (theirOrders.length) {
+    html += `<div class="sec-hd">${APT_NAMES[otherApt]} <span class="view-only-chip">View only</span></div>`;
+    html += `<div class="card view-only-card">`;
+    theirOrders.forEach(o => { html += orderCardHTML(o, false); });
+    html += `</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// Order card — editable (own apt) or view-only (other apt)
+function orderCardHTML(o, editable) {
+  const flat     = flatFromAddress(o.address);
+  const upiPaid  = isUpiPaid(o);
+  const delDone  = !!o.delivered;
+  const paidDone = isPaid(o);
+  const allDone  = delDone && paidDone;
+  const rid = o.id.replace(/'/g,'');
+
+
+  if (!editable) {
+    // View-only: same compact row, no tappable buttons
+    let statusChip;
+    if (allDone)      statusChip = `<span class="btn-pay cash-done" style="pointer-events:none">Done ✓</span>`;
+    else if (upiPaid) statusChip = `<span class="btn-pay upi">UPI ✓</span>`;
+    else if (delDone) statusChip = `<span class="btn-pay cash-done" style="pointer-events:none">Delivered</span>`;
+    else              statusChip = `<span class="btn-pay cod" style="pointer-events:none">COD</span>`;
+    return `
+    <div class="order-card${allDone ? ' completed' : ''}">
+      <div class="order-info">
+        <div class="order-name">${esc(o.name)}</div>
+        <div class="order-meta">${esc(flat)} · ${qtyLabel(o)} · ${fmt(o.totalRs)}</div>
+      </div>
+      ${statusChip}
+    </div>`;
+  }
+
+  // Editable card — compact row with circle + pill
+  let payBtn;
+  if (upiPaid) {
+    payBtn = `<button class="btn-pay upi">UPI ✓</button>`;
+  } else if (paidDone) {
+    payBtn = `<button class="btn-pay cash-done" onclick="togglePaid('${rid}','${o.apt}')">Cash ✓</button>`;
+  } else {
+    payBtn = `<button class="btn-pay cod" onclick="togglePaid('${rid}','${o.apt}')">Collect</button>`;
+  }
+
+  return `
+  <div class="order-card${allDone ? ' completed' : ''}">
+    <div class="order-info">
+      <div class="order-name">${esc(o.name)}</div>
+      <div class="order-meta">${esc(flat)} · ${qtyLabel(o)} · ${fmt(o.totalRs)}</div>
+    </div>
+    <div class="order-btns">
+      <button class="btn-del${delDone ? ' done' : ''}" onclick="toggleDelivered('${rid}','${o.apt}')">${delDone ? '✓ Delivered' : 'Delivered?'}</button>
+      ${payBtn}
+    </div>
+  </div>`;
+}
+
+// ── RENDER ACCOUNTS ───────────────────────────────────────────
+function renderAccounts() {
+  const el = document.getElementById('accounts-content');
+  if (!summaryData) {
+    el.innerHTML = '<div class="loading"><div class="spin"></div><br>Loading…</div>'; return;
+  }
+  const src = activePeriod === 'week' ? summaryData.week : summaryData.total;
+  const expenses = expensesCache;
+  const now = new Date();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + 1); weekStart.setHours(0,0,0,0);
+  const expTotal = expenses
+    .filter(e => activePeriod === 'all' || new Date(e.date) >= weekStart)
+    .reduce((s, e) => s + e.amount, 0);
+  const netMargin = (src.margin || 0) - expTotal;
+
+  el.innerHTML = `
+    <div class="stat-section-label">Income</div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Collected</div>
+        <div class="stat-value green">${fmt(src.collected)}</div>
+        <div class="stat-sub">Online + cash received</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value orange">${fmt(src.codPending)}</div>
+        <div class="stat-sub">COD not yet collected</div>
+      </div>
+    </div>
+    <div class="stat-section-label">Expenses</div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Paneer purchase</div>
+        <div class="stat-value">${fmt(src.cost)}</div>
+        <div class="stat-sub">${src.kg} kg × ₹${COST_PER_KG}/kg</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Other</div>
+        <div class="stat-value">${fmt(expTotal)}</div>
+        <div class="stat-sub">Packaging, stationery…</div>
+      </div>
+    </div>
+    <div class="stat-section-label">Net margin</div>
+    <div class="card" style="padding:16px 18px">
+      <div style="font-size:30px;font-weight:760;letter-spacing:-0.6px;color:${netMargin >= 0 ? 'var(--green)' : 'var(--err)'}">
+        ${fmt(netMargin)}
+      </div>
+      <div style="font-size:12px;color:var(--text-soft);margin-top:4px">Collected − paneer purchase − other expenses</div>
+    </div>`;
+}
+
+// ── EXPENSES ──────────────────────────────────────────────────
+
+async function loadExpensesFromBackend() {
+  try {
+    const r    = await fetch(WEBHOOK_URL + '?action=expenses&token=' + (activeToken || ''));
+    const data = await r.json();
+    if (data.expenses) {
+      expensesCache = data.expenses;
+      localStorage.setItem('db_expenses', JSON.stringify(expensesCache));
+      renderExpenseList();
+      renderAccounts();
+    }
+  } catch { /* keep using cache */ }
+}
+
+function onExpCatChange() {
+  const cat = document.getElementById('exp-cat').value;
+  document.getElementById('exp-other-row').style.display = cat === 'Other' ? 'flex' : 'none';
+}
+
+// ── Receipt helpers ──
+function compressReceipt(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800, Q = 0.6;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else       { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', Q).split(',')[1]);
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function onReceiptPicked(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const btn  = document.getElementById('exp-receipt-btn');
+  const lbl  = document.getElementById('exp-receipt-btn-text');
+  if (lbl) lbl.textContent = '…';
+  compressReceipt(file).then(b64 => {
+    _expReceipt = { b64, skipped: false };
+    if (btn) btn.classList.add('has-photo');
+    if (lbl) lbl.textContent = 'Receipt added — tap to change';
+    document.getElementById('exp-no-receipt-btn').style.display = 'none';
+  }).catch(() => {
+    showToast('Could not read image');
+    if (lbl) lbl.textContent = 'Add receipt';
+  });
+}
+
+function skipReceipt() {
+  _expReceipt = { b64: null, skipped: true };
+  document.getElementById('exp-receipt-area').style.display = 'none';
+  document.getElementById('no-receipt-reason-row').style.display = 'flex';
+  setTimeout(() => document.getElementById('exp-no-receipt-reason')?.focus(), 50);
+}
+
+function resetReceiptUI() {
+  _expReceipt = { b64: null, skipped: false };
+  const area = document.getElementById('exp-receipt-area');
+  if (area) {
+    area.style.display = 'flex';
+    const btn = document.getElementById('exp-receipt-btn');
+    const lbl = document.getElementById('exp-receipt-btn-text');
+    if (btn) btn.classList.remove('has-photo');
+    if (lbl) lbl.textContent = 'Add receipt';
+    const skip = document.getElementById('exp-no-receipt-btn');
+    if (skip) skip.style.display = '';
+  }
+  const reasonRow = document.getElementById('no-receipt-reason-row');
+  if (reasonRow) reasonRow.style.display = 'none';
+  const reason = document.getElementById('exp-no-receipt-reason');
+  if (reason) reason.value = '';
+  const input = document.getElementById('exp-receipt-input');
+  if (input) input.value = '';
+}
+
+async function logExpense() {
+  const cat    = document.getElementById('exp-cat').value;
+  const other  = document.getElementById('exp-desc')?.value.trim() || '';
+  const amount = parseFloat(document.getElementById('exp-amt').value);
+  if (cat === 'Other' && !other) { showToast('Describe the expense'); return; }
+  if (!amount || amount <= 0)    { showToast('Enter a valid amount'); return; }
+  if (!_expReceipt.b64 && !_expReceipt.skipped) {
+    showToast('Add a receipt photo or tap "No receipt?"'); return;
+  }
+  const noReceiptReason = _expReceipt.skipped
+    ? (document.getElementById('exp-no-receipt-reason')?.value.trim() || '') : '';
+  if (_expReceipt.skipped && !noReceiptReason) {
+    showToast('Enter a reason for no receipt'); return;
+  }
+  const description = cat === 'Other' ? other : cat;
+  const saveBtn = document.querySelector('.btn-log-exp');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+  try {
+    const payload = {
+      action: 'log_expense', token: activeToken,
+      category: cat, description,
+      amount, date: todayISO(), loggedBy: activeUser,
+      receiptB64: _expReceipt.b64 || null,
+      noReceiptReason: noReceiptReason || null,
+    };
+    const r    = await fetch(WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    const entry = {
+      id: data.id || String(Date.now()), date: todayISO(),
+      category: cat, description, amount,
+      receiptUrl: data.receiptUrl || '', loggedBy: activeUser,
+    };
+    expensesCache.unshift(entry);
+    localStorage.setItem('db_expenses', JSON.stringify(expensesCache));
+    document.getElementById('exp-amt').value = '';
+    const desc = document.getElementById('exp-desc');
+    if (desc) desc.value = '';
+    resetReceiptUI();
+    renderExpenseList();
+    renderAccounts();
+    showToast('Expense saved ✓');
+  } catch {
+    showToast('Save failed — check connection');
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Add expense'; }
+  }
+}
+
+// Edit expense inline
+function editExpense(id) {
+  _editingExpenseId = String(id);
+  renderExpenseList();
+}
+function cancelExpenseEdit() {
+  _editingExpenseId = null;
+  renderExpenseList();
+}
+function onEditCatChange() {
+  const cat = document.getElementById('edit-exp-cat').value;
+  document.getElementById('edit-exp-desc-row').style.display = cat === 'Other' ? 'block' : 'none';
+}
+async function saveExpenseEdit(id) {
+  const cat    = document.getElementById('edit-exp-cat').value;
+  const other  = document.getElementById('edit-exp-desc')?.value.trim() || '';
+  const amount = parseFloat(document.getElementById('edit-exp-amt').value);
+  if (cat === 'Other' && !other) { showToast('Describe the expense'); return; }
+  if (!amount || amount <= 0)    { showToast('Enter a valid amount'); return; }
+  const description = cat === 'Other' ? other : cat;
+  const saveBtn = document.getElementById('edit-save-btn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'update_expense', token: activeToken, id, category: cat, description, amount }),
+    });
+    const idx = expensesCache.findIndex(e => String(e.id) === String(id));
+    if (idx >= 0) {
+      expensesCache[idx] = { ...expensesCache[idx], category: cat, description, amount };
+      localStorage.setItem('db_expenses', JSON.stringify(expensesCache));
+    }
+    _editingExpenseId = null;
+    renderExpenseList(); renderAccounts();
+    showToast('Updated ✓');
+  } catch {
+    showToast('Save failed');
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+  }
+}
+
+function renderExpenseList() {
+  const el = document.getElementById('expense-list');
+  if (!el) return;
+  const list = expensesCache;
+  if (!list.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px 0"><div class="empty-icon">🧾</div>No expenses yet.</div>';
+    return;
+  }
+  const editIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>`;
+  const CATS = ['Paneer purchase','Packaging','Stationery','Other'];
+  let html = '<div class="sec-hd">Expense log</div><div class="card">';
+  list.forEach(e => {
+    const rid = String(e.id).replace(/'/g, '');
+    if (rid === _editingExpenseId) {
+      // ── Inline edit row ──
+      const isOther = !CATS.slice(0,-1).includes(e.category);
+      const descVal = isOther ? e.description : '';
+      html += `
+      <div class="expense-row expense-edit-row">
+        <div class="edit-fields">
+          <select class="exp-select" id="edit-exp-cat" onchange="onEditCatChange()" style="flex:1;min-width:100px">
+            ${CATS.map(c => `<option value="${c}"${e.category===c?' selected':''}>${c}</option>`).join('')}
+          </select>
+          <input class="exp-input" id="edit-exp-amt" type="number" value="${e.amount}" style="width:80px">
+        </div>
+        <div id="edit-exp-desc-row" style="display:${isOther?'block':'none'}">
+          <input class="exp-input" id="edit-exp-desc" type="text" value="${esc(descVal)}" placeholder="Describe">
+        </div>
+        <div class="edit-actions">
+          <button class="btn-edit-save" id="edit-save-btn" onclick="saveExpenseEdit('${rid}')">Save</button>
+          <button class="btn-edit-cancel" onclick="cancelExpenseEdit()">Cancel</button>
+        </div>
+      </div>`;
+    } else {
+      // ── Normal row ──
+      html += `
+      <div class="expense-row">
+        <div style="flex:1;min-width:0">
+          <div class="expense-desc">${esc(e.description)}</div>
+          <div class="expense-date">${esc(e.date)}${e.loggedBy ? ' · ' + esc(e.loggedBy) : ''}</div>
+        </div>
+        ${e.receiptUrl
+        ? e.receiptUrl.startsWith('No receipt:')
+          ? `<span class="no-receipt-note" title="${esc(e.receiptUrl)}">${esc(e.receiptUrl.replace('No receipt: ',''))}</span>`
+          : `<a href="${esc(e.receiptUrl)}" target="_blank" class="receipt-link" title="View receipt">🧾</a>`
+        : ''}
+        <div class="expense-amt">−${fmt(e.amount)}</div>
+        <button class="expense-edit-icon" onclick="editExpense('${rid}')">${editIcon}</button>
+      </div>`;
+    }
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── VENDOR ORDER WINDOW ───────────────────────────────────────
+// Buttons active: Tue 8 PM – Wed 2 AM, Fri 8 PM – Sat 2 AM
+function isVendorOrderWindow() {
+  const d = new Date(), day = d.getDay(), h = d.getHours();
+  return (day === 2 && h >= 20) || (day === 3 && h < 2)  // Tue 20–Wed 02
+      || (day === 5 && h >= 20) || (day === 6 && h < 2); // Fri 20–Sat 02
+}
+
+// ── VENDOR ORDER ─────────────────────────────────────────────
+function vendorOrderDeadline(isoDeliveryDate) {
+  // 2 days before delivery = when vendor should be ordered by
+  const d = new Date(isoDeliveryDate + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+function openVendorWA(deliveryDate, buyKg) {
+  const d = new Date(deliveryDate + 'T00:00:00');
+  const msg = [
+    `Paneer order – ${fmtDate(d)}`,
+    `${buyKg} kg`,
+    ``,
+    `Deliver to ${VENDOR_DELIVER_TO}`,
+    VENDOR_DELIVER_ADDR,
+    VENDOR_DELIVER_PH,
+  ].join('\n');
+  window.open(`https://wa.me/${VENDOR_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+async function markVendorOrdered(deliveryDate, value) {
+  vendorOrdered[deliveryDate] = value;
+  renderToday();
+  showToast(value ? '✅ Vendor order marked as placed' : 'Unmarked');
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'mark_vendor_ordered', token: activeToken, deliveryDate, value }),
+    });
+  } catch { showToast('Sync failed — try refreshing'); }
+}
+
+// ── TOGGLE DELIVERED / PAID ───────────────────────────────────
+// Busy lock prevents double-fire from touch events on re-rendered DOM
+let _toggleBusy = false;
+function _busyLock() {
+  if (_toggleBusy) return false;
+  _toggleBusy = true;
+  setTimeout(() => { _toggleBusy = false; }, 700);
+  return true;
+}
+
+async function toggleDelivered(id, apt) {
+  if (!_busyLock()) return;
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  o.delivered = !o.delivered;
+  renderOrders();
+  showToast(o.delivered ? '✓ Delivered' : 'Delivery unmarked');
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'mark_delivered', token: activeToken, orderId: id, apt, value: o.delivered }),
+    });
+  } catch { showToast('Sync failed — try refreshing'); }
+}
+async function togglePaid(id, apt) {
+  if (!_busyLock()) return;
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  o.paymentCollected = !o.paymentCollected;
+  renderOrders();
+  showToast(o.paymentCollected ? '₹ Payment collected' : 'Payment unmarked');
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'mark_paid', token: activeToken, orderId: id, apt, value: o.paymentCollected }),
+    });
+  } catch { showToast('Sync failed — try refreshing'); }
+}
+async function collectPaid(id, apt) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  o.paymentCollected = true;
+  renderToday();
+  showToast('₹ Payment collected');
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'mark_paid', token: activeToken, orderId: id, apt, value: true }),
+    });
+  } catch { showToast('Sync failed — try refreshing'); }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg, ms = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('up');
+  setTimeout(() => t.classList.remove('up'), ms);
+}
+
+// ── AUTO-RELOAD on return from background ─────────────────────
+let _hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    _hiddenAt = Date.now();
+  } else if (document.visibilityState === 'visible' && _hiddenAt > 0) {
+    // Reload if away for 5+ minutes (forces fresh HTML + data)
+    if (Date.now() - _hiddenAt > 5 * 60 * 1000) {
+      location.reload();
+    }
+    _hiddenAt = 0;
+  }
+});
+
+// ── INIT ──────────────────────────────────────────────────────
+(function init() {
+  const saved = sessionStorage.getItem('db_auth');
+  if (saved) {
+    try {
+      const { user, token } = JSON.parse(saved);
+      if (user && token) {
+        activeUser  = user;
+        activeToken = token;
+        showApp();
+        return;
+      }
+    } catch {}
+  }
+  // Check pin status — show setup link if any PIN not yet configured
+  fetch(WEBHOOK_URL + '?action=pin_status')
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        _pinStatus = { spcReady: data.spcReady, bnrReady: data.bnrReady };
+        if (!data.spcReady || !data.bnrReady) {
+          document.getElementById('pin-setup-link').style.display = 'block';
+        }
+      }
+    })
+    .catch(() => {});
+})();
+</script>
+</body>
+</html>

@@ -41,15 +41,32 @@ function doPost(e) {
 
     const payload = JSON.parse(raw);
 
+    // Telegram webhook — no auth needed
     if (payload.message || payload.callback_query) {
       handleTelegramUpdate(payload);
       return jsonOk({});
     }
 
+    // Customer order — no auth needed (public ordering page)
     if (payload.action === 'order')            return handleOrder(payload);
     if (payload.action === 'create_rzp_order') return handleCreateRzpOrder(payload);
-    if (payload.action === 'mark_delivered')   return handleMarkDelivered(payload);
-    if (payload.action === 'mark_paid')        return handleMarkPaid(payload);
+
+    // PIN auth — no token needed for these
+    if (payload.action === 'verify_pin')  return handleVerifyPin(payload);
+    if (payload.action === 'request_otp') return handleRequestOtp(payload);
+    if (payload.action === 'verify_otp')  return handleVerifyOtp(payload);
+    if (payload.action === 'setup_pin')   return handleSetupPin(payload);
+
+    // All other dashboard actions require a valid token
+    const tokenUser = validateToken(payload.token);
+    if (!tokenUser) return jsonOk({ ok: false, error: 'unauthorized' });
+
+    if (payload.action === 'mark_delivered')      return handleMarkDelivered(payload);
+    if (payload.action === 'mark_paid')           return handleMarkPaid(payload);
+    if (payload.action === 'mark_vendor_ordered') return handleMarkVendorOrdered(payload);
+    if (payload.action === 'log_expense')         return handleLogExpense(payload);
+    if (payload.action === 'update_expense')      return handleUpdateExpense(payload);
+    if (payload.action === 'delete_expense')      return handleDeleteExpense(payload);
 
     return jsonOk({ message: 'unknown action' });
   } catch (err) {
@@ -60,10 +77,153 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  if (e.parameter.action === 'status')    return jsonOk({ ordersEnabled: isOrdersEnabled() });
+  if (e.parameter.action === 'status') return jsonOk({ ordersEnabled: isOrdersEnabled() });
+  if (e.parameter.action === 'pin_status') return getPinStatus();
+
+  // Dashboard endpoints require a valid token
+  const tokenUser = validateToken(e.parameter.token);
+  if (!tokenUser) return jsonOk({ ok: false, error: 'unauthorized' });
+
   if (e.parameter.action === 'dashboard') return getDashboardOrders();
   if (e.parameter.action === 'summary')   return getDashboardSummary();
+  if (e.parameter.action === 'expenses')  return getExpensesData();
   return ContentService.createTextOutput('DairyBliss API ok');
+}
+
+// ── PIN AUTH ─────────────────────────────────────────────────
+
+function getPinStatus() {
+  const p = PropertiesService.getScriptProperties();
+  return jsonOk({
+    spcReady: !!p.getProperty('PIN_SPC'),
+    bnrReady: !!p.getProperty('PIN_BNR')
+  });
+}
+
+function handleVerifyPin(payload) {
+  const pin = String(payload.pin || '');
+  const p   = PropertiesService.getScriptProperties();
+  const spcPin = p.getProperty('PIN_SPC');
+  const bnrPin = p.getProperty('PIN_BNR');
+
+  let user = null;
+  if (spcPin && pin === spcPin) user = 'SPC';
+  else if (bnrPin && pin === bnrPin) user = 'BNR';
+
+  if (!user) return jsonOk({ ok: false });
+
+  const token   = Utilities.getUuid();
+  const expires = new Date().getTime() + (14 * 60 * 60 * 1000); // 14 hours
+  p.setProperty('TOKEN_' + token, user + ':' + expires);
+
+  return jsonOk({ ok: true, user, token });
+}
+
+function handleRequestOtp(payload) {
+  const apt = payload.apt;
+  if (apt !== 'SPC' && apt !== 'BNR') return jsonOk({ ok: false, message: 'Invalid user' });
+
+  const p = PropertiesService.getScriptProperties();
+
+  if (p.getProperty('PIN_' + apt))
+    return jsonOk({ ok: false, message: 'PIN already set. Contact admin to reset.' });
+
+  const email = p.getProperty('EMAIL_' + apt);
+  if (!email) return jsonOk({ ok: false, message: 'Email not configured. Contact admin.' });
+
+  const otp     = String(Math.floor(100000 + Math.random() * 900000));
+  const expires = new Date().getTime() + (15 * 60 * 1000); // 15 minutes
+  p.setProperty('OTP_' + apt, otp + ':' + expires);
+
+  const name = apt === 'SPC' ? 'Rekha' : 'Deepa';
+  MailApp.sendEmail({
+    to: email,
+    subject: 'DairyBliss — Your setup code',
+    body:
+      'Hi ' + name + ',\n\n' +
+      'Your one-time setup code is: ' + otp + '\n\n' +
+      'This code expires in 15 minutes.\n\n' +
+      'If you didn\'t request this, ignore this email.\n\n' +
+      '— DairyBliss'
+  });
+
+  return jsonOk({ ok: true });
+}
+
+function handleVerifyOtp(payload) {
+  const apt = payload.apt;
+  const otp = String(payload.otp || '');
+
+  const p      = PropertiesService.getScriptProperties();
+  const stored = p.getProperty('OTP_' + apt);
+  if (!stored) return jsonOk({ ok: false, message: 'No code found. Request a new one.' });
+
+  const parts      = stored.split(':');
+  const storedOtp  = parts[0];
+  const expires    = parseInt(parts[1]);
+
+  if (isNaN(expires) || new Date().getTime() > expires) {
+    p.deleteProperty('OTP_' + apt);
+    return jsonOk({ ok: false, expired: true, message: 'Code expired — tap Resend.' });
+  }
+
+  if (otp !== storedOtp) return jsonOk({ ok: false, message: 'Wrong code — try again.' });
+
+  // Valid — delete OTP and issue a short-lived setup token
+  p.deleteProperty('OTP_' + apt);
+  const setupToken  = Utilities.getUuid();
+  const setupExpiry = new Date().getTime() + (10 * 60 * 1000); // 10 min to complete setup
+  p.setProperty('SETUP_TOKEN_' + apt, setupToken + ':' + setupExpiry);
+
+  return jsonOk({ ok: true, setupToken });
+}
+
+function handleSetupPin(payload) {
+  const apt        = payload.apt;
+  const pin        = String(payload.pin || '');
+  const setupToken = payload.setupToken;
+  if (!apt || !pin || pin.length < 4) return jsonOk({ ok: false, message: 'Invalid PIN' });
+
+  const p   = PropertiesService.getScriptProperties();
+  const key = apt === 'SPC' ? 'PIN_SPC' : apt === 'BNR' ? 'PIN_BNR' : null;
+  if (!key) return jsonOk({ ok: false, message: 'Invalid user' });
+
+  if (p.getProperty(key)) return jsonOk({ ok: false, message: 'PIN already set — contact admin to reset' });
+
+  // Verify the setup token issued after OTP verification
+  const stored = p.getProperty('SETUP_TOKEN_' + apt);
+  if (!stored) return jsonOk({ ok: false, message: 'Session expired — start over' });
+  const parts   = stored.split(':');
+  const expires = parseInt(parts[1]);
+  if (setupToken !== parts[0] || new Date().getTime() > expires) {
+    p.deleteProperty('SETUP_TOKEN_' + apt);
+    return jsonOk({ ok: false, message: 'Session expired — start over' });
+  }
+  p.deleteProperty('SETUP_TOKEN_' + apt);
+
+  p.setProperty(key, pin);
+
+  // Issue session token — log them in immediately
+  const token      = Utilities.getUuid();
+  const tokenExpiry = new Date().getTime() + (14 * 60 * 60 * 1000);
+  p.setProperty('TOKEN_' + token, apt + ':' + tokenExpiry);
+
+  return jsonOk({ ok: true, user: apt, token });
+}
+
+function validateToken(token) {
+  if (!token) return null;
+  const p   = PropertiesService.getScriptProperties();
+  const val = p.getProperty('TOKEN_' + token);
+  if (!val) return null;
+  const parts   = val.split(':');
+  const user    = parts[0];
+  const expires = parseInt(parts[1]);
+  if (isNaN(expires) || new Date().getTime() > expires) {
+    p.deleteProperty('TOKEN_' + token);
+    return null;
+  }
+  return user;
 }
 
 // ── ORDER ID ─────────────────────────────────────────────────
@@ -268,7 +428,14 @@ function getDashboardOrders() {
       });
     });
   }
-  return jsonOk({ orders });
+  // Vendor order status for next two delivery dates
+  const p2 = PropertiesService.getScriptProperties();
+  const vendorOrdered = {};
+  nextDeliveryDates(2).forEach(d => {
+    vendorOrdered[d.date] = p2.getProperty('VENDOR_ORDERED_' + d.date) === 'Y';
+  });
+
+  return jsonOk({ orders, vendorOrdered });
 }
 
 function getDashboardSummary() {
@@ -317,6 +484,131 @@ function handleMarkDelivered(payload) {
 
 function handleMarkPaid(payload) {
   return markOrderColumn(payload.orderId, payload.apt, 20, payload.value ? 'Y' : '');
+}
+
+function handleMarkVendorOrdered(payload) {
+  const p = PropertiesService.getScriptProperties();
+  const key = 'VENDOR_ORDERED_' + payload.deliveryDate;
+  if (payload.value) {
+    p.setProperty(key, 'Y');
+  } else {
+    p.deleteProperty(key);
+  }
+  return jsonOk({});
+}
+
+// ── EXPENSE HANDLING ─────────────────────────────────────────
+
+function handleLogExpense(payload) {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = getOrCreateExpensesSheet(ss);
+
+  let receiptUrl = '';
+  if (payload.receiptB64) {
+    try {
+      const folder  = getOrCreateReceiptsFolder();
+      const decoded = Utilities.base64Decode(payload.receiptB64);
+      const ts      = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyyMMdd_HHmmss');
+      const blob    = Utilities.newBlob(decoded, 'image/jpeg', 'receipt_' + ts + '.jpg');
+      const file    = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      receiptUrl = 'https://drive.google.com/uc?id=' + file.getId();
+    } catch (ex) {
+      Logger.log('Receipt upload error: ' + ex);
+    }
+  } else if (payload.noReceiptReason) {
+    receiptUrl = 'No receipt: ' + payload.noReceiptReason;
+  }
+
+  const id  = 'EXP' + Date.now();
+  const now = new Date();
+  sheet.appendRow([
+    now,
+    id,
+    payload.category    || '',
+    payload.description || '',
+    parseFloat(payload.amount) || 0,
+    payload.date || Utilities.formatDate(now, 'Asia/Kolkata', 'yyyy-MM-dd'),
+    receiptUrl,
+    payload.loggedBy || '',
+  ]);
+
+  return jsonOk({ id, receiptUrl });
+}
+
+function handleUpdateExpense(payload) {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName('Expenses');
+  if (!sheet || sheet.getLastRow() < 2) return jsonError('sheet not found');
+  const ids = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === String(payload.id)) {
+      const row = i + 2;
+      sheet.getRange(row, 3).setValue(payload.category    || '');
+      sheet.getRange(row, 4).setValue(payload.description || '');
+      sheet.getRange(row, 5).setValue(parseFloat(payload.amount) || 0);
+      return jsonOk({});
+    }
+  }
+  return jsonOk({});
+}
+
+function handleDeleteExpense(payload) {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName('Expenses');
+  if (!sheet || sheet.getLastRow() < 2) return jsonOk({});
+  const ids = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === String(payload.id)) {
+      sheet.deleteRow(i + 2);
+      return jsonOk({});
+    }
+  }
+  return jsonOk({});
+}
+
+function getExpensesData() {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName('Expenses');
+  if (!sheet || sheet.getLastRow() < 2) return jsonOk({ expenses: [] });
+  const numRows = sheet.getLastRow() - 1;
+  const rows    = sheet.getRange(2, 1, numRows, 8).getValues();
+  const expenses = rows
+    .filter(r => r[1])
+    .map(r => ({
+      id:          String(r[1]),
+      category:    r[2] || '',
+      description: r[3] || '',
+      amount:      parseFloat(r[4]) || 0,
+      date:        r[5] instanceof Date
+                     ? Utilities.formatDate(r[5], 'Asia/Kolkata', 'yyyy-MM-dd')
+                     : String(r[5]),
+      receiptUrl:  r[6] || '',
+      loggedBy:    r[7] || '',
+    }))
+    .reverse(); // newest first
+  return jsonOk({ expenses });
+}
+
+function getOrCreateExpensesSheet(ss) {
+  let sheet = ss.getSheetByName('Expenses');
+  if (!sheet) {
+    sheet = ss.insertSheet('Expenses');
+    const headers = ['Timestamp','ID','Category','Description','Amount (₹)','Date','Receipt URL','Logged By'];
+    sheet.appendRow(headers);
+    const r = sheet.getRange(1, 1, 1, headers.length);
+    r.setFontWeight('bold');
+    r.setBackground('#1a3a6b');
+    r.setFontColor('#ffffff');
+  }
+  return sheet;
+}
+
+function getOrCreateReceiptsFolder() {
+  const name = 'DairyBliss Receipts';
+  const it   = DriveApp.getFoldersByName(name);
+  if (it.hasNext()) return it.next();
+  return DriveApp.createFolder(name);
 }
 
 function markOrderColumn(orderId, apt, col, value) {
@@ -371,10 +663,10 @@ function aptMeta(key) {
   return APARTMENTS.find(a => a.key === key) || { key: 'Other', label: 'Other', emoji: '⚪' };
 }
 
-// ── CUTOFF SUMMARY (Tue 10pm → Wed orders, Fri 10pm → Sat orders) ──
+// ── CUTOFF SUMMARY (Tue 8pm → Wed orders, Fri 8pm → Sat orders) ──
 
 /**
- * Triggered at 10pm every day; only fires on Tuesday and Friday.
+ * Triggered at 8pm every day; only fires on Tuesday and Friday.
  * Scheduled trigger (no aptFilter): sends ONE combined order-to-place message.
  * Manual /summary SPC|BNR: sends per-apartment detail (names + flats).
  */
@@ -473,6 +765,11 @@ function sendCutoffSummary(aptFilter) {
       ``
     );
     aptLines.forEach(l => lines.push(l));
+
+    // Vendor order status
+    const p3 = PropertiesService.getScriptProperties();
+    const vendorPlaced = p3.getProperty('VENDOR_ORDERED_' + deliveryDate) === 'Y';
+    lines.push(``, vendorPlaced ? `✅ Vendor order placed` : `⚠️ Vendor order not yet placed`);
 
     tg(lines.join('\n'));
   }
@@ -613,9 +910,9 @@ function setupTriggers() {
   ScriptApp.newTrigger('pollTelegram')
     .timeBased().everyMinutes(1).create();
 
-  // Cutoff summary: 9pm every day — function checks if it's Tue or Fri inside
+  // Cutoff summary: 8pm every day — function checks if it's Tue or Fri inside
   ScriptApp.newTrigger('sendCutoffSummary')
-    .timeBased().atHour(21).everyDays(1).create();
+    .timeBased().atHour(20).everyDays(1).create();
 
   Logger.log('Triggers set up successfully.');
 }
@@ -699,8 +996,8 @@ function matchDate(cell, dateStr) {
 
 /**
  * Returns the next n delivery dates (Wed=3, Sat=6) with an open/closed flag.
- * Wed cutoff: the Tuesday before at 9pm IST.
- * Sat cutoff: the Friday before at 9pm IST.
+ * Wed cutoff: the Monday before at 8pm IST.
+ * Sat cutoff: the Friday before at 8pm IST.
  * A date is "open" if now is before its cutoff.
  */
 function nextDeliveryDates(n) {
@@ -712,9 +1009,9 @@ function nextDeliveryDates(n) {
     const wd = d.getDay();
     if (wd !== 3 && wd !== 6) continue;
 
-    // Cutoff = 2 days before (Tue for Wed, Fri for Sat) at 21:00 IST
+    // Cutoff = 2 days before (Mon for Wed, Fri for Sat) at 20:00 IST
     const cutoffDay = wd === 3 ? d.getDate() - 2 : d.getDate() - 1;
-    const cutoff    = new Date(d.getFullYear(), d.getMonth(), cutoffDay, 21, 0, 0);
+    const cutoff    = new Date(d.getFullYear(), d.getMonth(), cutoffDay, 20, 0, 0);
 
     result.push({
       date:  fmt(d, 'yyyy-MM-dd'),

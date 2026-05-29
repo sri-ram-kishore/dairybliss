@@ -1,9 +1,9 @@
 {
-  "name": "DairyBliss Dashboard",
-  "short_name": "DB Admin",
+  "name": "DairyBliss Ops",
+  "short_name": "DB Ops",
   "description": "DairyBliss delivery dashboard for Rekha and Deepa.",
-  "start_url": "/dashboard/",
-  "scope": "/dashboard/",
+  "start_url": "/ops/",
+  "scope": "/ops/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#faf8f4",
