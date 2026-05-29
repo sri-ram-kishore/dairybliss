@@ -768,7 +768,7 @@ let setupApt    = null;      // 'SPC' or 'BNR'
 let setupToken  = null;      // short-lived token returned after OTP verify
 let setupFirst  = '';        // first PIN entry (to confirm)
 let _pinBusy    = false;
-let _pinStatus  = { spcReady: true, bnrReady: true };
+let _pinStatus  = { spcReady: false, bnrReady: false };
 
 function pinKey(k) {
   if (_pinBusy) return;
@@ -1874,10 +1874,10 @@ document.addEventListener('visibilitychange', () => {
       if (data.ok) {
         _pinStatus = { spcReady: data.spcReady, bnrReady: data.bnrReady };
         localStorage.setItem('db_pin_status', JSON.stringify(_pinStatus));
-        if (!data.spcReady || !data.bnrReady) {
-          document.getElementById('pin-setup-link').style.display = 'block';
-        } else {
-          document.getElementById('pin-setup-link').style.display = 'none';
+        // Only update setup link if still on login screen
+        if (pinMode === 'login') {
+          document.getElementById('pin-setup-link').style.display =
+            (!data.spcReady || !data.bnrReady) ? 'block' : 'none';
         }
       }
     })
