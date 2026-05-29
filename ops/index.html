@@ -893,10 +893,10 @@ async function requestOtp(apt) {
     if (data.ok) {
       setPinMode('setup-otp');
     } else {
-      document.getElementById('pin-err').textContent = data.message || 'Could not send OTP';
+      document.getElementById('pin-err').textContent = data.message || data.error || 'Could not send OTP';
       btn.disabled = false;
     }
-  } catch {
+  } catch (err) {
     document.getElementById('pin-err').textContent = 'Connection error — check internet';
     btn.disabled = false;
   }
@@ -1860,14 +1860,24 @@ document.addEventListener('visibilitychange', () => {
       }
     } catch {}
   }
-  // Check pin status — show setup link if any PIN not yet configured
+  // Show setup link immediately if cached status says PIN not set
+  try {
+    const cached = JSON.parse(localStorage.getItem('db_pin_status') || '{}');
+    if (cached.spcReady === false || cached.bnrReady === false) {
+      document.getElementById('pin-setup-link').style.display = 'block';
+    }
+  } catch {}
+  // Always refresh from backend
   fetch(WEBHOOK_URL + '?action=pin_status')
     .then(r => r.json())
     .then(data => {
       if (data.ok) {
         _pinStatus = { spcReady: data.spcReady, bnrReady: data.bnrReady };
+        localStorage.setItem('db_pin_status', JSON.stringify(_pinStatus));
         if (!data.spcReady || !data.bnrReady) {
           document.getElementById('pin-setup-link').style.display = 'block';
+        } else {
+          document.getElementById('pin-setup-link').style.display = 'none';
         }
       }
     })
