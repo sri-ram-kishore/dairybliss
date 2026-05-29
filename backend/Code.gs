@@ -64,6 +64,15 @@ function doGet(e) {
   return ContentService.createTextOutput('DairyBliss API ok');
 }
 
+// ── ORDER ID ─────────────────────────────────────────────────
+
+function nextOrderId() {
+  const p   = PropertiesService.getScriptProperties();
+  const seq = parseInt(p.getProperty('ORDER_SEQ') || '0') + 1;
+  p.setProperty('ORDER_SEQ', String(seq));
+  return 'DB' + String(seq).padStart(3, '0');
+}
+
 // ── ORDER HANDLING ───────────────────────────────────────────
 
 function handleOrder(data) {
@@ -78,7 +87,7 @@ function handleOrder(data) {
   const sheet    = getOrCreate(ss, tabName);
   ensureOrderHeaders(sheet);
 
-  const orderId = tabName + '-' + String(sheet.getLastRow()).padStart(3, '0');
+  const orderId = nextOrderId();
   const now     = new Date();
 
   const q250 = parseInt(data.q250) || 0;
@@ -174,7 +183,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const { unit } = parseApt(data.address);
 
   const msg = [
-    `<b>${meta.emoji} [${meta.key}] New Order — ${esc(orderId)}</b>`,
+    `<b>${meta.emoji} New Order — ${esc(orderId)}</b>`,
     ``,
     `${esc(data.name)}${unit ? ', ' + esc(unit) : ''}, ${esc(data.phone)}`,
     `${esc(data.deliveryLabel)}`,
