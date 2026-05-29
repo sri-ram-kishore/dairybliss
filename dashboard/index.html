@@ -467,8 +467,8 @@
       <div class="page">
         <div class="day-toggle-wrap">
           <div class="day-toggle">
-            <button class="day-btn active" id="day-wed" onclick="setDay('wed')">Wednesday</button>
-            <button class="day-btn"        id="day-sat" onclick="setDay('sat')">Saturday</button>
+            <button class="day-btn active" id="day-0" onclick="setDayIdx(0)">—</button>
+            <button class="day-btn"        id="day-1" onclick="setDayIdx(1)">—</button>
           </div>
         </div>
         <div id="today-content"><div class="loading"><div class="spin"></div><br>Loading…</div></div>
@@ -550,7 +550,7 @@ const COST_PER_KG = 335;
 let orders      = [];
 let summaryData = null;
 let activeApt   = 'SPC';
-let activeDay   = 'wed';
+let activeDay   = null; // ISO date string of selected delivery
 let activeTab   = 'today';
 let payFilter   = 'all';
 
@@ -653,10 +653,17 @@ function setApt(apt) {
   renderToday(); renderOrders();
 }
 
-function setDay(day) {
-  activeDay = day;
-  document.getElementById('day-wed').classList.toggle('active', day === 'wed');
-  document.getElementById('day-sat').classList.toggle('active', day === 'sat');
+function getDeliveryDates() {
+  const wed = nextDeliveryDate(3);
+  const sat = nextDeliveryDate(6);
+  return wed < sat ? [wed, sat] : [sat, wed];
+}
+
+function setDayIdx(idx) {
+  const dates = getDeliveryDates();
+  activeDay = isoDate(dates[idx]);
+  document.getElementById('day-0').classList.toggle('active', idx === 0);
+  document.getElementById('day-1').classList.toggle('active', idx === 1);
   renderToday();
 }
 
@@ -735,14 +742,26 @@ function isPaid(o) {
 
 // ── RENDER TODAY ──────────────────────────────────────────────
 function renderToday() {
-  const wedDate = nextDeliveryDate(3);
-  const satDate = nextDeliveryDate(6);
-  const target  = activeDay === 'wed' ? wedDate : satDate;
-  const iso     = isoDate(target);
+  const dates = getDeliveryDates();
+  const [d0, d1] = dates;
 
-  // Update day toggle labels
-  document.getElementById('day-wed').textContent = fmtDate(wedDate);
-  document.getElementById('day-sat').textContent = fmtDate(satDate);
+  // Update toggle labels (nearest first)
+  document.getElementById('day-0').textContent = fmtDate(d0);
+  document.getElementById('day-1').textContent = fmtDate(d1);
+
+  // Default to nearest if not set or stale
+  if (!activeDay || ![isoDate(d0), isoDate(d1)].includes(activeDay)) {
+    activeDay = isoDate(d0);
+    document.getElementById('day-0').classList.add('active');
+    document.getElementById('day-1').classList.remove('active');
+  } else {
+    const idx = activeDay === isoDate(d0) ? 0 : 1;
+    document.getElementById('day-0').classList.toggle('active', idx === 0);
+    document.getElementById('day-1').classList.toggle('active', idx === 1);
+  }
+
+  const target = activeDay === isoDate(d0) ? d0 : d1;
+  const iso    = activeDay;
 
   const filtered = orders.filter(o =>
     o.deliveryDate === iso &&
