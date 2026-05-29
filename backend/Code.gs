@@ -16,7 +16,10 @@ const ALERT_BEFORE_KG = 0.5;  // alert this many kg before each block boundary
 const COST_PER_KG     = 335;  // buying price per kg from supplier
 
 // Key ID is public-facing (used in frontend checkout). Store in Script Properties if preferred.
-const RZP_KEY_ID = '***REMOVED***'; // replace with new key after rotating
+// RZP_KEY_ID is stored in Script Properties (key: RZP_KEY_ID) — never hardcode here
+function getRzpKeyId() {
+  return PropertiesService.getScriptProperties().getProperty('RZP_KEY_ID') || '';
+}
 
 /**
  * Run ONCE from the Apps Script editor after rotating keys.
@@ -296,10 +299,11 @@ function handleCreateRzpOrder(data) {
   const amountPaise = parseInt(data.amount);
   if (!amountPaise || amountPaise < 100) return jsonError('invalid amount');
 
+  const keyId  = getRzpKeyId();
   const secret = getRzpSecret();
-  if (!secret) return jsonError('Razorpay not configured — run setRazorpaySecret()');
+  if (!keyId || !secret) return jsonError('Razorpay not configured');
 
-  const creds    = Utilities.base64Encode(RZP_KEY_ID + ':' + secret);
+  const creds    = Utilities.base64Encode(keyId + ':' + secret);
   const response = UrlFetchApp.fetch('https://api.razorpay.com/v1/orders', {
     method:             'post',
     muteHttpExceptions: true,
@@ -320,7 +324,7 @@ function handleCreateRzpOrder(data) {
     return jsonError('Razorpay: ' + (rzp.error?.description || 'unknown error'));
   }
 
-  return jsonOk({ rzp_order_id: rzp.id, key_id: RZP_KEY_ID });
+  return jsonOk({ rzp_order_id: rzp.id, key_id: keyId });
 }
 
 function ensureOrderHeaders(sheet) {
