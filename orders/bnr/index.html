@@ -941,7 +941,7 @@ if ('serviceWorker' in navigator) {
         }
         localStorage.setItem('db_q', JSON.stringify(fail));
       });
-    }).catch(err => console.warn('[SW]', err));
+    }).catch(() => {});
   });
 }
 
