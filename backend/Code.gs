@@ -1036,3 +1036,23 @@ function clip(s, len) {
 function jsonOk(data)   { return res(JSON.stringify({ ok:true,  ...data })); }
 function jsonError(msg) { return res(JSON.stringify({ ok:false, error:msg })); }
 function res(body)      { return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON); }
+
+// ── PIN RESET UTILITIES ───────────────────────────────────────
+// Run these manually from the Apps Script editor when a PIN needs to be reset.
+// After reset, the user will be prompted to set up a new PIN via OTP on next login.
+
+function resetSpcPin() {
+  const p = PropertiesService.getScriptProperties();
+  p.deleteProperty('PIN_SPC');
+  p.deleteProperty('OTP_SPC');
+  p.deleteProperty('SETUP_TOKEN_SPC');
+  Logger.log('Rekha (SPC) PIN reset ✓ — she can set a new PIN via OTP on next login');
+}
+
+function resetBnrPin() {
+  const p = PropertiesService.getScriptProperties();
+  p.deleteProperty('PIN_BNR');
+  p.deleteProperty('OTP_BNR');
+  p.deleteProperty('SETUP_TOKEN_BNR');
+  Logger.log('Deepa (BNR) PIN reset ✓ — she can set a new PIN via OTP on next login');
+}
