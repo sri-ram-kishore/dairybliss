@@ -1197,24 +1197,26 @@ function renderToday() {
     el.innerHTML = '<div class="loading"><div class="spin"></div><br>Loading…</div>'; return;
   }
 
-  // Order count chips
+  // Order summary bar
+  const totalOrders = spcOrders.length + bnrOrders.length;
   html += `
     <div class="count-bar">
       <div class="count-seg">
-        <div class="count-val">${spcOrders.length}</div>
-        <div class="count-sub">${spcB.kg.toFixed(1)} kg</div>
-        <div class="count-label">SPC orders</div>
+        <div class="count-val">${spcB.kg.toFixed(1)} kg</div>
+        <div class="count-sub">${spcOrders.length} order${spcOrders.length !== 1 ? 's' : ''}</div>
+        <div class="count-label">SPC</div>
       </div>
       <div class="count-divider"></div>
       <div class="count-seg count-seg--mid">
-        <div class="count-val">${bnrOrders.length}</div>
-        <div class="count-sub">${bnrB.kg.toFixed(1)} kg</div>
-        <div class="count-label">BNR orders</div>
+        <div class="count-val">${bnrB.kg.toFixed(1)} kg</div>
+        <div class="count-sub">${bnrOrders.length} order${bnrOrders.length !== 1 ? 's' : ''}</div>
+        <div class="count-label">BNR</div>
       </div>
       <div class="count-divider"></div>
       <div class="count-seg count-seg--end">
         <div class="count-val">${buy.kg > 0 ? buy.kg.toFixed(1) + ' kg' : '0'}</div>
-        <div class="count-label">Total qty</div>
+        <div class="count-sub">${totalOrders} order${totalOrders !== 1 ? 's' : ''}</div>
+        <div class="count-label">Total</div>
       </div>
     </div>`;
 
