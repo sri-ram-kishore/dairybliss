@@ -1073,11 +1073,22 @@ async function fetchOrders(showSpinner) {
       if (data.vendorOrdered) vendorOrdered = data.vendorOrdered;
       localStorage.setItem('db_orders', JSON.stringify(orders));
       renderToday(); renderOrders();
-    } else if (data.error === 'unauthorized') { lockApp(); }
+    } else if (data.error === 'unauthorized') {
+      lockApp();
+    } else {
+      // Unexpected response (e.g. service worker returned {status:'queued'} offline)
+      throw new Error('bad response');
+    }
   } catch {
     const cached = localStorage.getItem('db_orders');
-    if (cached) { orders = JSON.parse(cached); renderToday(); renderOrders(); }
-    showToast('Offline — showing cached data');
+    if (cached) {
+      orders = JSON.parse(cached); renderToday(); renderOrders();
+      showToast('Offline — showing cached data');
+    } else {
+      document.getElementById('today-content').innerHTML =
+        `<div class="empty"><div class="empty-icon">⚠️</div>Could not load orders.<br>Check your connection and tap refresh.</div>`;
+      document.getElementById('orders-content').innerHTML = '';
+    }
   }
 }
 async function fetchSummary() {
