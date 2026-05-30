@@ -54,8 +54,10 @@
       border: 2px solid var(--border); background: var(--cream);
       transition: background 0.15s, border-color 0.15s;
     }
-    .pin-dot.filled { background: var(--green); border-color: var(--green); }
-    .pin-dot.error  { background: var(--err);   border-color: var(--err); }
+    .pin-dot.filled  { background: var(--green); border-color: var(--green); }
+    .pin-dot.error   { background: var(--err);   border-color: var(--err); }
+    .pin-dot.checking { animation: pin-pulse 0.6s ease-in-out infinite alternate; border-color: var(--green); }
+    @keyframes pin-pulse { from { background: var(--green); } to { background: var(--green-light); } }
     .pin-pad {
       display: grid; grid-template-columns: repeat(3, 1fr);
       gap: 12px; width: min(100%, 300px);
@@ -367,6 +369,11 @@
     .period-btn.active { background: var(--green); color: #fff; border-radius: 8px; }
 
     .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 4px 0 0; }
+    .paneer-alert {
+      background: #fff8e1; border: 1px solid #f5c07a; border-radius: 10px;
+      padding: 10px 14px; font-size: 13px; color: #8a5a00;
+      margin-bottom: 4px; line-height: 1.4;
+    }
     .stat-section-label {
       font-size: 11px; font-weight: 700; color: var(--text-soft);
       text-transform: uppercase; letter-spacing: 0.07em;
@@ -786,6 +793,11 @@ function pinKey(k) {
   updatePinDots();
   if (pinEntry.length === pinLen) {
     _pinBusy = true;
+    // Show pulsing "checking" state on all dots so user knows it's working
+    for (let i = 0; i < pinLen; i++) {
+      const d = document.getElementById('pd' + i);
+      if (d) { d.classList.remove('filled'); d.classList.add('checking'); }
+    }
     setTimeout(handlePinComplete, 80);
   }
 }
@@ -981,12 +993,18 @@ async function checkPin() {
 
 function flashPinError(msg) {
   const dotCount = pinLen;
-  for (let i = 0; i < dotCount; i++) document.getElementById('pd' + i).classList.add('error');
+  for (let i = 0; i < dotCount; i++) {
+    const d = document.getElementById('pd' + i);
+    if (d) { d.classList.remove('checking', 'filled'); d.classList.add('error'); }
+  }
   document.getElementById('pin-err').textContent = msg;
   setTimeout(() => {
     pinEntry = '';
     updatePinDots();
-    for (let i = 0; i < dotCount; i++) document.getElementById('pd' + i).classList.remove('error');
+    for (let i = 0; i < dotCount; i++) {
+      const d = document.getElementById('pd' + i);
+      if (d) d.classList.remove('error', 'checking');
+    }
     document.getElementById('pin-err').textContent = '';
     _pinBusy = false;
   }, 1000);
@@ -1008,6 +1026,7 @@ function lockApp() {
   sessionStorage.removeItem('db_auth');
   activeToken = null;
   setupApt = null; setupToken = null; setupFirst = '';
+  _pinBusy = false; // always reset so PIN screen accepts input immediately
   setPinMode('login');
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('screen-pin').style.display = 'flex';
@@ -1458,15 +1477,23 @@ function renderAccounts() {
   const expenses = expensesCache;
   const now = new Date();
   const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + 1); weekStart.setHours(0,0,0,0);
-  // "Paneer purchase" cost is already calculated from orders (src.cost)
-  // Only count non-paneer logged expenses in "Other"
-  const expTotal = expenses
-    .filter(e => (activePeriod === 'all' || new Date(e.date) >= weekStart)
-               && e.category !== 'Paneer purchase')
-    .reduce((s, e) => s + e.amount, 0);
-  const netMargin = (src.margin || 0) - expTotal;
+
+  const periodExp = expenses.filter(e => activePeriod === 'all' || new Date(e.date) >= weekStart);
+  const paneerExp  = periodExp.filter(e => e.category === 'Paneer purchase').reduce((s, e) => s + e.amount, 0);
+  const otherExp   = periodExp.filter(e => e.category !== 'Paneer purchase').reduce((s, e) => s + e.amount, 0);
+  const totalExp   = paneerExp + otherExp;
+  const netMargin  = (src.collected || 0) - totalExp;
+
+  // Cross-check: expected paneer cost vs what was logged
+  const expectedPaneer = Math.round((src.kg || 0) * COST_PER_KG);
+  const paneerAlert = paneerExp === 0
+    ? `<div class="paneer-alert" onclick="setTab('accounts')">⚠️ No paneer purchase logged yet. Expected ~₹${expectedPaneer.toLocaleString('en-IN')} for ${src.kg} kg.</div>`
+    : (Math.abs(paneerExp - expectedPaneer) > 50
+        ? `<div class="paneer-alert warn">⚠️ Logged paneer ₹${paneerExp.toLocaleString('en-IN')} vs expected ₹${expectedPaneer.toLocaleString('en-IN')} (${src.kg} kg × ₹${COST_PER_KG}). Double-check?</div>`
+        : '');
 
   el.innerHTML = `
+    ${paneerAlert}
     <div class="stat-section-label">Income</div>
     <div class="stat-grid">
       <div class="stat-card">
@@ -1484,12 +1511,12 @@ function renderAccounts() {
     <div class="stat-grid">
       <div class="stat-card">
         <div class="stat-label">Paneer purchase</div>
-        <div class="stat-value">${fmt(src.cost)}</div>
-        <div class="stat-sub">${src.kg} kg × ₹${COST_PER_KG}/kg</div>
+        <div class="stat-value">${fmt(paneerExp)}</div>
+        <div class="stat-sub">${paneerExp ? 'From expense log' : 'Not logged yet'}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Other</div>
-        <div class="stat-value">${fmt(expTotal)}</div>
+        <div class="stat-value">${fmt(otherExp)}</div>
         <div class="stat-sub">Packaging, stationery…</div>
       </div>
     </div>
@@ -1498,7 +1525,7 @@ function renderAccounts() {
       <div style="font-size:30px;font-weight:760;letter-spacing:-0.6px;color:${netMargin >= 0 ? 'var(--green)' : 'var(--err)'}">
         ${fmt(netMargin)}
       </div>
-      <div style="font-size:12px;color:var(--text-soft);margin-top:4px">Collected − paneer purchase − other expenses</div>
+      <div style="font-size:12px;color:var(--text-soft);margin-top:4px">Collected − all logged expenses</div>
     </div>`;
 }
 
@@ -1795,7 +1822,7 @@ let _toggleBusy = false;
 function _busyLock() {
   if (_toggleBusy) return false;
   _toggleBusy = true;
-  setTimeout(() => { _toggleBusy = false; }, 700);
+  setTimeout(() => { _toggleBusy = false; }, 250);
   return true;
 }
 
