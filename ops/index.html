@@ -170,10 +170,8 @@
     .count-seg--mid  { text-align: center; }
     .count-seg--end  { text-align: right; }
     .count-divider {
-      display: flex; align-items: flex-start; padding-top: 5px;
-      font-size: 11px; font-weight: 700; color: var(--text-soft);
       border-left: 1px solid var(--border);
-      padding-left: 14px; margin-right: 14px;
+      margin: 0 14px;
     }
     .count-val   { font-size: 22px; font-weight: 760; color: var(--text); letter-spacing: -0.5px; line-height: 1.1; }
     .count-sub   { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
@@ -241,10 +239,13 @@
 
     /* ── TODAY: VENDOR ACTIONS ── */
     .vendor-actions {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 8px;
+      display: flex; flex-direction: column; gap: 8px;
       padding-top: 10px; margin-top: 10px;
       border-top: 1px solid var(--border);
+    }
+    .vendor-actions-row {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 8px;
     }
     .vendor-deadline-text { font-size: 12px; color: var(--text-soft); flex: 1; min-width: 0; }
     .vendor-ordered-done  { font-size: 13px; font-weight: 700; color: var(--green); flex: 1; }
@@ -1204,13 +1205,13 @@ function renderToday() {
         <div class="count-sub">${spcB.kg.toFixed(1)} kg</div>
         <div class="count-label">SPC orders</div>
       </div>
-      <div class="count-divider">+</div>
+      <div class="count-divider"></div>
       <div class="count-seg count-seg--mid">
         <div class="count-val">${bnrOrders.length}</div>
         <div class="count-sub">${bnrB.kg.toFixed(1)} kg</div>
         <div class="count-label">BNR orders</div>
       </div>
-      <div class="count-divider">=</div>
+      <div class="count-divider"></div>
       <div class="count-seg count-seg--end">
         <div class="count-val">${buy.kg > 0 ? buy.kg.toFixed(1) + ' kg' : '0'}</div>
         <div class="count-label">Total qty</div>
@@ -1240,21 +1241,23 @@ function renderToday() {
           <div class="vendor-stat-label">cost</div>
         </div>
       </div>
-      <div class="vendor-detail">${buy.kg.toFixed(2)} kg across ${upcoming.length} orders · ${BLOCK_KG} kg/block</div>
       <div class="vendor-actions">
-        ${vOrdered
-          ? `<span class="vendor-ordered-done">✅ Order sent to vendor</span>
-             <button class="btn-vendor-undo" onclick="markVendorOrdered('${iso}', false)">Undo</button>`
-          : `<span class="vendor-deadline-text">Order by ${vDeadline}, 8 PM</span>
-             <div style="display:flex;gap:6px;flex-wrap:wrap">
-               <button class="btn-wa" ${inWindow ? `onclick="openVendorWA('${iso}', ${buy.buyKg})"` : 'disabled'}>
-                 ${waIcon} WhatsApp vendor
-               </button>
-               <button class="btn-mark-sent" ${inWindow ? `onclick="markVendorOrdered('${iso}', true)"` : 'disabled'}>
-                 Mark sent
-               </button>
-             </div>`
-        }
+        <div class="vendor-detail">${buy.kg.toFixed(2)} kg across ${upcoming.length} orders · ${BLOCK_KG} kg/block</div>
+        <div class="vendor-actions-row">
+          ${vOrdered
+            ? `<span class="vendor-ordered-done">✅ Order sent to vendor</span>
+               <button class="btn-vendor-undo" onclick="markVendorOrdered('${iso}', false)">Undo</button>`
+            : `<span class="vendor-deadline-text">Order by ${vDeadline}, 8 PM</span>
+               <div style="display:flex;gap:6px;flex-wrap:wrap">
+                 <button class="btn-wa" ${inWindow ? `onclick="openVendorWA('${iso}', ${buy.buyKg})"` : 'disabled'}>
+                   ${waIcon} WhatsApp vendor
+                 </button>
+                 <button class="btn-mark-sent" ${inWindow ? `onclick="markVendorOrdered('${iso}', true)"` : 'disabled'}>
+                   Mark sent
+                 </button>
+               </div>`
+          }
+        </div>
       </div>
     </div>`;
 
