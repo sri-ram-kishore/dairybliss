@@ -231,8 +231,7 @@
     .ref-price { font-size: 13px; font-weight: 700; color: var(--text-mid); }
     .ref-cod, .ref-paid {
       font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
-      width: 56px; text-align: center;
-      padding: 3px 0; border-radius: 6px;
+      padding: 3px 8px; border-radius: 6px; white-space: nowrap;
     }
     .ref-cod  { background: #fef3e2; color: var(--orange); }
     .ref-paid { background: var(--green-light); color: var(--green); }
@@ -325,31 +324,21 @@
     }
     .order-meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
     .order-btns { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
-    /* Delivery button — solid green when action needed, quiet text when done */
-    .btn-del {
-      min-width: 88px; padding: 7px 14px; border-radius: 20px; white-space: nowrap;
+    /* Action buttons — same fixed width so they always align */
+    .btn-del, .btn-pay {
+      width: 90px; padding: 7px 0; border-radius: 20px; white-space: nowrap;
       font-size: 12px; font-weight: 700; text-align: center;
-      background: var(--green); color: #fff; border: none;
-      cursor: pointer; font-family: inherit;
+      border: none; cursor: pointer; font-family: inherit;
       -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
     }
-    .btn-del:active { opacity: 0.75; }
-    .btn-del.done {
-      background: none; border: none; padding: 7px 4px;
-      color: var(--text-soft); font-weight: 600; min-width: 0;
-    }
-    /* Payment — solid amber when action needed, quiet label when done */
-    .btn-pay {
-      min-width: 72px; padding: 7px 14px; border-radius: 20px; white-space: nowrap;
-      font-size: 12px; font-weight: 700; text-align: center;
-      background: var(--orange); color: #fff; border: none;
-      cursor: pointer; font-family: inherit;
-      -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
-    }
-    .btn-pay:active { opacity: 0.75; }
+    .btn-del         { background: var(--green);  color: #fff; }
+    .btn-del:active  { opacity: 0.75; }
+    .btn-del.done    { background: none; color: var(--text-soft); font-weight: 600; }
+    .btn-pay         { background: var(--orange); color: #fff; }
+    .btn-pay:active  { opacity: 0.75; }
     .pay-label {
-      font-size: 12px; font-weight: 600; color: var(--text-soft);
-      padding: 7px 4px; white-space: nowrap;
+      width: 90px; font-size: 12px; font-weight: 600; color: var(--text-soft);
+      padding: 7px 0; white-space: nowrap; text-align: center; display: inline-block;
     }
 
     /* ── VIEW-ONLY SECTION CHIP ── */
@@ -1335,8 +1324,8 @@ function refRow(o) {
   const upi       = isUpiPaid(o);
   const paidCash  = !!o.paymentCollected;
   const badge     = (upi || paidCash)
-    ? `<span class="ref-paid">${upi ? 'UPI ✓' : 'Paid ✓'}</span>`
-    : `<span class="ref-cod">COD</span>`;
+    ? `<span class="ref-paid">Paid ✓</span>`
+    : `<span class="ref-cod">To collect</span>`;
   return `
   <div class="ref-row">
     <div class="ref-info">
@@ -1434,19 +1423,15 @@ function orderCardHTML(o, editable) {
   }
 
   // Editable card — action buttons loud, done states quiet
+  // For COD: both Deliver and Collect are active from the start (you do both at the door)
   let payBtn;
   if (upiPaid) {
-    // Paid online — quiet label, no action
-    payBtn = `<span class="pay-label">UPI ✓</span>`;
+    payBtn = `<span class="pay-label">Paid ✓</span>`;
   } else if (paidDone) {
-    // Cash collected — quiet label, tap to undo
     payBtn = `<span class="pay-label" style="cursor:pointer" onclick="togglePaid('${rid}','${o.apt}')">Cash ✓</span>`;
-  } else if (delDone) {
-    // Delivered but cash not collected — LOUD amber action button
-    payBtn = `<button class="btn-pay" onclick="togglePaid('${rid}','${o.apt}')">Collect</button>`;
   } else {
-    // Not delivered yet — COD is just info, can't collect yet
-    payBtn = `<span class="pay-label">COD</span>`;
+    // COD — Collect button always active, not gated behind delivery
+    payBtn = `<button class="btn-pay" onclick="togglePaid('${rid}','${o.apt}')">Collect</button>`;
   }
 
   const delLabel = delDone ? '✓ Delivered' : 'Deliver';
@@ -1473,8 +1458,11 @@ function renderAccounts() {
   const expenses = expensesCache;
   const now = new Date();
   const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + 1); weekStart.setHours(0,0,0,0);
+  // "Paneer purchase" cost is already calculated from orders (src.cost)
+  // Only count non-paneer logged expenses in "Other"
   const expTotal = expenses
-    .filter(e => activePeriod === 'all' || new Date(e.date) >= weekStart)
+    .filter(e => (activePeriod === 'all' || new Date(e.date) >= weekStart)
+               && e.category !== 'Paneer purchase')
     .reduce((s, e) => s + e.amount, 0);
   const netMargin = (src.margin || 0) - expTotal;
 
