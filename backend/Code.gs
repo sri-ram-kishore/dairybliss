@@ -1060,3 +1060,143 @@ function resetBnrPin() {
   p.deleteProperty('SETUP_TOKEN_BNR');
   Logger.log('Deepa (BNR) PIN reset ✓ — she can set a new PIN via OTP on next login');
 }
+
+// ── CLEAN UP TABLE (run once from editor) ────────────────────────────
+// Normalises payment statuses to canonical values and auto-fills
+// Payment Method where it is blank.
+//
+//  Old value                  → Canonical
+//  "UPI"                      → "Paid Online"
+//  "UPI - Customer Confirmed" → "Paid Online"
+//  "Cash on Delivery"         → "Cash on Delivery"  (unchanged)
+//  "Paid Online"              → "Paid Online"        (unchanged)
+//
+// Payment Method is back-filled from Payment Status when blank:
+//  Paid Online → "Online"
+//  Cash on Delivery → "COD"
+//
+function cleanupTable() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let fixed = 0;
+
+  for (const aptName of ['SPC', 'BNR']) {
+    const sheet = ss.getSheetByName(aptName);
+    if (!sheet || sheet.getLastRow() < 2) continue;
+
+    const numRows = sheet.getLastRow() - 1;
+    // Cols: P=16 (paymentMethod), Q=17 (paymentStatus) — 1-indexed
+    const methodRange  = sheet.getRange(2, 16, numRows, 1);
+    const statusRange  = sheet.getRange(2, 17, numRows, 1);
+    const methodVals   = methodRange.getValues();
+    const statusVals   = statusRange.getValues();
+
+    for (let i = 0; i < numRows; i++) {
+      const raw    = String(statusVals[i][0] || '').trim();
+      const lo     = raw.toLowerCase();
+      let canonical = raw;
+
+      if (lo === 'paid online')                           canonical = 'Paid Online';
+      else if (lo.startsWith('upi'))                      canonical = 'Paid Online';
+      else if (lo === 'cash on delivery' || lo === 'cod') canonical = 'Cash on Delivery';
+
+      if (canonical !== raw) {
+        statusVals[i][0] = canonical;
+        fixed++;
+      }
+
+      // Back-fill Payment Method if empty
+      if (!methodVals[i][0]) {
+        methodVals[i][0] = canonical === 'Paid Online' ? 'Online' : 'COD';
+        fixed++;
+      }
+    }
+
+    statusRange.setValues(statusVals);
+    methodRange.setValues(methodVals);
+    Logger.log('✅ ' + aptName + ' cleaned');
+  }
+
+  Logger.log('Done — ' + fixed + ' cell(s) updated.');
+}
+
+// ── FIX SHEET HEADERS (run once from editor if headers are missing) ──
+// Rewrites the full header row for SPC and BNR sheets so all 20 columns are labelled.
+function fixSheetHeaders() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const headers = [
+    'Timestamp', 'Order ID', 'Name', 'Phone', 'Address', 'Map URL',
+    'Delivery Date', 'Delivery Label', '250g', '500g', '750g', '1kg',
+    'Total (g)', 'Total (₹)', 'Status',
+    'Payment Method', 'Payment Status', 'RZP Payment ID',
+    'Delivered', 'Payment Collected'
+  ];
+  for (const aptName of ['SPC', 'BNR']) {
+    const sheet = ss.getSheetByName(aptName);
+    if (!sheet) continue;
+    const r = sheet.getRange(1, 1, 1, headers.length);
+    r.setValues([headers]);
+    r.setFontWeight('bold');
+    r.setBackground('#2d5a1b');
+    r.setFontColor('#ffffff');
+    sheet.setFrozenRows(1);
+    Logger.log('✅ Headers fixed for ' + aptName);
+  }
+}
+
+// ── SEED DUMMY ORDERS (run once from editor, then delete) ─────
+// Creates past unpaid COD orders so the "Collect from previous run"
+// section shows up on the home tab. Run → seedDummyOrders() from
+// the Apps Script editor. Delete this function afterwards.
+function seedDummyOrders() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+
+  const dummySPC = [
+    { id: 'DUMMY001', name: 'Anita Sharma',   phone: '9845012345', address: '1203, Sobha Palm Court, Kogilu Main Road, Yelahanka', date: '2026-05-27', label: 'Wed, 27 May', q250: 2, q500: 0, q750: 0, q1kg: 0 },
+    { id: 'DUMMY002', name: 'Vikram Nair',     phone: '9741098765', address: '2401, Sobha Palm Court, Kogilu Main Road, Yelahanka', date: '2026-05-27', label: 'Wed, 27 May', q250: 0, q500: 1, q750: 0, q1kg: 0 },
+    { id: 'DUMMY003', name: 'Priya Menon',     phone: '9632587410', address: '3115, Sobha Palm Court, Kogilu Main Road, Yelahanka', date: '2026-05-24', label: 'Sat, 24 May', q250: 1, q500: 0, q750: 1, q1kg: 0 },
+  ];
+  const dummyBNR = [
+    { id: 'DUMMY004', name: 'Ramesh Iyer',    phone: '9880123456', address: 'B-802, Brigade North Ridge, Kogilu, Yelahanka', date: '2026-05-27', label: 'Wed, 27 May', q250: 0, q500: 0, q750: 0, q1kg: 1 },
+    { id: 'DUMMY005', name: 'Sunita Pillai',  phone: '9972345678', address: 'D-401, Brigade North Ridge, Kogilu, Yelahanka', date: '2026-05-24', label: 'Sat, 24 May', q250: 2, q500: 1, q750: 0, q1kg: 0 },
+  ];
+
+  const PRICE = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
+
+  function appendDummy(sheet, rows) {
+    ensureOrderHeaders(sheet);
+    rows.forEach(d => {
+      const totalGrams = d.q250*250 + d.q500*500 + d.q750*750 + d.q1kg*1000;
+      const totalRs    = d.q250*PRICE.q250 + d.q500*PRICE.q500 + d.q750*PRICE.q750 + d.q1kg*PRICE.q1kg;
+      sheet.appendRow([
+        new Date(), d.id, d.name, d.phone, d.address, '',
+        d.date, d.label,
+        d.q250, d.q500, d.q750, d.q1kg,
+        totalGrams, totalRs,
+        'New', 'COD', '', '',
+        'Y',  // mark as delivered
+        '',   // NOT collected yet — this is what makes it show in "Collect from previous run"
+      ]);
+    });
+  }
+
+  appendDummy(ss.getSheetByName('SPC'), dummySPC);
+  appendDummy(ss.getSheetByName('BNR'), dummyBNR);
+
+  Logger.log('✅ Seeded 3 SPC + 2 BNR dummy past COD orders. Refresh the ops app to see "Collect from previous run".');
+}
+
+// To clean up dummy rows, run this:
+function removeDummyOrders() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  for (const aptName of ['SPC', 'BNR']) {
+    const sheet = ss.getSheetByName(aptName);
+    if (!sheet) continue;
+    const rows = sheet.getDataRange().getValues();
+    for (let i = rows.length - 1; i >= 1; i--) {
+      if (String(rows[i][1]).startsWith('DUMMY')) {
+        sheet.deleteRow(i + 1);
+      }
+    }
+  }
+  Logger.log('✅ Dummy orders removed.');
+}
