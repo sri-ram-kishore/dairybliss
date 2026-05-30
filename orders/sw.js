@@ -5,7 +5,7 @@
 //  localStorage and retried via Background Sync.
 // ============================================================
 
-const CACHE_NAME = 'dairy-bliss-v4';
+const CACHE_NAME = 'dairy-bliss-v5';
 
 // Assets to precache on install
 const PRECACHE_ASSETS = [
