@@ -197,7 +197,7 @@ h3 {
   padding: 0;
   overflow: hidden;
   background:
-    linear-gradient(to right, rgba(250,248,244,0.96) 0%, rgba(250,248,244,0.82) 22%, rgba(250,248,244,0.30) 46%, rgba(250,248,244,0.0) 62%);
+    linear-gradient(to right, rgba(250,248,244,0.88) 0%, rgba(250,248,244,0.60) 18%, rgba(250,248,244,0.15) 36%, rgba(250,248,244,0.0) 50%);
 }
 
 .hero-copy {
@@ -396,8 +396,8 @@ h1 {
   height: 100%;
   margin: 0;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 30%, rgba(0,0,0,0.5) 42%, black 54%);
-  mask-image: linear-gradient(to right, transparent 0%, transparent 30%, rgba(0,0,0,0.5) 42%, black 54%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 18%, rgba(0,0,0,0.75) 32%, black 44%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 18%, rgba(0,0,0,0.75) 32%, black 44%);
 }
 
 .hero-photo::before {
