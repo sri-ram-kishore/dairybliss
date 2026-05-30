@@ -675,6 +675,9 @@ function aptMeta(key) {
  * Manual /summary SPC|BNR: sends per-apartment detail (names + flats).
  */
 function sendCutoffSummary(aptFilter) {
+  // When called from a time-based trigger, Apps Script passes the event object
+  // as the first argument. Discard it so we always send the full summary.
+  if (aptFilter && typeof aptFilter !== 'string') aptFilter = null;
   const now = new Date();
   const day = now.getDay();
 
@@ -849,6 +852,7 @@ function handleTelegramUpdate(update) {
  * /status — running totals for the next two delivery dates
  */
 function sendStatus(aptFilter) {
+  if (aptFilter && typeof aptFilter !== 'string') aptFilter = null;
   const ss    = SpreadsheetApp.openById(SHEET_ID);
   const now   = new Date();
   const dates = nextDeliveryDates(2);
