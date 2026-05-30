@@ -159,14 +159,23 @@
     }
     .today-sub { font-size: 14px; color: var(--text-soft); margin-top: 4px; }
 
-    /* ── TODAY: ORDER COUNT CHIPS ── */
-    .count-row { display: flex; gap: 8px; margin-bottom: 12px; }
-    .count-chip {
-      flex: 1; background: var(--white);
-      border: 1px solid var(--border); border-radius: 12px;
-      box-shadow: var(--shadow); padding: 11px 12px; text-align: center;
+    /* ── TODAY: ORDER COUNT BAR ── */
+    .count-bar {
+      display: flex; align-items: center;
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: var(--shadow);
+      margin-bottom: 12px; overflow: hidden;
+    }
+    .count-seg {
+      flex: 1; padding: 11px 8px; text-align: center;
+    }
+    .count-seg + .count-seg { border-left: 1px solid var(--border); }
+    .count-op {
+      font-size: 15px; font-weight: 600; color: var(--text-soft);
+      padding: 0 2px; flex-shrink: 0;
     }
     .count-val   { font-size: 22px; font-weight: 760; color: var(--text); letter-spacing: -0.4px; }
+    .count-sub   { font-size: 11px; color: var(--text-soft); margin-top: 1px; }
     .count-label { font-size: 11px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
 
     /* ── TODAY: APT BREAKDOWN CARD ── */
@@ -1188,16 +1197,20 @@ function renderToday() {
 
   // Order count chips
   html += `
-    <div class="count-row">
-      <div class="count-chip">
+    <div class="count-bar">
+      <div class="count-seg">
         <div class="count-val">${spcOrders.length}</div>
+        <div class="count-sub">${spcB.kg.toFixed(1)} kg</div>
         <div class="count-label">SPC orders</div>
       </div>
-      <div class="count-chip">
+      <div class="count-op">+</div>
+      <div class="count-seg">
         <div class="count-val">${bnrOrders.length}</div>
+        <div class="count-sub">${bnrB.kg.toFixed(1)} kg</div>
         <div class="count-label">BNR orders</div>
       </div>
-      <div class="count-chip">
+      <div class="count-op">=</div>
+      <div class="count-seg">
         <div class="count-val">${buy.kg > 0 ? buy.kg.toFixed(1) + ' kg' : '0'}</div>
         <div class="count-label">Total qty</div>
       </div>
