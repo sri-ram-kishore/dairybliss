@@ -214,6 +214,14 @@ h3 {
   padding: clamp(20px, 4.2vw, 65px) min(52vw, 640px) clamp(60px, 8vw, 108px) clamp(22px, 4.8vw, 72px);
 }
 
+/* Text elements must sit above hero-photo (z-index:1) inside the same stacking context */
+.hero-headline-group,
+.hero-copy > p,
+.hero-sub-block {
+  position: relative;
+  z-index: 2;
+}
+
 h1 {
   max-width: 560px;
   margin-bottom: 10px;
@@ -396,8 +404,8 @@ h1 {
   height: 100%;
   margin: 0;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 18%, rgba(0,0,0,0.75) 32%, black 44%);
-  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 18%, rgba(0,0,0,0.75) 32%, black 44%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 28%, rgba(0,0,0,0.5) 40%, black 55%);
+  mask-image: linear-gradient(to right, transparent 0%, transparent 28%, rgba(0,0,0,0.5) 40%, black 55%);
 }
 
 .hero-photo::before {
