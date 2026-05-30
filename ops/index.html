@@ -325,27 +325,32 @@
     }
     .order-meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
     .order-btns { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
-    /* Delivery pill — matches Collect pill */
+    /* Delivery button — solid green when action needed, quiet text when done */
     .btn-del {
-      width: 100px; padding: 6px 0; border-radius: 20px; white-space: nowrap;
-      font-size: 12px; font-weight: 700; letter-spacing: 0.02em; text-align: center;
-      border: 1.5px solid var(--border); background: var(--cream);
-      color: var(--text-soft); cursor: pointer; font-family: inherit;
+      min-width: 88px; padding: 7px 14px; border-radius: 20px; white-space: nowrap;
+      font-size: 12px; font-weight: 700; text-align: center;
+      background: var(--green); color: #fff; border: none;
+      cursor: pointer; font-family: inherit;
       -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
     }
-    .btn-del:active { opacity: 0.7; }
-    .btn-del.done { background: var(--green); color: #fff; border-color: var(--green); }
-    /* Payment pill */
+    .btn-del:active { opacity: 0.75; }
+    .btn-del.done {
+      background: none; border: none; padding: 7px 4px;
+      color: var(--text-soft); font-weight: 600; min-width: 0;
+    }
+    /* Payment — solid amber when action needed, quiet label when done */
     .btn-pay {
-      width: 86px; padding: 6px 0; border-radius: 20px; white-space: nowrap;
-      font-size: 12px; font-weight: 700; letter-spacing: 0.02em; text-align: center;
-      border: 1.5px solid; cursor: pointer; font-family: inherit;
+      min-width: 72px; padding: 7px 14px; border-radius: 20px; white-space: nowrap;
+      font-size: 12px; font-weight: 700; text-align: center;
+      background: var(--orange); color: #fff; border: none;
+      cursor: pointer; font-family: inherit;
       -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
     }
-    .btn-pay:active { opacity: 0.7; }
-    .btn-pay.cod       { background: #fef3e2; color: var(--orange);  border-color: #f5c07a; }
-    .btn-pay.cash-done { background: var(--green-light); color: var(--green); border-color: var(--green); pointer-events: none; }
-    .btn-pay.upi       { background: var(--green-light); color: var(--green); border-color: var(--green); pointer-events: none; }
+    .btn-pay:active { opacity: 0.75; }
+    .pay-label {
+      font-size: 12px; font-weight: 600; color: var(--text-soft);
+      padding: 7px 4px; white-space: nowrap;
+    }
 
     /* ── VIEW-ONLY SECTION CHIP ── */
     .view-only-chip {
@@ -1414,10 +1419,10 @@ function orderCardHTML(o, editable) {
   if (!editable) {
     // View-only: same compact row, no tappable buttons
     let statusChip;
-    if (allDone)      statusChip = `<span class="btn-pay cash-done" style="pointer-events:none">Done ✓</span>`;
-    else if (upiPaid) statusChip = `<span class="btn-pay upi">UPI ✓</span>`;
-    else if (delDone) statusChip = `<span class="btn-pay cash-done" style="pointer-events:none">Delivered</span>`;
-    else              statusChip = `<span class="btn-pay cod" style="pointer-events:none">COD</span>`;
+    if (allDone)      statusChip = `<span class="pay-label">Done ✓</span>`;
+    else if (upiPaid) statusChip = `<span class="pay-label">UPI ✓</span>`;
+    else if (delDone) statusChip = `<span class="pay-label" style="color:var(--orange);font-weight:700">Collect</span>`;
+    else              statusChip = `<span class="pay-label">COD</span>`;
     return `
     <div class="order-card${allDone ? ' completed' : ''}">
       <div class="order-info">
@@ -1428,16 +1433,23 @@ function orderCardHTML(o, editable) {
     </div>`;
   }
 
-  // Editable card — compact row with circle + pill
+  // Editable card — action buttons loud, done states quiet
   let payBtn;
   if (upiPaid) {
-    payBtn = `<button class="btn-pay upi">UPI ✓</button>`;
+    // Paid online — quiet label, no action
+    payBtn = `<span class="pay-label">UPI ✓</span>`;
   } else if (paidDone) {
-    payBtn = `<button class="btn-pay cash-done" onclick="togglePaid('${rid}','${o.apt}')">Cash ✓</button>`;
+    // Cash collected — quiet label, tap to undo
+    payBtn = `<span class="pay-label" style="cursor:pointer" onclick="togglePaid('${rid}','${o.apt}')">Cash ✓</span>`;
+  } else if (delDone) {
+    // Delivered but cash not collected — LOUD amber action button
+    payBtn = `<button class="btn-pay" onclick="togglePaid('${rid}','${o.apt}')">Collect</button>`;
   } else {
-    payBtn = `<button class="btn-pay cod" onclick="togglePaid('${rid}','${o.apt}')">Collect</button>`;
+    // Not delivered yet — COD is just info, can't collect yet
+    payBtn = `<span class="pay-label">COD</span>`;
   }
 
+  const delLabel = delDone ? '✓ Delivered' : 'Deliver';
   return `
   <div class="order-card${allDone ? ' completed' : ''}">
     <div class="order-info">
@@ -1445,7 +1457,7 @@ function orderCardHTML(o, editable) {
       <div class="order-meta">${esc(flat)} · ${qtyLabel(o)} · ${fmt(o.totalRs)}</div>
     </div>
     <div class="order-btns">
-      <button class="btn-del${delDone ? ' done' : ''}" onclick="toggleDelivered('${rid}','${o.apt}')">${delDone ? '✓ Delivered' : 'Delivered?'}</button>
+      <button class="btn-del${delDone ? ' done' : ''}" onclick="toggleDelivered('${rid}','${o.apt}')">${delLabel}</button>
       ${payBtn}
     </div>
   </div>`;
