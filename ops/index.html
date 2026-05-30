@@ -42,7 +42,7 @@
     #screen-pin {
       min-height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: max(32px, env(safe-area-inset-top)) 24px 32px;
+      padding: max(32px, env(safe-area-inset-top)) 24px max(48px, env(safe-area-inset-bottom, 0px));
     }
     .pin-logo { width: min(50vw, 180px); margin-bottom: 32px; }
     .pin-logo img { width: 100%; mix-blend-mode: multiply; }
@@ -128,7 +128,7 @@
     /* ── TAB CONTENT ── */
     .tab-content {
       flex: 1; overflow-y: auto;
-      padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(70px + max(env(safe-area-inset-bottom, 0px), 20px));
     }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
@@ -486,7 +486,7 @@
       backdrop-filter: saturate(180%) blur(22px);
       -webkit-backdrop-filter: saturate(180%) blur(22px);
       border-top: 1px solid var(--border);
-      display: flex; padding-bottom: env(safe-area-inset-bottom, 0px);
+      display: flex; padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
     }
     .tab-item {
       flex: 1; display: flex; flex-direction: column;
