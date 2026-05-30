@@ -161,22 +161,23 @@
 
     /* ── TODAY: ORDER COUNT BAR ── */
     .count-bar {
-      display: flex; align-items: center;
+      display: flex; align-items: flex-start;
       background: var(--white); border: 1px solid var(--border);
       border-radius: 12px; box-shadow: var(--shadow);
-      margin-bottom: 12px; overflow: hidden;
+      padding: 16px 18px; margin-bottom: 12px;
     }
-    .count-seg {
-      flex: 1; padding: 11px 8px; text-align: center;
+    .count-seg       { flex: 1; }
+    .count-seg--mid  { text-align: center; }
+    .count-seg--end  { text-align: right; }
+    .count-divider {
+      display: flex; align-items: flex-start; padding-top: 5px;
+      font-size: 11px; font-weight: 700; color: var(--text-soft);
+      border-left: 1px solid var(--border);
+      padding-left: 14px; margin-right: 14px;
     }
-    .count-seg + .count-seg { border-left: 1px solid var(--border); }
-    .count-op {
-      font-size: 15px; font-weight: 600; color: var(--text-soft);
-      padding: 0 2px; flex-shrink: 0;
-    }
-    .count-val   { font-size: 22px; font-weight: 760; color: var(--text); letter-spacing: -0.4px; }
-    .count-sub   { font-size: 11px; color: var(--text-soft); margin-top: 1px; }
-    .count-label { font-size: 11px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+    .count-val   { font-size: 22px; font-weight: 760; color: var(--text); letter-spacing: -0.5px; line-height: 1.1; }
+    .count-sub   { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+    .count-label { font-size: 11px; color: var(--text-soft); margin-top: 3px; }
 
     /* ── TODAY: APT BREAKDOWN CARD ── */
     .apt-breakdown {
@@ -1203,14 +1204,14 @@ function renderToday() {
         <div class="count-sub">${spcB.kg.toFixed(1)} kg</div>
         <div class="count-label">SPC orders</div>
       </div>
-      <div class="count-op">+</div>
-      <div class="count-seg">
+      <div class="count-divider">+</div>
+      <div class="count-seg count-seg--mid">
         <div class="count-val">${bnrOrders.length}</div>
         <div class="count-sub">${bnrB.kg.toFixed(1)} kg</div>
         <div class="count-label">BNR orders</div>
       </div>
-      <div class="count-op">=</div>
-      <div class="count-seg">
+      <div class="count-divider">=</div>
+      <div class="count-seg count-seg--end">
         <div class="count-val">${buy.kg > 0 ? buy.kg.toFixed(1) + ' kg' : '0'}</div>
         <div class="count-label">Total qty</div>
       </div>
