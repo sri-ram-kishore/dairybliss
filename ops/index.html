@@ -784,6 +784,7 @@ const VENDOR_DELIVER_PH  = '8861000100';
 const APT_NAMES = { SPC: 'Sobha Palm Court', BNR: 'Brigade North Ridge' };
 const BLOCK_KG    = 3;
 const COST_PER_KG = 335;
+const FETCH_TIMEOUT_MS = 20000;
 
 // ── STATE ─────────────────────────────────────────────────────
 let orders        = [];
@@ -1066,7 +1067,7 @@ async function fetchOrders(showSpinner) {
     setTimeout(() => btn.classList.remove('spinning'), 600);
   }
   try {
-    const resp = await fetch(WEBHOOK_URL + '?action=dashboard&token=' + (activeToken || ''));
+    const resp = await fetchWithTimeout(WEBHOOK_URL + '?action=dashboard&token=' + (activeToken || ''));
     const data = await resp.json();
     if (data.ok) {
       orders = data.orders;
@@ -1079,7 +1080,8 @@ async function fetchOrders(showSpinner) {
       // Unexpected response (e.g. service worker returned {status:'queued'} offline)
       throw new Error('bad response');
     }
-  } catch {
+  } catch (err) {
+    console.warn('[DairyBliss] dashboard load failed', err);
     const cached = localStorage.getItem('db_orders');
     if (cached) {
       orders = JSON.parse(cached); renderToday(); renderOrders();
@@ -1087,13 +1089,14 @@ async function fetchOrders(showSpinner) {
     } else {
       document.getElementById('today-content').innerHTML =
         `<div class="empty"><div class="empty-icon">⚠️</div>Could not load orders.<br>Check your connection and tap refresh.</div>`;
-      document.getElementById('orders-content').innerHTML = '';
+      document.getElementById('orders-content').innerHTML =
+        `<div class="empty"><div class="empty-icon">⚠️</div>Could not load orders.<br>Tap refresh to try again.</div>`;
     }
   }
 }
 async function fetchSummary() {
   try {
-    const resp = await fetch(WEBHOOK_URL + '?action=summary&token=' + (activeToken || ''));
+    const resp = await fetchWithTimeout(WEBHOOK_URL + '?action=summary&token=' + (activeToken || ''));
     const data = await resp.json();
     if (data.ok) {
       summaryData = data;
@@ -1169,6 +1172,11 @@ function isoDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function todayISO() { return isoDate(new Date()); }
+function fetchWithTimeout(url, options = {}) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  return fetch(url, { ...options, signal: ctrl.signal }).finally(() => clearTimeout(timer));
+}
 
 function qtyLabel(o) {
   const parts = [];
@@ -1389,7 +1397,7 @@ function renderToday() {
       const flat    = flatFromAddress(o.address);
       const dateStr = niceDate(o.deliveryLabel || o.deliveryDate);
       const waMsg   = encodeURIComponent(`Hi ${o.name}! 🙏 A gentle reminder from DairyBliss — your paneer delivery payment of ${fmt(o.totalRs)} is still pending. You're welcome to pay via UPI (just send us a screenshot) or have it ready when we're next in the building. Thank you! 😊`);
-      const waHref  = `https://wa.me/91${o.phone.replace(/\D/g,'')}?text=${waMsg}`;
+      const waHref  = `https://wa.me/91${String(o.phone || '').replace(/\D/g,'')}?text=${waMsg}`;
       html += `
       <div class="collect-row" id="cr-${esc(o.id)}">
         <div class="collect-body">
