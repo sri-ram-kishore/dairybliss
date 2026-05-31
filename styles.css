@@ -197,7 +197,7 @@ h3 {
   padding: 0;
   overflow: hidden;
   background:
-    linear-gradient(to right, rgba(250,248,244,0.78) 0%, rgba(250,248,244,0.45) 20%, rgba(250,248,244,0.08) 38%, rgba(250,248,244,0.0) 48%);
+    linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.84) 38%, rgba(255,255,255,0.18) 62%, rgba(255,255,255,0.0) 100%);
 }
 
 .hero-copy {
@@ -251,7 +251,7 @@ h1 {
 }
 
 .hero-delivery-note {
-  margin: 10px 0 0;
+  margin: 6px 0 0;
   font-size: 13px;
   font-weight: 500;
   color: var(--muted);
@@ -319,32 +319,32 @@ h1 {
 .hero-trust-icons {
   display: flex;
   align-items: stretch;
-  gap: 10px;
-  margin: 26px 0 0;
+  gap: 8px;
+  margin: 20px 0 0;
 }
 .trust-icon-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 10px 22px 12px;
-  gap: 12px;
+  padding: 8px 16px 10px;
+  gap: 8px;
   background: #fff;
   border: 1px solid rgba(0,0,0,0.10);
   border-radius: 10px;
-  min-width: 150px;
+  min-width: 130px;
 }
 .trust-icon-item img {
-  height: 42px;
+  height: 32px;
   width: auto;
-  max-width: 120px;
+  max-width: 100px;
   object-fit: contain;
   display: block;
 }
 .trust-icon-item span {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a2433;
   letter-spacing: 0.01em;
   line-height: 1.35;
   max-width: 110px;
