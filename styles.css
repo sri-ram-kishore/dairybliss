@@ -252,6 +252,7 @@ h1 {
 
 .hero-delivery-note {
   margin: 6px 0 0;
+  max-width: 188px;
   font-size: 13px;
   font-weight: 500;
   color: var(--muted);
