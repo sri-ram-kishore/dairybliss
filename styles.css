@@ -487,12 +487,12 @@ h1 {
 
 .feature-points strong {
   color: var(--green);
-  font-size: 19px;
+  font-size: 20px;
 }
 
 .feature-points span {
   color: var(--muted);
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.55;
 }
 
