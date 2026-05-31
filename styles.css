@@ -250,6 +250,14 @@ h1 {
   margin-left: 16px;
 }
 
+.hero-delivery-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+
 .hero-text-link {
   display: inline-flex;
   align-items: center;
