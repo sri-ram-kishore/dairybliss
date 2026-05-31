@@ -1150,11 +1150,12 @@ function niceDate(s) {
 
 // Smooth-scroll to a section within the tab-content container
 function scrollToSection(id) {
-  const el        = document.getElementById(id);
-  const container = document.querySelector('.tab-content');
-  if (!el || !container) return;
-  const offset = el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 12;
-  container.scrollTo({ top: offset, behavior: 'smooth' });
+  const el = document.getElementById(id);
+  if (!el) return;
+  const hd  = document.querySelector('.hd');
+  const hdH = hd ? hd.getBoundingClientRect().height : 0;
+  const top = el.getBoundingClientRect().top + window.scrollY - hdH - 8;
+  window.scrollTo({ top, behavior: 'smooth' });
 }
 
 function nextDeliveryDate(weekday) {
@@ -1945,12 +1946,13 @@ async function togglePaid(id, apt) {
 async function collectPaid(id, apt) {
   const o = orders.find(x => x.id === id);
   if (!o) return;
-  // Optimistic DOM update — dim the row, disable the button
+  // Optimistic DOM update — dim the row, disable the button, then sink it to the bottom
   const row = document.getElementById('cr-' + id);
   if (row) {
     row.classList.add('done');
     const btn = row.querySelector('.btn-collect');
     if (btn) { btn.textContent = 'Paid ✓'; btn.classList.add('done'); btn.onclick = null; }
+    setTimeout(() => { const card = row.parentElement; if (card) card.appendChild(row); }, 350);
   }
   o.paymentCollected = true;
   showToast('Payment collected ✓');
