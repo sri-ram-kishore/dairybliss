@@ -251,10 +251,11 @@ h1 {
 }
 
 .hero-delivery-note {
-  margin: 12px 0 0;
-  font-size: 13px;
+  margin: 14px 0 0;
+  font-size: 12px;
   font-weight: 400;
   color: rgba(26, 48, 91, 0.72);
+  opacity: 0.65;
   line-height: 1.4;
   letter-spacing: 0;
 }
