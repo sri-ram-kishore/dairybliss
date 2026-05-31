@@ -193,11 +193,11 @@ h3 {
   flex-direction: column;
   justify-content: flex-start;
   min-height: 0 !important;
-  height: max(calc(100vw * 866 / 1817), calc(100svh - 73px)) !important;
+  height: max(calc(100vw * 941 / 1672), calc(100svh - 73px)) !important;
   padding: 0;
   overflow: hidden;
   background:
-    linear-gradient(to right, rgba(250,248,244,0.88) 0%, rgba(250,248,244,0.60) 18%, rgba(250,248,244,0.15) 36%, rgba(250,248,244,0.0) 50%);
+    linear-gradient(to right, rgba(250,248,244,0.78) 0%, rgba(250,248,244,0.45) 20%, rgba(250,248,244,0.08) 38%, rgba(250,248,244,0.0) 48%);
 }
 
 .hero-copy {
@@ -322,8 +322,8 @@ h1 {
   min-width: 120px;
 }
 .trust-icon-item img {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
   display: block;
 }
@@ -394,8 +394,8 @@ h1 {
   height: 100%;
   margin: 0;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 28%, rgba(0,0,0,0.5) 40%, black 55%);
-  mask-image: linear-gradient(to right, transparent 0%, transparent 28%, rgba(0,0,0,0.5) 40%, black 55%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 22%, rgba(0,0,0,0.55) 34%, black 48%);
+  mask-image: linear-gradient(to right, transparent 0%, transparent 22%, rgba(0,0,0,0.55) 34%, black 48%);
 }
 
 .hero-photo::before {
