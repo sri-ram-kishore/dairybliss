@@ -193,7 +193,7 @@ h3 {
   flex-direction: column;
   justify-content: flex-start;
   min-height: 0 !important;
-  height: max(calc(100vw * 941 / 1672), calc(100svh - 73px)) !important;
+  height: max(calc(100vw * 866 / 1817), calc(100svh - 73px)) !important;
   padding: 0;
   overflow: hidden;
   background:
