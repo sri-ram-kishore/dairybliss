@@ -449,6 +449,7 @@ h1 {
 
 .paneer-feature {
   padding: clamp(40px, 4vw, 60px) clamp(22px, 4.8vw, 72px) clamp(72px, 8vw, 112px);
+  scroll-margin-top: 68px;
 }
 
 .story-band {
