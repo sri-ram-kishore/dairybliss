@@ -1043,6 +1043,14 @@ function showApp() {
   app.style.display = 'flex'; app.style.flexDirection = 'column';
   document.getElementById('hd-user').textContent = activeUser;
   try { expensesCache = JSON.parse(localStorage.getItem('db_expenses') || '[]'); } catch { expensesCache = []; }
+  // Render cached data immediately so the dashboard isn't blank while fetching
+  try {
+    const cachedOrders = localStorage.getItem('db_orders');
+    if (cachedOrders) { orders = JSON.parse(cachedOrders); renderToday(); renderOrders(); }
+    const cachedSummary = localStorage.getItem('db_summary');
+    if (cachedSummary) { summaryData = JSON.parse(cachedSummary); renderAccounts(); }
+  } catch {}
+  // Then fetch fresh data silently in the background
   fetchOrders();
   fetchSummary();
   loadExpensesFromBackend();
