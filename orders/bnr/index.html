@@ -168,25 +168,26 @@
     .day-sub  { font-size: 12.5px; color: var(--text-soft); margin-top: 1px; }
 
     /* ── QUANTITY CARDS ── */
-    .qty-cards { display: flex; flex-direction: column; gap: 8px; }
-
-    .qty-card {
-      display: flex; align-items: center; gap: 14px;
-      padding: 13px 16px;
-      border: 1.5px solid var(--border); border-radius: 11px;
-      cursor: pointer; background: var(--cream-card);
-      transition: border-color 0.15s, background 0.15s;
-      -webkit-tap-highlight-color: transparent;
+        .qty-rows { display: flex; flex-direction: column; }
+    .qty-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 15px 0; border-bottom: 1px solid var(--border);
     }
-    .qty-card:hover { border-color: rgba(28,47,92,0.3); }
-    .qty-card.chosen { border-color: var(--green); box-shadow: 0 0 0 2px rgba(61,122,26,0.12); }
-    .qty-card input[type="radio"] {
-      width: 20px; height: 20px; accent-color: var(--green);
-      flex-shrink: 0; cursor: pointer;
+    .qty-row:last-child { border-bottom: none; }
+    .qty-info { display: flex; align-items: baseline; gap: 10px; }
+    .qty-label { font-size: 16px; font-weight: 600; color: var(--text); }
+    .qty-price { font-size: 14px; font-weight: 500; color: var(--green); }
+    .qty-stepper { display: flex; align-items: center; gap: 16px; }
+    .qty-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1.5px solid var(--border); background: #fff;
+      color: var(--text); font-size: 20px; line-height: 1;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent; transition: border-color 0.15s;
+      font-weight: 300; font-family: inherit;
     }
-    .qty-label { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); }
-    .qty-desc  { font-size: 12px; color: var(--text-soft); font-weight: 400; margin-top: 1px; }
-    .qty-price { font-size: 14px; font-weight: 600; color: var(--green); }
+    .qty-btn:active { opacity: 0.6; }
+    .qty-count { font-size: 17px; font-weight: 600; color: var(--text); min-width: 20px; text-align: center; }
 
     .amt-row {
       display: none; align-items: center; justify-content: space-between;
@@ -492,39 +493,39 @@ const APT = {
       <span class="step-title">How much paneer?</span>
     </div>
 
-    <div class="qty-cards" id="qty-cards">
-      <label class="qty-card" id="qc-250">
-        <input type="radio" name="quantity" value="250g">
-        <div style="flex:1">
-          <div class="qty-label">250g</div>
-          <div class="qty-desc">Great for 1–2 people</div>
+    <div class="qty-rows" id="qty-cards">
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price">₹145</span></div>
+        <div class="qty-stepper">
+          <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
+          <span class="qty-count" id="qcount-250g">0</span>
+          <button type="button" class="qty-btn" onclick="stepQty('250g',1)">+</button>
         </div>
-        <span class="qty-price">₹145</span>
-      </label>
-      <label class="qty-card chosen" id="qc-500">
-        <input type="radio" name="quantity" value="500g" checked>
-        <div style="flex:1">
-          <div class="qty-label">500g</div>
-          <div class="qty-desc">Perfect for a family</div>
+      </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">500g</span><span class="qty-price">₹280</span></div>
+        <div class="qty-stepper">
+          <button type="button" class="qty-btn" onclick="stepQty('500g',-1)">−</button>
+          <span class="qty-count" id="qcount-500g">0</span>
+          <button type="button" class="qty-btn" onclick="stepQty('500g',1)">+</button>
         </div>
-        <span class="qty-price">₹280</span>
-      </label>
-      <label class="qty-card" id="qc-750">
-        <input type="radio" name="quantity" value="750g">
-        <div style="flex:1">
-          <div class="qty-label">750g</div>
-          <div class="qty-desc">Weekly staple</div>
+      </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">750g</span><span class="qty-price">₹420</span></div>
+        <div class="qty-stepper">
+          <button type="button" class="qty-btn" onclick="stepQty('750g',-1)">−</button>
+          <span class="qty-count" id="qcount-750g">0</span>
+          <button type="button" class="qty-btn" onclick="stepQty('750g',1)">+</button>
         </div>
-        <span class="qty-price">₹420</span>
-      </label>
-      <label class="qty-card" id="qc-1kg">
-        <input type="radio" name="quantity" value="1kg">
-        <div style="flex:1">
-          <div class="qty-label">1 Kg</div>
-          <div class="qty-desc">Best value</div>
+      </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">1 kg</span><span class="qty-price">₹550</span></div>
+        <div class="qty-stepper">
+          <button type="button" class="qty-btn" onclick="stepQty('1kg',-1)">−</button>
+          <span class="qty-count" id="qcount-1kg">0</span>
+          <button type="button" class="qty-btn" onclick="stepQty('1kg',1)">+</button>
         </div>
-        <span class="qty-price">₹550</span>
-      </label>
+      </div>
     </div>
 
 
@@ -666,9 +667,6 @@ function reorderCards() {
 populateDates();
 reorderCards();
 
-// Pre-select 500g amount pill
-document.getElementById('amount-val').textContent = '₹280';
-document.getElementById('amount-pill').classList.add('v');
 
 // ── cutoff popup ──────────────────────────────────────────────
 (function checkCutoff() {
@@ -710,18 +708,32 @@ function wireCards(name) {
   });
 }
 wireCards('delivery_day');
-wireCards('quantity');
 wireCards('payment');
 
-// quantity → amount pill
-document.querySelectorAll('input[name="quantity"]').forEach(r => {
-  r.addEventListener('change', () => {
-    const p = CONFIG.PRICES[r.value];
-    if (!p) return;
-    document.getElementById('amount-val').textContent = p.display;
+// ── quantity steppers ─────────────────────────────────────────
+const QTY_STATE = { '250g': 0, '500g': 0, '750g': 0, '1kg': 0 };
+
+function stepQty(key, delta) {
+  QTY_STATE[key] = Math.max(0, (QTY_STATE[key] || 0) + delta);
+  document.getElementById('qcount-' + key).textContent = QTY_STATE[key];
+  updateTotalPill();
+  if (qtyTotal() > 0) setCardsErr('qty-cards', 'e-qty', false);
+}
+function qtyTotal() {
+  return Object.values(QTY_STATE).reduce((s, v) => s + v, 0);
+}
+function qtyAmount() {
+  return Object.entries(QTY_STATE).reduce((s, [k, v]) => s + (CONFIG.PRICES[k]?.amount || 0) * v, 0);
+}
+function updateTotalPill() {
+  const total = qtyAmount();
+  if (total > 0) {
+    document.getElementById('amount-val').textContent = '₹' + total.toLocaleString('en-IN');
     document.getElementById('amount-pill').classList.add('v');
-  });
-});
+  } else {
+    document.getElementById('amount-pill').classList.remove('v');
+  }
+}
 
 // phone: digits only + clear error
 document.getElementById('f-phone').addEventListener('input', function () {
@@ -756,8 +768,8 @@ function validateAll() {
   const day = document.querySelector('input[name="delivery_day"]:checked');
   setCardsErr('day-cards','e-day', !day); if (!day) ok = false;
 
-  const qty = document.querySelector('input[name="quantity"]:checked');
-  setCardsErr('qty-cards','e-qty', !qty); if (!qty) ok = false;
+  const hasQty = qtyTotal() > 0;
+  setCardsErr('qty-cards','e-qty', !hasQty); if (!hasQty) ok = false;
 
   const pay = document.querySelector('input[name="payment"]:checked');
   setCardsErr('pay-cards','e-pay', !pay); if (!pay) ok = false;
@@ -767,22 +779,28 @@ function validateAll() {
 
 // ── collect form data ─────────────────────────────────────────
 function collectData() {
-  const qk     = document.querySelector('input[name="quantity"]:checked').value;
-  const p      = CONFIG.PRICES[qk];
   const pay    = document.querySelector('input[name="payment"]:checked').value;
   const dayRad = document.querySelector('input[name="delivery_day"]:checked');
+  const amount = qtyAmount();
+  const qtyLabel = Object.entries(QTY_STATE)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${k} × ${v}`)
+    .join(', ');
 
   return {
     name:       document.getElementById('f-name').value.trim(),
     phone:      document.getElementById('f-phone').value.trim(),
     apartment:  APT.name,
-    aptKey:     APT.name,
     flat:       document.getElementById('f-flat').value.trim(),
     day:        dayRad.value,
-    fullDate:   dayRad.dataset.fullDate  || dayRad.value,
-    isoDate:    dayRad.dataset.isoDate   || '',
+    fullDate:   dayRad.dataset.fullDate   || dayRad.value,
+    isoDate:    dayRad.dataset.isoDate    || '',
     shortLabel: dayRad.dataset.shortLabel || dayRad.value,
-    qk, qtyLabel: p.label, amount: p.amount, amtDisp: p.display,
+    q250: QTY_STATE['250g'],
+    q500: QTY_STATE['500g'],
+    q750: QTY_STATE['750g'],
+    q1kg: QTY_STATE['1kg'],
+    qtyLabel, amount, amtDisp: '₹' + amount.toLocaleString('en-IN'),
     payKey: pay,
     payLabel: pay === 'cod' ? 'Cash on Delivery' : 'Online',
   };
@@ -799,10 +817,10 @@ async function sendToSheet(d, payStatus, rzpPaymentId) {
     mapUrl:        '',
     deliveryDate:  d.isoDate,
     deliveryLabel: d.shortLabel,
-    q250:  d.qk === '250g' ? 1 : 0,
-    q500:  d.qk === '500g' ? 1 : 0,
-    q750:  d.qk === '750g' ? 1 : 0,
-    q1kg:  d.qk === '1kg'  ? 1 : 0,
+    q250:  d.q250,
+    q500:  d.q500,
+    q750:  d.q750,
+    q1kg:  d.q1kg,
     paymentMethod: d.payLabel,
     paymentStatus: payStatus,
     rzpPaymentId:  rzpPaymentId || '',
@@ -886,22 +904,15 @@ function showConfirmation(d, payStatus) {
 // ── reset ─────────────────────────────────────────────────────
 function resetForm() {
   document.getElementById('orderForm').reset();
-  document.querySelectorAll('.day-card, .qty-card, .pay-card').forEach(c => c.classList.remove('chosen'));
+  document.querySelectorAll('.day-card, .pay-card').forEach(c => c.classList.remove('chosen'));
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));
   document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
   document.querySelectorAll('.cards-error').forEach(e => e.classList.remove('cards-error'));
-  const checked = document.querySelector('input[name="qty"]:checked');
-  if (checked) {
-    const price = CONFIG.PRICES[checked.value];
-    if (price) {
-      document.getElementById('amount-val').textContent = price.display;
-      document.getElementById('amount-pill').classList.add('v');
-    } else {
-      document.getElementById('amount-pill').classList.remove('v');
-    }
-  } else {
-    document.getElementById('amount-pill').classList.remove('v');
-  }
+  Object.keys(QTY_STATE).forEach(k => {
+    QTY_STATE[k] = 0;
+    document.getElementById('qcount-' + k).textContent = '0';
+  });
+  document.getElementById('amount-pill').classList.remove('v');
   hide('screen-confirm');
   show('screen-form'); goTop();
 }
