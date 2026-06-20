@@ -356,7 +356,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const { unit } = parseApt(data.address);
 
   const msg = [
-    `<b>${meta.emoji} New Order — ${esc(orderId)}</b>`,
+    `<b>New Order — ${esc(orderId)}</b>  (${esc(meta.key)})`,
     ``,
     `${esc(data.name)}${unit ? ', ' + esc(unit) : ''}, ${esc(data.phone)}`,
     `${esc(data.deliveryLabel)}`,
@@ -403,6 +403,10 @@ function checkStockAlerts(prevGrams, newGrams, label, meta) {
 
 function getDashboardOrders() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
+  const today = fmt(new Date(), 'yyyy-MM-dd');
+  const deliveryDates = nextDeliveryDates(2).map(d => d.date);
+  const deliveryDateSet = {};
+  deliveryDates.forEach(d => deliveryDateSet[d] = true);
   const orders = [];
   for (const apt of ['SPC', 'BNR']) {
     const sheet = ss.getSheetByName(apt);
@@ -410,12 +414,22 @@ function getDashboardOrders() {
     const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 20).getValues();
     rows.forEach(r => {
       if (!r[1]) return;
+      const deliveryDate = r[6] instanceof Date ? fmt(r[6], 'yyyy-MM-dd') : String(r[6]);
+      const paymentStatus = r[16] || '';
+      const paymentCollected = r[19] === 'Y';
+      const isPaidOnline = String(paymentStatus).toLowerCase() === 'paid online';
+      const isPastUnpaidCod = deliveryDate < today && !isPaidOnline && !paymentCollected;
+
+      // The ops Home/Orders tabs only need the next two delivery dates and
+      // unresolved old COD rows. Keeping this small prevents dashboard hangs.
+      if (!deliveryDateSet[deliveryDate] && !isPastUnpaidCod) return;
+
       orders.push({
         id:               r[1],
         name:             r[2],
         phone:            r[3],
         address:          r[4],
-        deliveryDate:     r[6] instanceof Date ? fmt(r[6], 'yyyy-MM-dd') : String(r[6]),
+        deliveryDate:     deliveryDate,
         deliveryLabel:    r[7],
         q250:             parseInt(r[8])  || 0,
         q500:             parseInt(r[9])  || 0,
@@ -424,10 +438,10 @@ function getDashboardOrders() {
         totalGrams:       parseInt(r[12]) || 0,
         totalRs:          parseInt(r[13]) || 0,
         paymentMethod:    r[15] || '',
-        paymentStatus:    r[16] || '',
+        paymentStatus:    paymentStatus,
         rzpPaymentId:     r[17] || '',
         delivered:        r[18] === 'Y',
-        paymentCollected: r[19] === 'Y',
+        paymentCollected: paymentCollected,
         apt:              apt,
       });
     });
@@ -708,16 +722,16 @@ function sendCutoffSummary(aptFilter) {
     if (apts.length === 0) {
       tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
     }
-    apts.forEach(({ key, label, emoji }) => {
+    apts.forEach(({ key, label }) => {
       const sheet  = getOrCreate(ss, key);
       const orders = ordersForDate(sheet, deliveryDate);
       if (orders.length === 0) {
-        tg(`${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>\nNo orders.`);
+        tg(`<b>${esc(label)} — ${esc(deliveryLabel)}</b>\nNo orders.`);
         return;
       }
       const s = sumOrders(orders);
       const lines = [
-        `${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>`,
+        `<b>${esc(label)} — ${esc(deliveryLabel)}</b>`,
         `${orders.length} orders  ·  ${(s.grams/1000).toFixed(2)} kg  ·  ₹${s.rs}`,
         ``,
       ];
@@ -738,7 +752,7 @@ function sendCutoffSummary(aptFilter) {
     const combined = { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 };
     const aptLines = [];
 
-    APARTMENTS.forEach(({ key, emoji }) => {
+    APARTMENTS.forEach(({ key }) => {
       const sheet  = getOrCreate(ss, key);
       const orders = ordersForDate(sheet, deliveryDate);
       const s      = sumOrders(orders);
@@ -746,7 +760,7 @@ function sendCutoffSummary(aptFilter) {
       combined.q750  += s.q750;  combined.q1kg  += s.q1kg;
       combined.grams += s.grams; combined.rs    += s.rs;
       const kg = (s.grams / 1000).toFixed(2);
-      aptLines.push(`${emoji} ${key}: ${orders.length} orders · ${kg} kg · ₹${s.rs}`);
+      aptLines.push(`${key}: ${orders.length} orders · ${kg} kg · ₹${s.rs}`);
     });
 
     if (combined.grams === 0) {
@@ -795,6 +809,15 @@ function sumOrders(orders) {
 // ── TELEGRAM COMMAND HANDLING ─────────────────────────────────
 
 function handleTelegramUpdate(update) {
+  // Deduplicate: Telegram retries the webhook if we don't respond in time (GAS cold start).
+  // Track the last processed update_id so retries are ignored.
+  const updateId = String(update.update_id || '');
+  if (updateId) {
+    const lastId = PropertiesService.getScriptProperties().getProperty('TG_LAST_UPDATE_ID');
+    if (lastId && Number(updateId) <= Number(lastId)) return; // already processed
+    PropertiesService.getScriptProperties().setProperty('TG_LAST_UPDATE_ID', updateId);
+  }
+
   const msg = update.message;
   if (!msg || !msg.text) return;
 
@@ -862,20 +885,19 @@ function sendStatus(aptFilter) {
     tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
   }
 
-  const lines = [`📊 <b>Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}</b>`, ``];
+  const lines = [`<b>Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}</b>`, ``];
 
   dates.forEach(({date, label, open}) => {
-    const status = open ? '🟢 open' : '🔴 closed';
-    lines.push(`<b>${esc(label)}</b>  (${status})`);
+    lines.push(`<b>${esc(label)}</b>  (${open ? 'open' : 'closed'})`);
 
-    apts.forEach(({ key, label: aptLabel, emoji }) => {
+    apts.forEach(({ key }) => {
       const sheet = getOrCreate(ss, key);
       const s     = statsForDate(sheet, date);
       const kg    = (s.totalGrams / 1000).toFixed(2);
       if (s.orders === 0) {
-        lines.push(`  ${emoji} ${esc(aptLabel)}: no orders yet`);
+        lines.push(`  ${key}: no orders yet`);
       } else {
-        lines.push(`  ${emoji} ${esc(aptLabel)}: ${s.orders} orders · <b>${kg} kg</b> · ₹${s.totalRs}`);
+        lines.push(`  ${key}: ${s.orders} orders · <b>${kg} kg</b> · ₹${s.totalRs}`);
       }
     });
     lines.push(``);
