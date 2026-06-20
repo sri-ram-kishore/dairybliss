@@ -74,7 +74,7 @@ function doPost(e) {
     return jsonOk({ message: 'unknown action' });
   } catch (err) {
     Logger.log('doPost error: ' + err + '\nbody: ' + (e.postData ? e.postData.contents : 'null'));
-    tg('⚠️ Order submission error: ' + esc(err.toString()));
+    try { tg('⚠️ Order submission error: ' + esc(err.toString())); } catch (_) {}
     return jsonError(err.toString());
   }
 }
@@ -244,6 +244,19 @@ function handleOrder(data) {
   if (!isOrdersEnabled()) {
     return jsonOk({ ok: false, paused: true,
       message: "We're not taking orders right now. Check back soon!" });
+  }
+
+  // Validate delivery date — reject if cutoff has passed (Tue ≥ 9PM closes Wed, Fri ≥ 9PM closes Sat)
+  if (data.deliveryDate) {
+    const now     = new Date();
+    const day     = now.getDay();   // 0=Sun … 6=Sat
+    const hour    = now.getHours(); // IST
+    const CUTOFF  = 21;             // 9 PM
+    const validDates = nextDeliveryDates(2).map(d => d.date);
+    if (!validDates.includes(data.deliveryDate)) {
+      return jsonOk({ ok: false, paused: true,
+        message: "Orders for that date are now closed. Please choose an available date." });
+    }
   }
 
   const ss       = SpreadsheetApp.openById(SHEET_ID);
@@ -476,7 +489,8 @@ function getDashboardSummary() {
       if (!r[1]) return;
       const rs   = parseInt(r[13]) || 0;
       const kg   = (parseInt(r[12]) || 0) / 1000;
-      const paid = r[16] === 'Paid Online' || r[19] === 'Y';
+      const payStatus = String(r[16] || '').toLowerCase();
+      const paid = payStatus === 'paid online' || payStatus.startsWith('upi') || payStatus === 'paid' || r[19] === 'Y';
       const delivDate = r[6] instanceof Date ? r[6] : new Date(r[6]);
 
       allKg += kg;
@@ -1171,60 +1185,3 @@ function fixSheetHeaders() {
   }
 }
 
-// ── SEED DUMMY ORDERS (run once from editor, then delete) ─────
-// Creates past unpaid COD orders so the "Collect from previous run"
-// section shows up on the home tab. Run → seedDummyOrders() from
-// the Apps Script editor. Delete this function afterwards.
-function seedDummyOrders() {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-
-  const dummySPC = [
-    { id: 'DUMMY001', name: 'Anita Sharma',   phone: '9845012345', address: '1203, Sobha Palm Court, Kogilu Main Road, Yelahanka', date: '2026-05-27', label: 'Wed, 27 May', q250: 2, q500: 0, q750: 0, q1kg: 0 },
-    { id: 'DUMMY002', name: 'Vikram Nair',     phone: '9741098765', address: '2401, Sobha Palm Court, Kogilu Main Road, Yelahanka', date: '2026-05-27', label: 'Wed, 27 May', q250: 0, q500: 1, q750: 0, q1kg: 0 },
-    { id: 'DUMMY003', name: 'Priya Menon',     phone: '9632587410', address: '3115, Sobha Palm Court, Kogilu Main Road, Yelahanka', date: '2026-05-24', label: 'Sat, 24 May', q250: 1, q500: 0, q750: 1, q1kg: 0 },
-  ];
-  const dummyBNR = [
-    { id: 'DUMMY004', name: 'Ramesh Iyer',    phone: '9880123456', address: 'B-802, Brigade North Ridge, Kogilu, Yelahanka', date: '2026-05-27', label: 'Wed, 27 May', q250: 0, q500: 0, q750: 0, q1kg: 1 },
-    { id: 'DUMMY005', name: 'Sunita Pillai',  phone: '9972345678', address: 'D-401, Brigade North Ridge, Kogilu, Yelahanka', date: '2026-05-24', label: 'Sat, 24 May', q250: 2, q500: 1, q750: 0, q1kg: 0 },
-  ];
-
-  const PRICE = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
-
-  function appendDummy(sheet, rows) {
-    ensureOrderHeaders(sheet);
-    rows.forEach(d => {
-      const totalGrams = d.q250*250 + d.q500*500 + d.q750*750 + d.q1kg*1000;
-      const totalRs    = d.q250*PRICE.q250 + d.q500*PRICE.q500 + d.q750*PRICE.q750 + d.q1kg*PRICE.q1kg;
-      sheet.appendRow([
-        new Date(), d.id, d.name, d.phone, d.address, '',
-        d.date, d.label,
-        d.q250, d.q500, d.q750, d.q1kg,
-        totalGrams, totalRs,
-        'New', 'COD', '', '',
-        'Y',  // mark as delivered
-        '',   // NOT collected yet — this is what makes it show in "Collect from previous run"
-      ]);
-    });
-  }
-
-  appendDummy(ss.getSheetByName('SPC'), dummySPC);
-  appendDummy(ss.getSheetByName('BNR'), dummyBNR);
-
-  Logger.log('✅ Seeded 3 SPC + 2 BNR dummy past COD orders. Refresh the ops app to see "Collect from previous run".');
-}
-
-// To clean up dummy rows, run this:
-function removeDummyOrders() {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  for (const aptName of ['SPC', 'BNR']) {
-    const sheet = ss.getSheetByName(aptName);
-    if (!sheet) continue;
-    const rows = sheet.getDataRange().getValues();
-    for (let i = rows.length - 1; i >= 1; i--) {
-      if (String(rows[i][1]).startsWith('DUMMY')) {
-        sheet.deleteRow(i + 1);
-      }
-    }
-  }
-  Logger.log('✅ Dummy orders removed.');
-}

@@ -1571,7 +1571,7 @@ function renderAccounts() {
   const src = activePeriod === 'week' ? summaryData.week : summaryData.total;
   const expenses = expensesCache;
   const now = new Date();
-  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + 1); weekStart.setHours(0,0,0,0);
+  const weekStart = new Date(now); const dow = now.getDay() === 0 ? 6 : now.getDay() - 1; weekStart.setDate(now.getDate() - dow); weekStart.setHours(0,0,0,0);
 
   const periodExp = expenses.filter(e => activePeriod === 'all' || new Date(e.date) >= weekStart);
   const paneerExp  = periodExp.filter(e => e.category === 'Paneer purchase').reduce((s, e) => s + e.amount, 0);
@@ -1951,9 +1951,12 @@ async function togglePaid(id, apt) {
     });
   } catch { showToast('Sync failed — try refreshing'); }
 }
+const _collectBusy = new Set();
 async function collectPaid(id, apt) {
+  if (_collectBusy.has(id)) return;
+  _collectBusy.add(id);
   const o = orders.find(x => x.id === id);
-  if (!o) return;
+  if (!o) { _collectBusy.delete(id); return; }
   // Optimistic DOM update — dim the row, disable the button, then sink it to the bottom
   const row = document.getElementById('cr-' + id);
   if (row) {

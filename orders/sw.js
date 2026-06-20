@@ -12,7 +12,7 @@ const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icons/Logo.png',
+  './icons/logo.png',
 ];
 
 // ── INSTALL ──────────────────────────────────────────────────

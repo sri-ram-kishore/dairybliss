@@ -881,10 +881,22 @@ function showConfirmation(d, payStatus) {
 function resetForm() {
   document.getElementById('orderForm').reset();
   document.querySelectorAll('.day-card, .qty-card, .pay-card').forEach(c => c.classList.remove('chosen'));
-  document.getElementById('amount-pill').classList.remove('v');
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));
   document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
   document.querySelectorAll('.cards-error').forEach(e => e.classList.remove('cards-error'));
+  // Re-apply the pre-selected 500g amount pill (form.reset() selects it but doesn't fire change)
+  const checked = document.querySelector('input[name="qty"]:checked');
+  if (checked) {
+    const price = CONFIG.PRICES[checked.value];
+    if (price) {
+      document.getElementById('amount-val').textContent = price.display;
+      document.getElementById('amount-pill').classList.add('v');
+    } else {
+      document.getElementById('amount-pill').classList.remove('v');
+    }
+  } else {
+    document.getElementById('amount-pill').classList.remove('v');
+  }
   hide('screen-confirm');
   show('screen-form'); goTop();
 }
