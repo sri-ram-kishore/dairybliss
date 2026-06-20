@@ -356,7 +356,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const { unit } = parseApt(data.address);
 
   const msg = [
-    `<b>New Order — ${esc(orderId)}</b>  (${esc(meta.key)})`,
+    `<b>${meta.emoji} New Order — ${esc(orderId)}</b>`,
     ``,
     `${esc(data.name)}${unit ? ', ' + esc(unit) : ''}, ${esc(data.phone)}`,
     `${esc(data.deliveryLabel)}`,
@@ -722,16 +722,16 @@ function sendCutoffSummary(aptFilter) {
     if (apts.length === 0) {
       tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
     }
-    apts.forEach(({ key, label }) => {
+    apts.forEach(({ key, label, emoji }) => {
       const sheet  = getOrCreate(ss, key);
       const orders = ordersForDate(sheet, deliveryDate);
       if (orders.length === 0) {
-        tg(`<b>${esc(label)} — ${esc(deliveryLabel)}</b>\nNo orders.`);
+        tg(`${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>\nNo orders.`);
         return;
       }
       const s = sumOrders(orders);
       const lines = [
-        `<b>${esc(label)} — ${esc(deliveryLabel)}</b>`,
+        `${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>`,
         `${orders.length} orders  ·  ${(s.grams/1000).toFixed(2)} kg  ·  ₹${s.rs}`,
         ``,
       ];
@@ -752,7 +752,7 @@ function sendCutoffSummary(aptFilter) {
     const combined = { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 };
     const aptLines = [];
 
-    APARTMENTS.forEach(({ key }) => {
+    APARTMENTS.forEach(({ key, emoji }) => {
       const sheet  = getOrCreate(ss, key);
       const orders = ordersForDate(sheet, deliveryDate);
       const s      = sumOrders(orders);
@@ -760,7 +760,7 @@ function sendCutoffSummary(aptFilter) {
       combined.q750  += s.q750;  combined.q1kg  += s.q1kg;
       combined.grams += s.grams; combined.rs    += s.rs;
       const kg = (s.grams / 1000).toFixed(2);
-      aptLines.push(`${key}: ${orders.length} orders · ${kg} kg · ₹${s.rs}`);
+      aptLines.push(`${emoji} ${key}: ${orders.length} orders · ${kg} kg · ₹${s.rs}`);
     });
 
     if (combined.grams === 0) {
@@ -890,14 +890,14 @@ function sendStatus(aptFilter) {
   dates.forEach(({date, label, open}) => {
     lines.push(`<b>${esc(label)}</b>  (${open ? 'open' : 'closed'})`);
 
-    apts.forEach(({ key }) => {
+    apts.forEach(({ key, emoji }) => {
       const sheet = getOrCreate(ss, key);
       const s     = statsForDate(sheet, date);
       const kg    = (s.totalGrams / 1000).toFixed(2);
       if (s.orders === 0) {
-        lines.push(`  ${key}: no orders yet`);
+        lines.push(`  ${emoji} ${key}: no orders yet`);
       } else {
-        lines.push(`  ${key}: ${s.orders} orders · <b>${kg} kg</b> · ₹${s.totalRs}`);
+        lines.push(`  ${emoji} ${key}: ${s.orders} orders · <b>${kg} kg</b> · ₹${s.totalRs}`);
       }
     });
     lines.push(``);
