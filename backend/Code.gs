@@ -389,7 +389,7 @@ function checkStockAlerts(prevGrams, newGrams, label, meta) {
 
     if (prevKg < threshold && newKg >= threshold) {
       tg([
-        `⚠️ <b>Stock Alert — ${esc(meta.label)} · ${esc(label)}</b>`,
+        `⚠️ <b>Stock Alert — ${esc(meta.key)} · ${esc(label)}</b>`,
         `Running total: <b>${newKg.toFixed(2)} kg</b>  (approaching ${nextBlock} kg block)`,
         ``,
         `Time to order the next ${BLOCK_KG} kg block.`,
@@ -722,16 +722,16 @@ function sendCutoffSummary(aptFilter) {
     if (apts.length === 0) {
       tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
     }
-    apts.forEach(({ key, label, emoji }) => {
+    apts.forEach(({ key, emoji }) => {
       const sheet  = getOrCreate(ss, key);
       const orders = ordersForDate(sheet, deliveryDate);
       if (orders.length === 0) {
-        tg(`${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>\nNo orders.`);
+        tg(`${emoji} <b>${esc(key)} — ${esc(deliveryLabel)}</b>\nNo orders.`);
         return;
       }
       const s = sumOrders(orders);
       const lines = [
-        `${emoji} <b>${esc(label)} — ${esc(deliveryLabel)}</b>`,
+        `${emoji} <b>${esc(key)} — ${esc(deliveryLabel)}</b>`,
         `${orders.length} orders  ·  ${(s.grams/1000).toFixed(2)} kg  ·  ₹${s.rs}`,
         ``,
       ];
@@ -885,7 +885,7 @@ function sendStatus(aptFilter) {
     tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
   }
 
-  const lines = [`<b>Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}</b>`, ``];
+  const lines = [`📊 <b>Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}</b>`, ``];
 
   dates.forEach(({date, label, open}) => {
     lines.push(`<b>${esc(label)}</b>  (${open ? 'open' : 'closed'})`);
