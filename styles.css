@@ -506,12 +506,12 @@ h1 {
 
 .feature-points strong {
   color: var(--green);
-  font-size: 20px;
+  font-size: 19px;
 }
 
 .feature-points span {
   color: var(--muted);
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.55;
 }
 
