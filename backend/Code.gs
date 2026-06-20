@@ -760,8 +760,9 @@ function sendCutoffSummary(aptFilter) {
       combined.q250  += s.q250;  combined.q500  += s.q500;
       combined.q750  += s.q750;  combined.q1kg  += s.q1kg;
       combined.grams += s.grams; combined.rs    += s.rs;
+      if (orders.length === 0) return;
       const kg = (s.grams / 1000).toFixed(2);
-      aptLines.push(`${emoji} ${key}: ${orders.length} orders · ${kg} kg · ₹${s.rs}`);
+      aptLines.push(`${emoji} ${key}: ${orders.length} order${orders.length !== 1 ? 's' : ''} · ${kg} kg · ₹${s.rs}`);
     });
 
     if (combined.grams === 0) {
@@ -898,7 +899,7 @@ function sendStatus(aptFilter) {
       if (s.orders === 0) {
         lines.push(`  ${emoji} ${key}: no orders yet`);
       } else {
-        lines.push(`  ${emoji} ${key}: ${s.orders} orders · <b>${kg} kg</b> · ₹${s.totalRs}`);
+        lines.push(`  ${emoji} ${key}: ${s.orders} order${s.orders !== 1 ? 's' : ''} · <b>${kg} kg</b> · ₹${s.totalRs}`);
       }
     });
     lines.push(``);
