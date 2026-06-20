@@ -363,7 +363,8 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
     ``,
     items.map(esc).join('\n'),
     ``,
-    `<b>Total: ₹${totalRs}  ·  ${(totalGrams/1000).toFixed(2)} kg</b>`,
+    `<b>Total: ${(totalGrams/1000).toFixed(2)} kg  ·  ₹${totalRs}</b>`,
+    ``,
     `${esc(meta.key)} running total: <b>${newKg} kg</b>`
   ].join('\n');
 
