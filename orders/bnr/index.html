@@ -789,6 +789,7 @@ function collectData() {
 }
 
 // ── backend POST ──────────────────────────────────────────────
+// Returns true if order was accepted, false if paused/rejected
 async function sendToSheet(d, payStatus, rzpPaymentId) {
   const payload = {
     action:        'order',
@@ -807,11 +808,14 @@ async function sendToSheet(d, payStatus, rzpPaymentId) {
     rzpPaymentId:  rzpPaymentId || '',
   };
   try {
-    await fetch(CONFIG.WEBHOOK_URL, {
-      method: 'POST', mode: 'no-cors',
+    const resp = await fetch(CONFIG.WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload),
     });
+    const data = await resp.json();
+    if (data.paused) return false;
+    return true;
   } catch {
     const q = JSON.parse(localStorage.getItem('db_q') || '[]');
     q.push({ ...payload, ts: new Date().toISOString() });
@@ -819,6 +823,7 @@ async function sendToSheet(d, payStatus, rzpPaymentId) {
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       try { (await navigator.serviceWorker.ready).sync.register('sync-orders'); } catch(_) {}
     }
+    return true;
   }
 }
 
@@ -844,9 +849,10 @@ async function openRazorpay(d) {
       order_id:    data.rzp_order_id,
       prefill:     { name: d.name, contact: '91' + d.phone },
       theme:       { color: '#3d7a1a' },
-      handler: function(response) {
+      handler: async function(response) {
         showConfirmation(d, 'Paid Online');
-        sendToSheet(d, 'Paid Online', response.razorpay_payment_id);
+        const ok = await sendToSheet(d, 'Paid Online', response.razorpay_payment_id);
+        if (!ok) showToast('Payment received but order paused — please contact us.');
       },
       modal: { ondismiss: function() { setBusy(false); } },
     });
@@ -922,8 +928,14 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
   if (d.payKey === 'rzp') {
     await openRazorpay(d);
   } else {
-    showConfirmation(d, 'Cash on Delivery');
-    sendToSheet(d, 'Cash on Delivery');
+    setBusy(true);
+    const ok = await sendToSheet(d, 'Cash on Delivery');
+    setBusy(false);
+    if (ok) {
+      showConfirmation(d, 'Cash on Delivery');
+    } else {
+      showToast("Sorry, we're not taking orders right now. Please try again later.");
+    }
   }
 });
 
@@ -939,7 +951,7 @@ if ('serviceWorker' in navigator) {
         for (const order of q) {
           try {
             await fetch(CONFIG.WEBHOOK_URL, {
-              method: 'POST', mode: 'no-cors',
+              method: 'POST', redirect: 'follow',
               headers: { 'Content-Type': 'text/plain' },
               body: JSON.stringify(order),
             });
