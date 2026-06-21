@@ -544,8 +544,8 @@ const APT = {
     </div>
 
     <div class="pay-cards" id="pay-cards">
-      <label class="pay-card" id="pc-rzp">
-        <input type="radio" name="payment" value="rzp">
+      <label class="pay-card chosen" id="pc-rzp">
+        <input type="radio" name="payment" value="rzp" checked>
         <div class="pay-body">
           <div class="pay-name">Pay Online</div>
           <div class="pay-sub">UPI · Cards · Netbanking</div>
@@ -563,7 +563,7 @@ const APT = {
 
   </div>
 
-  <button type="submit" class="btn-submit" id="btn-submit">Place Order →</button>
+  <button type="submit" class="btn-submit" id="btn-submit">Proceed to Pay →</button>
   <p class="foot">Pure paneer. Delivered twice a week.</p>
 
 </form>
@@ -709,6 +709,15 @@ function wireCards(name) {
 }
 wireCards('delivery_day');
 wireCards('payment');
+
+// Update submit button label when payment method changes
+function updateSubmitLabel() {
+  const pay = document.querySelector('input[name="payment"]:checked');
+  const b = document.getElementById('btn-submit');
+  if (b && !b.disabled) b.textContent = pay?.value === 'rzp' ? 'Proceed to Pay →' : 'Place Order →';
+}
+document.querySelectorAll('input[name="payment"]').forEach(r =>
+  r.addEventListener('change', updateSubmitLabel));
 
 // ── quantity steppers ─────────────────────────────────────────
 const QTY_STATE = { '250g': 0, '500g': 0, '750g': 0, '1kg': 0 };
@@ -924,7 +933,8 @@ function resetForm() {
 function setBusy(on) {
   const b = document.getElementById('btn-submit');
   b.disabled  = on;
-  b.innerHTML = on ? '<span class="spin"></span>Processing…' : 'Place Order →';
+  if (on) { b.innerHTML = '<span class="spin"></span>Processing…'; }
+  else { updateSubmitLabel(); }
 }
 
 document.getElementById('orderForm').addEventListener('submit', async e => {
