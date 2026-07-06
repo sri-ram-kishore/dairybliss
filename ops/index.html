@@ -986,7 +986,7 @@ async function savePin() {
     if (data.ok) {
       activeUser  = data.user;
       activeToken = data.token;
-      sessionStorage.setItem('db_auth', JSON.stringify({ user: data.user, token: data.token }));
+      saveAuth(data.user, data.token);
       showApp();
     } else {
       flashPinError(data.message || 'Setup failed — try again');
@@ -1008,7 +1008,7 @@ async function checkPin() {
     if (data.ok) {
       activeUser  = data.user;
       activeToken = data.token;
-      sessionStorage.setItem('db_auth', JSON.stringify({ user: data.user, token: data.token }));
+      saveAuth(data.user, data.token);
       showApp();
     } else {
       flashPinError('Incorrect PIN. Try again.');
@@ -1057,8 +1057,27 @@ function showApp() {
   renderExpenseList();
 }
 
+// ── AUTH PERSISTENCE ──────────────────────────────────────────
+// Backend tokens live 14h. Persist auth in localStorage (with a
+// client-side expiry just under that) instead of sessionStorage,
+// which iOS PWAs discard on every app close — forcing a fresh PIN
+// + slow Apps Script verify on nearly every open.
+const AUTH_TTL_MS = 13.5 * 60 * 60 * 1000;
+function saveAuth(user, token) {
+  localStorage.setItem('db_auth', JSON.stringify({ user, token, ts: Date.now() }));
+}
+function loadAuth() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('db_auth') || 'null');
+    if (saved && saved.user && saved.token && (Date.now() - saved.ts) < AUTH_TTL_MS) return saved;
+  } catch {}
+  localStorage.removeItem('db_auth');
+  return null;
+}
+
 function lockApp() {
-  sessionStorage.removeItem('db_auth');
+  localStorage.removeItem('db_auth');
+  sessionStorage.removeItem('db_auth'); // clean up legacy pre-migration sessions
   activeToken = null;
   setupApt = null; setupToken = null; setupFirst = '';
   _pinBusy = false; // always reset so PIN screen accepts input immediately
@@ -1999,17 +2018,12 @@ document.addEventListener('visibilitychange', () => {
 
 // ── INIT ──────────────────────────────────────────────────────
 (function init() {
-  const saved = sessionStorage.getItem('db_auth');
+  const saved = loadAuth();
   if (saved) {
-    try {
-      const { user, token } = JSON.parse(saved);
-      if (user && token) {
-        activeUser  = user;
-        activeToken = token;
-        showApp();
-        return;
-      }
-    } catch {}
+    activeUser  = saved.user;
+    activeToken = saved.token;
+    showApp();
+    return;
   }
   // Show setup link immediately if cached status says PIN not set
   try {
