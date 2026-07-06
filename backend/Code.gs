@@ -437,7 +437,7 @@ function buildDashboardData() {
   const deliveryDateSet = {};
   deliveryDates.forEach(d => deliveryDateSet[d] = true);
   const orders = [];
-  for (const apt of ['SPC', 'BNR']) {
+  for (const apt of APARTMENTS.map(a => a.key)) {
     const sheet = ss.getSheetByName(apt);
     if (!sheet || sheet.getLastRow() < 2) continue;
     const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 20).getValues();
@@ -496,7 +496,7 @@ function getDashboardSummary() {
   let collected = 0, codPending = 0, cost = 0, totalKg = 0;
   let allCollected = 0, allCodPending = 0, allCost = 0, allKg = 0;
 
-  for (const apt of ['SPC', 'BNR']) {
+  for (const apt of APARTMENTS.map(a => a.key)) {
     const sheet = ss.getSheetByName(apt);
     if (!sheet || sheet.getLastRow() < 2) continue;
     const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 20).getValues();
@@ -676,12 +676,14 @@ function markOrderColumn(orderId, apt, col, value) {
 
 const APARTMENTS = [
   { key: 'SPC', label: 'Sobha Palm Court',   emoji: '🟢' },
-  { key: 'BNR', label: 'Brigade North Ridge', emoji: '🔵' }
+  { key: 'BNR', label: 'Brigade North Ridge', emoji: '🔵' },
+  { key: 'ADG', label: 'Adarsh Greens',       emoji: '🟣' }
 ];
 
 const APT_PATTERNS = {
   SPC: ['sobha palm court'],
-  BNR: ['brigade north ridge', 'brigade northridge', 'brigade north-ridge']
+  BNR: ['brigade north ridge', 'brigade northridge', 'brigade north-ridge'],
+  ADG: ['adarsh greens', 'adarsh green']
 };
 
 /**
@@ -697,7 +699,7 @@ function parseApt(address) {
   }
 
   // Extract the unit — first short segment that doesn't contain the complex name or city
-  const skipWords = ['sobha', 'brigade', 'bangalore', 'bengaluru', 'karnataka', 'india'];
+  const skipWords = ['sobha', 'brigade', 'adarsh', 'bangalore', 'bengaluru', 'karnataka', 'india'];
   const unit = String(address || '')
     .split(',')
     .map(p => p.trim())
@@ -750,7 +752,7 @@ function sendCutoffSummary(aptFilter) {
     // ── Manual /summary SPC or /summary BNR — per-apartment detail ──
     const apts = APARTMENTS.filter(a => a.key === aptFilter);
     if (apts.length === 0) {
-      tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
+      tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC, BNR, or ADG.`); return;
     }
     apts.forEach(({ key, emoji }) => {
       const sheet  = getOrCreate(ss, key);
@@ -882,9 +884,9 @@ function handleTelegramUpdate(update) {
       tg([
         `<b>DairyBliss Bot — Commands</b>`,
         `/status — All apartments running totals`,
-        `/status SPC  or  /status BNR — one apartment`,
-        `/summary — Full order list (both apartments)`,
-        `/summary SPC  or  /summary BNR — one apartment`,
+        `/status SPC, BNR, or ADG — one apartment`,
+        `/summary — Full order list (all apartments)`,
+        `/summary SPC, BNR, or ADG — one apartment`,
         `/pause — Stop accepting orders`,
         `/resume — Resume accepting orders`,
         `/debug — Confirm bot is alive`
@@ -913,7 +915,7 @@ function sendStatus(aptFilter) {
   const apts  = aptFilter ? APARTMENTS.filter(a => a.key === aptFilter) : APARTMENTS;
 
   if (aptFilter && apts.length === 0) {
-    tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC or BNR.`); return;
+    tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC, BNR, or ADG.`); return;
   }
 
   const lines = [`📊 <b>Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}</b>`, ``];
@@ -1136,7 +1138,7 @@ function cleanupTable() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   let fixed = 0;
 
-  for (const aptName of ['SPC', 'BNR']) {
+  for (const aptName of APARTMENTS.map(a => a.key)) {
     const sheet = ss.getSheetByName(aptName);
     if (!sheet || sheet.getLastRow() < 2) continue;
 
@@ -1187,7 +1189,7 @@ function fixSheetHeaders() {
     'Payment Method', 'Payment Status', 'RZP Payment ID',
     'Delivered', 'Payment Collected'
   ];
-  for (const aptName of ['SPC', 'BNR']) {
+  for (const aptName of APARTMENTS.map(a => a.key)) {
     const sheet = ss.getSheetByName(aptName);
     if (!sheet) continue;
     const r = sheet.getRange(1, 1, 1, headers.length);

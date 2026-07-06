@@ -781,7 +781,18 @@ const VENDOR_DELIVER_TO  = 'Rekha';
 const VENDOR_DELIVER_ADDR= '3162, Sobha Palm Court, Kogilu Main Road, Yelahanka, Bangalore 560064';
 const VENDOR_DELIVER_PH  = '8861000100';
 
-const APT_NAMES = { SPC: 'Sobha Palm Court', BNR: 'Brigade North Ridge' };
+// Apartments in display order. `owner` is the PIN identity (activeUser) that
+// manages this apartment's orders as "mine" — Deepa's BNR login also owns
+// ADG, so both apartments group under her in the Orders tab.
+const APTS = [
+  { key: 'SPC', name: 'Sobha Palm Court',   owner: 'SPC' },
+  { key: 'BNR', name: 'Brigade North Ridge', owner: 'BNR' },
+  { key: 'ADG', name: 'Adarsh Greens',       owner: 'BNR' },
+];
+const APT_NAMES = Object.fromEntries(APTS.map(a => [a.key, a.name]));
+function myApts(user)    { return APTS.filter(a => a.owner === user).map(a => a.key); }
+function otherApts(user) { return APTS.filter(a => a.owner !== user).map(a => a.key); }
+
 const BLOCK_KG    = 3;
 const COST_PER_KG = 335;
 const FETCH_TIMEOUT_MS = 20000;
@@ -1250,7 +1261,7 @@ function computeBuy(list) {
 }
 function flatFromAddress(address) {
   const parts = String(address || '').split(',');
-  const skip  = ['sobha','brigade','bangalore','bengaluru','karnataka','india'];
+  const skip  = ['sobha','brigade','adarsh','bangalore','bengaluru','karnataka','india'];
   return parts.map(p => p.trim()).find(p =>
     p.length < 25 && !skip.some(w => p.toLowerCase().includes(w))
   ) || address;
@@ -1290,8 +1301,11 @@ function renderToday() {
   const iso    = isoDate(dates[0]);
 
   const upcoming = orders.filter(o => o.deliveryDate === iso);
-  const spcOrders = sortByFlat(upcoming.filter(o => o.apt === 'SPC'));
-  const bnrOrders = sortByFlat(upcoming.filter(o => o.apt === 'BNR'));
+  // Per-apartment breakdown, in APTS display order
+  const byApt = APTS.map(a => {
+    const list = sortByFlat(upcoming.filter(o => o.apt === a.key));
+    return { ...a, list, breakdown: aptQtyBreakdown(list) };
+  });
 
   const today = todayISO();
   const pendingCOD = orders.filter(o =>
@@ -1301,8 +1315,6 @@ function renderToday() {
   ).sort((a, b) => a.deliveryDate < b.deliveryDate ? 1 : -1);
 
   const buy = computeBuy(upcoming);
-  const spcB = aptQtyBreakdown(spcOrders);
-  const bnrB = aptQtyBreakdown(bnrOrders);
 
   let html = `
     <div class="today-header">
@@ -1316,22 +1328,18 @@ function renderToday() {
   }
 
   // Order summary bar (each segment scrolls to its section)
-  const totalOrders = spcOrders.length + bnrOrders.length;
+  const totalOrders = byApt.reduce((s, a) => s + a.list.length, 0);
   const pendingTotal = pendingCOD.reduce((s, o) => s + o.totalRs, 0);
+  const aptSegs = byApt.map((a, i) => `
+      <div class="count-seg${i > 0 ? ' count-seg--mid' : ''} tap" onclick="scrollToSection('sec-${a.key.toLowerCase()}')">
+        <div class="count-val">${a.breakdown.kg.toFixed(2)} kg</div>
+        <div class="count-sub">${a.list.length} order${a.list.length !== 1 ? 's' : ''}</div>
+        <div class="count-label">${a.key}</div>
+      </div>
+      <div class="count-divider"></div>`).join('');
   html += `
     <div class="count-bar">
-      <div class="count-seg tap" onclick="scrollToSection('sec-spc')">
-        <div class="count-val">${spcB.kg.toFixed(2)} kg</div>
-        <div class="count-sub">${spcOrders.length} order${spcOrders.length !== 1 ? 's' : ''}</div>
-        <div class="count-label">SPC</div>
-      </div>
-      <div class="count-divider"></div>
-      <div class="count-seg count-seg--mid tap" onclick="scrollToSection('sec-bnr')">
-        <div class="count-val">${bnrB.kg.toFixed(2)} kg</div>
-        <div class="count-sub">${bnrOrders.length} order${bnrOrders.length !== 1 ? 's' : ''}</div>
-        <div class="count-label">BNR</div>
-      </div>
-      <div class="count-divider"></div>
+      ${aptSegs}
       <div class="count-seg count-seg--end tap" onclick="scrollToSection('sec-vendor')">
         <div class="count-val">${buy.kg > 0 ? buy.kg.toFixed(2) + ' kg' : '0'}</div>
         <div class="count-sub">${totalOrders} order${totalOrders !== 1 ? 's' : ''}</div>
@@ -1400,34 +1408,21 @@ function renderToday() {
       </div>
     </div>`;
 
-    // SPC section: summary + breakup tags + order rows
-    if (spcOrders.length) {
-      const spcRs = spcOrders.reduce((s, o) => s + o.totalRs, 0);
+    // Per-apartment section: summary + breakup tags + order rows
+    byApt.forEach(a => {
+      if (!a.list.length) return;
+      const rs = a.list.reduce((s, o) => s + o.totalRs, 0);
       html += `
-      <div class="sec-hd" id="sec-spc">Sobha Palm Court</div>
+      <div class="sec-hd" id="sec-${a.key.toLowerCase()}">${esc(a.name)}</div>
       <div class="card">
         <div class="today-apt-summary">
-          <span class="today-apt-stat">${spcOrders.length} order${spcOrders.length !== 1 ? 's' : ''}</span>
-          <span class="today-apt-stat">${spcB.kg.toFixed(2)} kg</span>
-          <span class="today-apt-stat">${fmt(spcRs)}</span>
+          <span class="today-apt-stat">${a.list.length} order${a.list.length !== 1 ? 's' : ''}</span>
+          <span class="today-apt-stat">${a.breakdown.kg.toFixed(2)} kg</span>
+          <span class="today-apt-stat">${fmt(rs)}</span>
         </div>
-        ${spcOrders.map(o => refRow(o)).join('')}
+        ${a.list.map(o => refRow(o)).join('')}
       </div>`;
-    }
-    // BNR section: summary + breakup tags + order rows
-    if (bnrOrders.length) {
-      const bnrRs = bnrOrders.reduce((s, o) => s + o.totalRs, 0);
-      html += `
-      <div class="sec-hd" id="sec-bnr">Brigade North Ridge</div>
-      <div class="card">
-        <div class="today-apt-summary">
-          <span class="today-apt-stat">${bnrOrders.length} order${bnrOrders.length !== 1 ? 's' : ''}</span>
-          <span class="today-apt-stat">${bnrB.kg.toFixed(2)} kg</span>
-          <span class="today-apt-stat">${fmt(bnrRs)}</span>
-        </div>
-        ${bnrOrders.map(o => refRow(o)).join('')}
-      </div>`;
-    }
+    });
   } else {
     html += `<div class="empty"><div class="empty-icon">📦</div>No orders yet for ${fmtDate(dates[0])}.</div>`;
   }
@@ -1502,10 +1497,10 @@ function renderOrders() {
   const iso = activeDay;
   const filtered = orders.filter(o => o.deliveryDate === iso);
 
-  // My apt (editable) first, other apt (view-only) below
-  const otherApt   = activeUser === 'SPC' ? 'BNR' : 'SPC';
-  const myOrders   = sortByFlat(filtered.filter(o => o.apt === activeUser));
-  const theirOrders= sortByFlat(filtered.filter(o => o.apt === otherApt));
+  // My apartments (editable) first, other apartments (view-only) below —
+  // Deepa owns both BNR and ADG, so this can be more than one apt per group.
+  const mine  = myApts(activeUser);
+  const theirs = otherApts(activeUser);
 
   const el = document.getElementById('orders-content');
 
@@ -1516,25 +1511,28 @@ function renderOrders() {
 
   let html = '';
 
-  // My apt — editable
-  if (myOrders.length) {
-    html += `<div class="sec-hd">${APT_NAMES[activeUser]}</div>`;
+  // My apartments — editable
+  mine.forEach(aptKey => {
+    const myOrders = sortByFlat(filtered.filter(o => o.apt === aptKey));
+    if (!myOrders.length) return;
+    html += `<div class="sec-hd">${esc(APT_NAMES[aptKey])}</div>`;
     const active    = myOrders.filter(o => !(o.delivered && isPaid(o)));
     const completed = myOrders.filter(o =>   o.delivered && isPaid(o));
     html += `<div class="card">`;
     active.forEach(o    => { html += orderCardHTML(o, true); });
     completed.forEach(o => { html += orderCardHTML(o, true); });
     html += `</div>`;
-    if (completed.length && active.length === 0) {/* already inside card */}
-  }
+  });
 
-  // Their apt — view only
-  if (theirOrders.length) {
-    html += `<div class="sec-hd">${APT_NAMES[otherApt]} <span class="view-only-chip">View only</span></div>`;
+  // Other apartments — view only
+  theirs.forEach(aptKey => {
+    const theirOrders = sortByFlat(filtered.filter(o => o.apt === aptKey));
+    if (!theirOrders.length) return;
+    html += `<div class="sec-hd">${esc(APT_NAMES[aptKey])} <span class="view-only-chip">View only</span></div>`;
     html += `<div class="card view-only-card">`;
     theirOrders.forEach(o => { html += orderCardHTML(o, false); });
     html += `</div>`;
-  }
+  });
 
   el.innerHTML = html;
 }

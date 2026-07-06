@@ -6,9 +6,9 @@
 //  retried via Background Sync.
 // ============================================================
 
-const CACHE_NAME = 'dairy-bliss-v7';
+const CACHE_NAME = 'dairy-bliss-v8';
 
-// Assets to precache on install (both order apps + shared shell)
+// Assets to precache on install (all order apps + shared shell)
 const PRECACHE_ASSETS = [
   './',
   './manifest.json',
@@ -16,6 +16,8 @@ const PRECACHE_ASSETS = [
   './spc/manifest.json',
   './bnr/',
   './bnr/manifest.json',
+  './adg/',
+  './adg/manifest.json',
   './icons/icon-any-192.png',
   './icons/favicon.png',
   '../assets/logo.webp',
@@ -44,12 +46,13 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Pick the right offline page for a navigation request:
-// installed SPC/BNR apps must fall back to their own order form,
-// not the apartment picker.
+// Pick the right offline page for a navigation request: each installed
+// per-apartment app must fall back to its own order form, not the
+// apartment picker.
 function offlineFallbackFor(url) {
   if (url.pathname.includes('/orders/spc')) return caches.match('./spc/');
   if (url.pathname.includes('/orders/bnr')) return caches.match('./bnr/');
+  if (url.pathname.includes('/orders/adg')) return caches.match('./adg/');
   return caches.match('./');
 }
 
