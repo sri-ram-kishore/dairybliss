@@ -16,7 +16,7 @@ const PRECACHE_ASSETS = [
   './spc/manifest.json',
   './bnr/',
   './bnr/manifest.json',
-  './icons/icon-192.png',
+  './icons/icon-any-192.png',
   './icons/favicon.png',
   '../assets/logo.webp',
 ];
@@ -141,8 +141,8 @@ self.addEventListener('push', event => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: './icons/icon-192.png',
-      badge: './icons/icon-192.png',
+      icon: './icons/icon-any-192.png',
+      badge: './icons/icon-any-192.png',
     })
   );
 });

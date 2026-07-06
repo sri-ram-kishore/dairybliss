@@ -9,8 +9,8 @@
   <meta name="apple-mobile-web-app-title" content="DairyBliss">
   <title>DairyBliss Ops</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="../assets/icon-ops-192.png">
-  <link rel="apple-touch-icon" href="../assets/icon-ops-192.png">
+  <link rel="icon" type="image/png" href="../assets/icon-ops-any-192.png">
+  <link rel="apple-touch-icon" href="../assets/icon-ops-any-192.png">
 
   <style>
     :root {
@@ -2034,6 +2034,13 @@ document.addEventListener('visibilitychange', () => {
     })
     .catch(() => {});
 })();
+
+// ── service worker ────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>

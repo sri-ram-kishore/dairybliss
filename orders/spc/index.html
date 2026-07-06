@@ -980,29 +980,46 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
   }
 });
 
-// ── service worker ────────────────────────────────────────────
+// ── service worker + offline order queue retry ────────────────
+// Background Sync (SyncManager) has no iOS Safari support, so the
+// SW 'sync' event alone never fires there. We also retry on the
+// 'online' event and whenever the app returns to the foreground,
+// which covers iOS PWAs that were closed or backgrounded offline.
+let _retryingQueue = false;
+async function retryQueuedOrders() {
+  if (_retryingQueue) return;
+  const q = JSON.parse(localStorage.getItem('db_q') || '[]');
+  if (!q.length) return;
+  _retryingQueue = true;
+  const fail = [];
+  for (const order of q) {
+    try {
+      await fetch(CONFIG.WEBHOOK_URL, {
+        method: 'POST', redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(order),
+      });
+    } catch (_) { fail.push(order); }
+  }
+  localStorage.setItem('db_q', JSON.stringify(fail));
+  _retryingQueue = false;
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('../sw.js').then(() => {
-      navigator.serviceWorker.addEventListener('message', async e => {
-        if (e.data?.type !== 'RETRY_QUEUE') return;
-        const q = JSON.parse(localStorage.getItem('db_q') || '[]');
-        if (!q.length) return;
-        const fail = [];
-        for (const order of q) {
-          try {
-            await fetch(CONFIG.WEBHOOK_URL, {
-              method: 'POST', redirect: 'follow',
-              headers: { 'Content-Type': 'text/plain' },
-              body: JSON.stringify(order),
-            });
-          } catch (_) { fail.push(order); }
-        }
-        localStorage.setItem('db_q', JSON.stringify(fail));
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type === 'RETRY_QUEUE') retryQueuedOrders();
       });
     }).catch(() => {});
   });
 }
+
+window.addEventListener('online', retryQueuedOrders);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && navigator.onLine) retryQueuedOrders();
+});
+if (navigator.onLine) retryQueuedOrders();
 
 // ── install prompt ────────────────────────────────────────────
 let deferredPrompt = null;
