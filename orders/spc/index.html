@@ -536,10 +536,48 @@ const APT = {
     </div>
   </div>
 
-  <!-- ── STEP 5: PAYMENT ── -->
+  <!-- ── STEP 5: FREQUENCY ── -->
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">5</span>
+      <span class="step-title">How often?</span>
+    </div>
+
+    <div class="day-cards" id="freq-cards">
+      <label class="day-card chosen" id="fc-once">
+        <input type="radio" name="frequency" value="once" checked>
+        <div class="day-card-body">
+          <div class="day-name">Just this once</div>
+        </div>
+      </label>
+      <label class="day-card" id="fc-weekly">
+        <input type="radio" name="frequency" value="weekly">
+        <div class="day-card-body">
+          <div class="day-name">Every week</div>
+          <div class="day-sub">Same day, every week</div>
+        </div>
+      </label>
+      <label class="day-card" id="fc-both">
+        <input type="radio" name="frequency" value="both_days">
+        <div class="day-card-body">
+          <div class="day-name">Every Wed &amp; Sat</div>
+          <div class="day-sub">Twice a week</div>
+        </div>
+      </label>
+      <label class="day-card" id="fc-biweekly">
+        <input type="radio" name="frequency" value="biweekly">
+        <div class="day-card-body">
+          <div class="day-name">Every other week</div>
+          <div class="day-sub">Once a fortnight</div>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── STEP 6: PAYMENT ── -->
+  <div class="fc">
+    <div class="step-hd">
+      <span class="step-n">6</span>
       <span class="step-title">How would you like to pay?</span>
     </div>
 
@@ -586,6 +624,17 @@ const APT = {
       <p class="conf-msg" id="confirm-msg">Your paneer will be delivered on time.</p>
     </div>
     <div class="conf-rows" id="order-summary"></div>
+  </div>
+  <div class="conf-card" id="manage-block" style="display:none">
+    <div class="cr" style="flex-direction:column;align-items:stretch;gap:8px">
+      <span class="ck">Manage your subscription anytime</span>
+      <span class="cv" id="manage-link-text" style="word-break:break-all;text-align:left;font-weight:500"></span>
+    </div>
+    <div style="display:flex;gap:8px;padding:0 18px 16px">
+      <button type="button" class="btn-again" id="btn-copy-link" style="flex:1">Copy link</button>
+      <a class="btn-again" id="btn-wa-save" target="_blank" rel="noopener"
+         style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center">Save to WhatsApp</a>
+    </div>
   </div>
   <button class="btn-again" onclick="resetForm()">Place Another Order</button>
 </div>
@@ -709,15 +758,46 @@ function wireCards(name) {
 }
 wireCards('delivery_day');
 wireCards('payment');
+wireCards('frequency');
 
-// Update submit button label when payment method changes
+// Update submit button label when payment method or frequency changes
 function updateSubmitLabel() {
-  const pay = document.querySelector('input[name="payment"]:checked');
+  const pay  = document.querySelector('input[name="payment"]:checked');
+  const freq = document.querySelector('input[name="frequency"]:checked');
   const b = document.getElementById('btn-submit');
-  if (b && !b.disabled) b.textContent = pay?.value === 'rzp' ? 'Proceed to Pay →' : 'Place Order →';
+  if (!b || b.disabled) return;
+  const isSub = freq && freq.value !== 'once';
+  if (isSub) {
+    b.textContent = pay?.value === 'rzp' ? 'Prepay & Subscribe →' : 'Start Subscription →';
+  } else {
+    b.textContent = pay?.value === 'rzp' ? 'Proceed to Pay →' : 'Place Order →';
+  }
 }
 document.querySelectorAll('input[name="payment"]').forEach(r =>
   r.addEventListener('change', updateSubmitLabel));
+
+// When repeating, "Pay Online" becomes "Prepay for 4 deliveries" —
+// same card, same underlying value, just relabeled for the recurring case.
+function updatePayCardForFrequency() {
+  const freq   = document.querySelector('input[name="frequency"]:checked')?.value || 'once';
+  const nameEl = document.querySelector('#pc-rzp .pay-name');
+  const subEl  = document.querySelector('#pc-rzp .pay-sub');
+  if (freq === 'once') {
+    nameEl.textContent = 'Pay Online';
+    subEl.textContent  = 'UPI · Cards · Netbanking';
+  } else {
+    const amt = qtyAmount() * 4;
+    nameEl.textContent = 'Prepay for 4 deliveries';
+    subEl.textContent  = amt > 0 ? `₹${amt.toLocaleString('en-IN')} charged now` : 'UPI · Cards · Netbanking';
+  }
+  updateSubmitLabel();
+}
+document.querySelectorAll('input[name="frequency"]').forEach(r =>
+  r.addEventListener('change', updatePayCardForFrequency));
+
+function frequencyLabel(freq) {
+  return { weekly: 'Every week', both_days: 'Every Wed & Sat', biweekly: 'Every other week' }[freq] || '';
+}
 
 // ── quantity steppers ─────────────────────────────────────────
 const QTY_STATE = { '250g': 0, '500g': 0, '750g': 0, '1kg': 0 };
@@ -726,6 +806,7 @@ function stepQty(key, delta) {
   QTY_STATE[key] = Math.max(0, (QTY_STATE[key] || 0) + delta);
   document.getElementById('qcount-' + key).textContent = QTY_STATE[key];
   updateTotalPill();
+  updatePayCardForFrequency();
   if (qtyTotal() > 0) setCardsErr('qty-cards', 'e-qty', false);
 }
 function qtyTotal() {
@@ -790,6 +871,7 @@ function validateAll() {
 function collectData() {
   const pay    = document.querySelector('input[name="payment"]:checked').value;
   const dayRad = document.querySelector('input[name="delivery_day"]:checked');
+  const freq   = document.querySelector('input[name="frequency"]:checked').value;
   const amount = qtyAmount();
   const qtyLabel = Object.entries(QTY_STATE)
     .filter(([, v]) => v > 0)
@@ -802,6 +884,7 @@ function collectData() {
     apartment:  APT.name,
     flat:       document.getElementById('f-flat').value.trim(),
     day:        dayRad.value,
+    weekday:    dayRad.value === 'Wednesday' ? 'Wed' : 'Sat',
     fullDate:   dayRad.dataset.fullDate   || dayRad.value,
     isoDate:    dayRad.dataset.isoDate    || '',
     shortLabel: dayRad.dataset.shortLabel || dayRad.value,
@@ -810,6 +893,7 @@ function collectData() {
     q750: QTY_STATE['750g'],
     q1kg: QTY_STATE['1kg'],
     qtyLabel, amount, amtDisp: '₹' + amount.toLocaleString('en-IN'),
+    frequency: freq,
     payKey: pay,
     payLabel: pay === 'cod' ? 'Cash on Delivery' : 'Online',
   };
@@ -909,24 +993,118 @@ async function openRazorpay(d) {
   }
 }
 
+// ── subscriptions ──────────────────────────────────────────────
+// No offline queue here (unlike sendToSheet) — a subscription signup
+// tied to a Razorpay charge isn't safe to silently replay later, so a
+// network failure just surfaces an error and the customer retries.
+async function createSubscription(d, rzpPaymentId) {
+  const payload = {
+    action:        'create_subscription',
+    name:          d.name,
+    phone:         d.phone,
+    address:       `${d.apartment}, ${d.flat}`,
+    mapUrl:        '',
+    frequency:     d.frequency,
+    weekday:       d.weekday,
+    q250: d.q250, q500: d.q500, q750: d.q750, q1kg: d.q1kg,
+    paymentMethod: rzpPaymentId ? 'prepay4' : 'cod',
+    rzpPaymentId:  rzpPaymentId || '',
+    deliveryDate:  d.isoDate,
+    deliveryLabel: d.shortLabel,
+  };
+  try {
+    const resp = await fetch(CONFIG.WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (data.ok === false) return { ok: false, message: data.message || 'Could not start subscription.' };
+    return { ok: true, subId: data.subId, manageToken: data.manageToken, manageUrl: data.manageUrl };
+  } catch {
+    return { ok: false, message: 'Connection error — please try again.' };
+  }
+}
+
+async function openRazorpaySubscription(d) {
+  setBusy(true);
+  try {
+    await loadRazorpayScript();
+    const totalAmount = d.amount * 4;
+    const resp = await fetch(CONFIG.WEBHOOK_URL, {
+      method:   'POST',
+      redirect: 'follow',
+      headers:  { 'Content-Type': 'text/plain' },
+      body:     JSON.stringify({ action: 'create_rzp_order', amount: totalAmount * 100 }),
+    });
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || 'Could not create order');
+
+    const rzp = new Razorpay({
+      key:         data.key_id,
+      amount:      totalAmount * 100,
+      currency:    'INR',
+      name:        'Dairy Bliss',
+      description: `${d.qtyLabel} paneer — 4 deliveries`,
+      order_id:    data.rzp_order_id,
+      prefill:     { name: d.name, contact: '91' + d.phone },
+      theme:       { color: '#3d7a1a' },
+      handler: async function(response) {
+        const result = await createSubscription(d, response.razorpay_payment_id);
+        if (result.ok) {
+          showConfirmation(d, 'Prepaid (4 deliveries)', result);
+        } else {
+          showToast(result.message || 'Payment received but subscription setup failed — please contact us.');
+        }
+      },
+      modal: { ondismiss: function() { setBusy(false); } },
+    });
+    rzp.open();
+  } catch(err) {
+    setBusy(false);
+    showToast('Payment setup failed — please try Cash on Delivery.');
+  }
+}
+
 // ── confirmation screen ───────────────────────────────────────
-function showConfirmation(d, payStatus) {
+function showConfirmation(d, payStatus, subResult) {
   hide('screen-form');
   show('screen-confirm'); goTop();
 
-  document.getElementById('confirm-msg').textContent =
-    `Your paneer is confirmed for ${d.fullDate}. We've notified Rekha.`;
+  const isSub = d.frequency !== 'once';
+  document.getElementById('confirm-msg').textContent = isSub
+    ? `Your paneer subscription starts ${d.fullDate}. We've notified Rekha.`
+    : `Your paneer is confirmed for ${d.fullDate}. We've notified Rekha.`;
 
   const pmDisplay = payStatus || d.payLabel;
-  document.getElementById('order-summary').innerHTML = `
+  let rows = `
     <div class="cr"><span class="ck">Name</span><span class="cv">${esc(d.name)}</span></div>
     <div class="cr"><span class="ck">Phone</span><span class="cv">${esc(d.phone)}</span></div>
     <div class="cr"><span class="ck">Apartment</span><span class="cv">Sobha Palm Court</span></div>
     <div class="cr"><span class="ck">Flat</span><span class="cv">${esc(d.flat)}</span></div>
     <div class="cr"><span class="ck">Quantity</span><span class="cv">${esc(d.qtyLabel)} — ${esc(d.amtDisp)}</span></div>
-    <div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(d.fullDate)}</span></div>
-    <div class="cr"><span class="ck">Payment</span><span class="cv">${esc(pmDisplay)}</span></div>
-  `;
+    <div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(d.fullDate)}</span></div>`;
+  if (isSub) {
+    rows += `<div class="cr"><span class="ck">Frequency</span><span class="cv">${esc(frequencyLabel(d.frequency))}</span></div>`;
+  }
+  rows += `<div class="cr"><span class="ck">Payment</span><span class="cv">${esc(pmDisplay)}</span></div>`;
+  document.getElementById('order-summary').innerHTML = rows;
+
+  const manageBlock = document.getElementById('manage-block');
+  if (isSub && subResult && subResult.manageUrl) {
+    manageBlock.style.display = 'block';
+    document.getElementById('manage-link-text').textContent = subResult.manageUrl;
+    document.getElementById('btn-copy-link').onclick = () => {
+      navigator.clipboard.writeText(subResult.manageUrl).then(() => showToast('Link copied!'));
+    };
+    const waMsg = encodeURIComponent(`My DairyBliss paneer subscription — manage it here: ${subResult.manageUrl}`);
+    document.getElementById('btn-wa-save').href = `https://wa.me/?text=${waMsg}`;
+    try {
+      localStorage.setItem('db_subscription', JSON.stringify({ subId: subResult.subId, manageToken: subResult.manageToken }));
+    } catch {}
+  } else {
+    manageBlock.style.display = 'none';
+  }
 }
 
 // ── reset ─────────────────────────────────────────────────────
@@ -942,6 +1120,8 @@ function resetForm() {
     document.getElementById('qcount-' + k).textContent = '0';
   });
   document.getElementById('amount-pill').classList.remove('v');
+  document.getElementById('manage-block').style.display = 'none';
+  updatePayCardForFrequency();
   hide('screen-confirm');
   show('screen-form'); goTop();
 }
@@ -966,16 +1146,31 @@ document.getElementById('orderForm').addEventListener('submit', async e => {
   }
   const d = collectData();
 
-  if (d.payKey === 'rzp') {
-    await openRazorpay(d);
-  } else {
-    setBusy(true);
-    const ok = await sendToSheet(d, 'Cash on Delivery');
-    setBusy(false);
-    if (ok) {
-      showConfirmation(d, 'Cash on Delivery');
+  if (d.frequency === 'once') {
+    if (d.payKey === 'rzp') {
+      await openRazorpay(d);
     } else {
-      showToast("Sorry, we're not taking orders right now. Please try again later.");
+      setBusy(true);
+      const ok = await sendToSheet(d, 'Cash on Delivery');
+      setBusy(false);
+      if (ok) {
+        showConfirmation(d, 'Cash on Delivery');
+      } else {
+        showToast("Sorry, we're not taking orders right now. Please try again later.");
+      }
+    }
+  } else {
+    if (d.payKey === 'rzp') {
+      await openRazorpaySubscription(d);
+    } else {
+      setBusy(true);
+      const result = await createSubscription(d, null);
+      setBusy(false);
+      if (result.ok) {
+        showConfirmation(d, 'Cash on Delivery', result);
+      } else {
+        showToast(result.message || "Sorry, we're not taking orders right now. Please try again later.");
+      }
     }
   }
 });

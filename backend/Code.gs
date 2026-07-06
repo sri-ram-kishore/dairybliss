@@ -51,8 +51,18 @@ function doPost(e) {
     }
 
     // Customer order — no auth needed (public ordering page)
-    if (payload.action === 'order')            return handleOrder(payload);
-    if (payload.action === 'create_rzp_order') return handleCreateRzpOrder(payload);
+    if (payload.action === 'order')             return handleOrder(payload);
+    if (payload.action === 'create_rzp_order')  return handleCreateRzpOrder(payload);
+    if (payload.action === 'create_subscription') return handleCreateSubscription(payload);
+
+    // Subscription self-service — gated by the subscription's own manage
+    // token (validated inside each handler), not the ops PIN session token
+    if (payload.action === 'get_subscription')        return handleGetSubscription(payload);
+    if (payload.action === 'skip_delivery')           return handleSkipDelivery(payload);
+    if (payload.action === 'pause_subscription')      return handlePauseSubscription(payload);
+    if (payload.action === 'resume_subscription')     return handleResumeSubscription(payload);
+    if (payload.action === 'update_subscription_qty') return handleUpdateSubscriptionQty(payload);
+    if (payload.action === 'cancel_subscription')     return handleCancelSubscription(payload);
 
     // PIN auth — no token needed for these
     if (payload.action === 'verify_pin')  return handleVerifyPin(payload);
@@ -83,13 +93,17 @@ function doGet(e) {
   if (e.parameter.action === 'status') return jsonOk({ ordersEnabled: isOrdersEnabled() });
   if (e.parameter.action === 'pin_status') return getPinStatus();
 
+  // Manage-token-gated (not a PIN session) — the self-service page's initial load
+  if (e.parameter.action === 'get_subscription') return handleGetSubscription(e.parameter);
+
   // Dashboard endpoints require a valid token
   const tokenUser = validateToken(e.parameter.token);
   if (!tokenUser) return jsonOk({ ok: false, error: 'unauthorized' });
 
-  if (e.parameter.action === 'dashboard') return getDashboardOrders();
-  if (e.parameter.action === 'summary')   return getDashboardSummary();
-  if (e.parameter.action === 'expenses')  return getExpensesData();
+  if (e.parameter.action === 'dashboard')          return getDashboardOrders();
+  if (e.parameter.action === 'summary')            return getDashboardSummary();
+  if (e.parameter.action === 'expenses')           return getExpensesData();
+  if (e.parameter.action === 'list_subscriptions') return handleListSubscriptions();
   return ContentService.createTextOutput('DairyBliss API ok');
 }
 
@@ -247,6 +261,19 @@ function nextOrderId() {
   return 'DB' + String(seq).padStart(3, '0');
 }
 
+function nextSubscriptionId() {
+  const p   = PropertiesService.getScriptProperties();
+  const seq = parseInt(p.getProperty('SUB_SEQ') || '0') + 1;
+  p.setProperty('SUB_SEQ', String(seq));
+  return 'DBS' + String(seq).padStart(3, '0');
+}
+
+// Per-delivery pricing — single source of truth on the backend.
+// (Each frontend order form keeps its own copy for instant UI feedback
+// with no round-trip; this is the copy that governs what actually gets
+// written to the sheet and charged.)
+const PRICING = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
+
 // ── ORDER HANDLING ───────────────────────────────────────────
 
 function handleOrder(data) {
@@ -255,21 +282,26 @@ function handleOrder(data) {
       message: "We're not taking orders right now. Check back soon!" });
   }
 
-  // Validate delivery date — reject if cutoff has passed (Tue ≥ 9PM closes Wed, Fri ≥ 9PM closes Sat)
-  if (data.deliveryDate) {
-    const now     = new Date();
-    const day     = now.getDay();   // 0=Sun … 6=Sat
-    const hour    = now.getHours(); // IST
-    const CUTOFF  = 21;             // 9 PM
-    const validDates = nextDeliveryDates(2).map(d => d.date);
-    if (!validDates.includes(data.deliveryDate)) {
-      return jsonOk({ ok: false, paused: true,
-        message: "Orders for that date are now closed. Please choose an available date." });
-    }
+  if (data.deliveryDate && !isDateOrderable(data.deliveryDate)) {
+    return jsonOk({ ok: false, paused: true,
+      message: "Orders for that date are now closed. Please choose an available date." });
   }
 
+  const r = insertOrderRow(data, {});
+
+  notifyNewOrder(r.orderId, data, r.aptKey, r.q250, r.q500, r.q750, r.q1kg,
+    r.totalGrams, r.totalRs, r.prevGrams, r.newGrams);
+
+  return jsonOk({ orderId: r.orderId });
+}
+
+// Writes one order row into the correct apartment sheet. Used by one-off
+// orders (opts.subscriptionId omitted/blank) and by subscription signup +
+// nightly materialization (opts.subscriptionId set) — the single place
+// the 21-element row shape is constructed, so both paths always agree.
+function insertOrderRow(data, opts) {
   const ss       = SpreadsheetApp.openById(SHEET_ID);
-  const aptKey   = parseApt(data.address).apt;           // 'SPC', 'BNR', or 'Other'
+  const aptKey   = parseApt(data.address).apt;           // 'SPC', 'BNR', 'ADG', or 'Other'
   const tabName  = aptKey !== 'Other' ? aptKey : 'Other';
   const sheet    = getOrCreate(ss, tabName);
   ensureOrderHeaders(sheet);
@@ -283,7 +315,7 @@ function handleOrder(data) {
   const q1kg = parseInt(data.q1kg) || 0;
 
   const totalGrams = q250*250 + q500*500 + q750*750 + q1kg*1000;
-  const totalRs    = q250*145 + q500*280 + q750*420 + q1kg*550;
+  const totalRs    = q250*PRICING.q250 + q500*PRICING.q500 + q750*PRICING.q750 + q1kg*PRICING.q1kg;
 
   // Running total BEFORE this order (for this apartment's sheet)
   const prevGrams = getRunningTotalGrams(sheet, data.deliveryDate);
@@ -306,13 +338,12 @@ function handleOrder(data) {
     data.rzpPaymentId  || '',
     '',   // Delivered
     '',   // Payment Collected
+    (opts && opts.subscriptionId) || '',  // Subscription ID
   ]);
 
   const newGrams = prevGrams + totalGrams;
 
-  notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams);
-
-  return jsonOk({ orderId });
+  return { orderId, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams };
 }
 
 // ── RAZORPAY ORDER CREATION ───────────────────────────────────
@@ -355,7 +386,7 @@ function ensureOrderHeaders(sheet) {
     'Delivery Date','Delivery Label','250g','500g','750g','1kg',
     'Total (g)','Total (₹)','Status',
     'Payment Method','Payment Status','RZP Payment ID',
-    'Delivered','Payment Collected'];
+    'Delivered','Payment Collected','Subscription ID'];
   sheet.appendRow(headers);
   const r = sheet.getRange(1, 1, 1, headers.length);
   r.setFontWeight('bold');
@@ -363,9 +394,361 @@ function ensureOrderHeaders(sheet) {
   r.setFontColor('#ffffff');
 }
 
+// ── SUBSCRIPTIONS ────────────────────────────────────────────
+// One shared sheet across all apartments (same pattern as Expenses).
+// A subscription is a template; the nightly materializeSubscriptions()
+// job (and, for the very first delivery, handleCreateSubscription
+// itself) writes ordinary rows into the per-apartment order sheets via
+// insertOrderRow — nothing downstream needs to know subscriptions exist.
+
+const SUB_COL = {
+  TIMESTAMP: 1, ID: 2, APT: 3, NAME: 4, PHONE: 5, ADDRESS: 6,
+  FREQUENCY: 7, WEEKDAY: 8, ANCHOR_DATE: 9,
+  Q250: 10, Q500: 11, Q750: 12, Q1KG: 13, PER_DELIVERY_RS: 14,
+  PAYMENT_MODE: 15, PREPAID_REMAINING: 16, RZP_PAYMENT_ID: 17,
+  STATUS: 18, PAUSED_UNTIL: 19, SKIP_DATES: 20, LAST_MATERIALIZED: 21,
+  MANAGE_TOKEN: 22,
+};
+
+function getOrCreateSubscriptionsSheet(ss) {
+  let sheet = ss.getSheetByName('Subscriptions');
+  if (!sheet) {
+    sheet = ss.insertSheet('Subscriptions');
+    const headers = ['Timestamp','Subscription ID','Apartment','Name','Phone','Address',
+      'Frequency','Weekday','Anchor Date','250g','500g','750g','1kg','Per-Delivery ₹',
+      'Payment Mode','Prepaid Remaining','RZP Payment ID',
+      'Status','Paused Until','Skip Dates','Last Materialized Date','Manage Token'];
+    sheet.appendRow(headers);
+    const r = sheet.getRange(1, 1, 1, headers.length);
+    r.setFontWeight('bold');
+    r.setBackground('#6b3fa0');
+    r.setFontColor('#ffffff');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+// A date cell may come back as a real Date (Sheets auto-parsed it) or a
+// string, depending on how it was written — the same ambiguity the order
+// sheet already handles the same defensive way elsewhere in this file.
+function cellToIsoDate(cell) {
+  if (!cell) return '';
+  return cell instanceof Date ? fmt(cell, 'yyyy-MM-dd') : String(cell);
+}
+
+function subscriptionRowToObject(row, rowIndex) {
+  const c = i => row[i - 1];
+  return {
+    rowIndex,
+    id:               c(SUB_COL.ID),
+    apt:              c(SUB_COL.APT),
+    name:             c(SUB_COL.NAME),
+    phone:            c(SUB_COL.PHONE),
+    address:          c(SUB_COL.ADDRESS),
+    frequency:        c(SUB_COL.FREQUENCY),
+    weekday:          c(SUB_COL.WEEKDAY),
+    anchorDate:       cellToIsoDate(c(SUB_COL.ANCHOR_DATE)),
+    q250:             parseInt(c(SUB_COL.Q250)) || 0,
+    q500:             parseInt(c(SUB_COL.Q500)) || 0,
+    q750:             parseInt(c(SUB_COL.Q750)) || 0,
+    q1kg:             parseInt(c(SUB_COL.Q1KG)) || 0,
+    perDeliveryRs:    parseInt(c(SUB_COL.PER_DELIVERY_RS)) || 0,
+    paymentMode:      c(SUB_COL.PAYMENT_MODE),
+    prepaidRemaining: c(SUB_COL.PREPAID_REMAINING) === '' ? null : parseInt(c(SUB_COL.PREPAID_REMAINING)),
+    status:           c(SUB_COL.STATUS),
+    pausedUntil:      cellToIsoDate(c(SUB_COL.PAUSED_UNTIL)),
+    skipDates:        String(c(SUB_COL.SKIP_DATES) || '').split(',').map(s => s.trim()).filter(Boolean),
+    lastMaterialized: cellToIsoDate(c(SUB_COL.LAST_MATERIALIZED)),
+  };
+}
+
+// Does this subscription want a delivery on dateStr, ignoring pause/skip/
+// balance state (those are checked separately by each caller)?
+function isDueDate(sub, dateStr) {
+  const d  = new Date(dateStr + 'T00:00:00');
+  const wd = d.getDay(); // 0=Sun … 6=Sat
+  const isWed = wd === 3, isSat = wd === 6;
+
+  if (sub.frequency === 'both_days') {
+    if (!isWed && !isSat) return false;
+  } else {
+    const wantWed = sub.weekday === 'Wed';
+    if (wantWed !== isWed) return false;
+    if (!wantWed && !isSat) return false;
+  }
+
+  if (sub.frequency === 'biweekly') {
+    const anchor     = new Date(sub.anchorDate + 'T00:00:00');
+    const weeksSince = Math.round((d - anchor) / (7 * 24 * 60 * 60 * 1000));
+    if (weeksSince % 2 !== 0) return false;
+  }
+
+  return true;
+}
+
+// Looks up a subscription by ID and checks the manage token. Returns
+// { rowIndex, row } on success (rowIndex is the absolute 1-indexed sheet
+// row, ready for direct getRange writes), or null if not found/wrong token —
+// deliberately the same shape for "no such subscription" and "wrong token"
+// so this can't be used to probe for valid subscription IDs.
+function validateManageToken(subId, token) {
+  if (!subId || !token) return null;
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName('Subscriptions');
+  if (!sheet || sheet.getLastRow() < 2) return null;
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 22).getValues();
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i][SUB_COL.ID - 1] === subId) {
+      if (rows[i][SUB_COL.MANAGE_TOKEN - 1] === token) return { rowIndex: i + 2, row: rows[i] };
+      return null;
+    }
+  }
+  return null;
+}
+
+function handleCreateSubscription(data) {
+  if (!isOrdersEnabled()) {
+    return jsonOk({ ok: false, paused: true,
+      message: "We're not taking orders right now. Check back soon!" });
+  }
+
+  const frequency = data.frequency;
+  if (!['weekly', 'both_days', 'biweekly'].includes(frequency)) {
+    return jsonOk({ ok: false, message: 'Invalid frequency' });
+  }
+  const weekday = data.weekday;
+  if (weekday !== 'Wed' && weekday !== 'Sat') {
+    return jsonOk({ ok: false, message: 'Invalid delivery day' });
+  }
+  const paymentMethod = data.paymentMethod; // 'cod' | 'prepay4'
+  if (paymentMethod !== 'cod' && paymentMethod !== 'prepay4') {
+    return jsonOk({ ok: false, message: 'Invalid payment method' });
+  }
+  if (paymentMethod === 'prepay4' && !data.rzpPaymentId) {
+    return jsonOk({ ok: false, message: 'Missing payment confirmation' });
+  }
+  if (data.deliveryDate && !isDateOrderable(data.deliveryDate)) {
+    return jsonOk({ ok: false, paused: true,
+      message: 'Orders for that date are now closed. Please choose an available date.' });
+  }
+
+  const q250 = parseInt(data.q250) || 0;
+  const q500 = parseInt(data.q500) || 0;
+  const q750 = parseInt(data.q750) || 0;
+  const q1kg = parseInt(data.q1kg) || 0;
+  if (q250 + q500 + q750 + q1kg === 0) {
+    return jsonOk({ ok: false, message: 'Choose at least one item' });
+  }
+  const perDeliveryRs = q250*PRICING.q250 + q500*PRICING.q500 + q750*PRICING.q750 + q1kg*PRICING.q1kg;
+
+  const aptKey       = parseApt(data.address).apt;
+  const subId        = nextSubscriptionId();
+  const manageToken  = Utilities.getUuid();
+  const anchorDate   = data.deliveryDate;
+  const isPrepaid    = paymentMethod === 'prepay4';
+
+  const ss       = SpreadsheetApp.openById(SHEET_ID);
+  const subSheet = getOrCreateSubscriptionsSheet(ss);
+  subSheet.appendRow([
+    new Date(), subId, aptKey, data.name, data.phone, data.address,
+    frequency, weekday, anchorDate,
+    q250, q500, q750, q1kg, perDeliveryRs,
+    isPrepaid ? 'Prepay4' : 'COD',
+    isPrepaid ? 4 : '',
+    data.rzpPaymentId || '',
+    'Active', '', '', anchorDate, manageToken,
+  ]);
+  const subRow = subSheet.getLastRow();
+
+  // First delivery happens immediately, same as a one-off order — the
+  // nightly job only ever has to handle deliveries after this one.
+  const orderResult = insertOrderRow({
+    name: data.name, phone: data.phone, address: data.address, mapUrl: data.mapUrl,
+    deliveryDate: anchorDate, deliveryLabel: data.deliveryLabel,
+    q250, q500, q750, q1kg,
+    paymentMethod: isPrepaid ? 'Online (Prepaid ×4)' : 'Cash on Delivery',
+    paymentStatus: isPrepaid ? 'Paid Online' : '',
+    rzpPaymentId:  data.rzpPaymentId || '',
+  }, { subscriptionId: subId });
+
+  if (isPrepaid) {
+    subSheet.getRange(subRow, SUB_COL.PREPAID_REMAINING).setValue(3);
+  }
+  subSheet.getRange(subRow, SUB_COL.LAST_MATERIALIZED).setValue(anchorDate);
+
+  notifyNewOrder(orderResult.orderId, data, orderResult.aptKey, q250, q500, q750, q1kg,
+    orderResult.totalGrams, orderResult.totalRs, orderResult.prevGrams, orderResult.newGrams,
+    subId);
+
+  const manageUrl = 'https://dairybliss.com/manage/?id=' + subId + '&t=' + manageToken;
+  return jsonOk({ subId, manageToken, manageUrl, orderId: orderResult.orderId });
+}
+
+function handleGetSubscription(payload) {
+  const match = validateManageToken(payload.subId, payload.token);
+  if (!match) return jsonOk({ ok: false, error: 'unauthorized' });
+  const sub  = subscriptionRowToObject(match.row, match.rowIndex);
+  const next = nextDeliveryDates(4).find(d => isDueDate(sub, d.date) && !sub.skipDates.includes(d.date));
+  return jsonOk({ ok: true, subscription: sub, nextDueDate: next ? next.date : null });
+}
+
+function handleSkipDelivery(payload) {
+  const match = validateManageToken(payload.subId, payload.token);
+  if (!match) return jsonOk({ ok: false, error: 'unauthorized' });
+  const sub = subscriptionRowToObject(match.row, match.rowIndex);
+
+  const validUpcoming = nextDeliveryDates(4).map(d => d.date).filter(d => isDueDate(sub, d));
+  if (!validUpcoming.includes(payload.date)) {
+    return jsonOk({ ok: false, message: 'Not an upcoming delivery date' });
+  }
+
+  const skipSet = new Set(sub.skipDates);
+  skipSet.add(payload.date);
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  ss.getSheetByName('Subscriptions')
+    .getRange(match.rowIndex, SUB_COL.SKIP_DATES)
+    .setValue([...skipSet].join(','));
+  return jsonOk({ ok: true });
+}
+
+function handlePauseSubscription(payload) {
+  const match = validateManageToken(payload.subId, payload.token);
+  if (!match) return jsonOk({ ok: false, error: 'unauthorized' });
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName('Subscriptions');
+  sheet.getRange(match.rowIndex, SUB_COL.STATUS).setValue('Paused');
+  sheet.getRange(match.rowIndex, SUB_COL.PAUSED_UNTIL).setValue(payload.until || '');
+  return jsonOk({ ok: true });
+}
+
+function handleResumeSubscription(payload) {
+  const match = validateManageToken(payload.subId, payload.token);
+  if (!match) return jsonOk({ ok: false, error: 'unauthorized' });
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName('Subscriptions');
+  sheet.getRange(match.rowIndex, SUB_COL.STATUS).setValue('Active');
+  sheet.getRange(match.rowIndex, SUB_COL.PAUSED_UNTIL).setValue('');
+  return jsonOk({ ok: true });
+}
+
+function handleUpdateSubscriptionQty(payload) {
+  const match = validateManageToken(payload.subId, payload.token);
+  if (!match) return jsonOk({ ok: false, error: 'unauthorized' });
+
+  const q250 = parseInt(payload.q250) || 0;
+  const q500 = parseInt(payload.q500) || 0;
+  const q750 = parseInt(payload.q750) || 0;
+  const q1kg = parseInt(payload.q1kg) || 0;
+  if (q250 + q500 + q750 + q1kg === 0) {
+    return jsonOk({ ok: false, message: 'Choose at least one item' });
+  }
+  const perDeliveryRs = q250*PRICING.q250 + q500*PRICING.q500 + q750*PRICING.q750 + q1kg*PRICING.q1kg;
+
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  ss.getSheetByName('Subscriptions')
+    .getRange(match.rowIndex, SUB_COL.Q250, 1, 5)
+    .setValues([[q250, q500, q750, q1kg, perDeliveryRs]]);
+  return jsonOk({ ok: true });
+}
+
+function handleCancelSubscription(payload) {
+  const match = validateManageToken(payload.subId, payload.token);
+  if (!match) return jsonOk({ ok: false, error: 'unauthorized' });
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  ss.getSheetByName('Subscriptions').getRange(match.rowIndex, SUB_COL.STATUS).setValue('Cancelled');
+  return jsonOk({ ok: true });
+}
+
+function handleListSubscriptions() {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName('Subscriptions');
+  if (!sheet || sheet.getLastRow() < 2) return jsonOk({ subscriptions: [] });
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 22).getValues();
+  const subscriptions = rows
+    .filter(r => r[SUB_COL.ID - 1])
+    .map((r, i) => subscriptionRowToObject(r, i + 2))
+    .filter(s => s.status !== 'Cancelled');
+  return jsonOk({ subscriptions });
+}
+
+// Nightly job (see setupTriggers): materializes every due delivery for
+// every active subscription into the normal per-apartment order sheet via
+// insertOrderRow — from that point on it's indistinguishable from a
+// one-off order to the ops dashboard or the vendor-procurement math.
+//
+// Walks a small lookahead window of upcoming delivery dates rather than
+// just "today" so a run that failed for a few days catches up on every
+// missed delivery in order, instead of silently dropping them. Re-reads
+// each subscription's row before acting on it so state a prior candidate
+// in the same run just wrote (Last Materialized Date, prepaid balance)
+// is never acted on stale.
+function materializeSubscriptions() {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName('Subscriptions');
+  if (!sheet || sheet.getLastRow() < 2) return;
+
+  const upcoming = nextDeliveryDates(3); // ~10-11 days of lookahead/catch-up room
+  const numRows  = sheet.getLastRow() - 1;
+  const rows     = sheet.getRange(2, 1, numRows, 22).getValues();
+
+  rows.forEach((row, i) => {
+    const rowIndex = i + 2;
+    if (!row[SUB_COL.ID - 1]) return;
+    const sub = subscriptionRowToObject(row, rowIndex);
+    if (sub.status === 'Cancelled') return;
+
+    const candidates = upcoming
+      .map(d => d.date)
+      .filter(d => !sub.lastMaterialized || d > sub.lastMaterialized)
+      .filter(d => isDueDate(sub, d));
+
+    candidates.forEach(date => {
+      const current = subscriptionRowToObject(
+        sheet.getRange(rowIndex, 1, 1, 22).getValues()[0], rowIndex);
+
+      if (current.skipDates.includes(date)) {
+        sheet.getRange(rowIndex, SUB_COL.LAST_MATERIALIZED).setValue(date);
+        return;
+      }
+      if (current.status === 'Paused' && (!current.pausedUntil || date < current.pausedUntil)) {
+        return; // still paused for this date — don't advance, re-check next run
+      }
+      if (current.paymentMode === 'Prepay4' && (current.prepaidRemaining || 0) <= 0) {
+        return; // out of prepaid deliveries — already alerted when balance hit 0
+      }
+
+      const label = upcoming.find(d => d.date === date)?.label || date;
+      const result = insertOrderRow({
+        name: current.name, phone: current.phone, address: current.address, mapUrl: '',
+        deliveryDate: date, deliveryLabel: label,
+        q250: current.q250, q500: current.q500, q750: current.q750, q1kg: current.q1kg,
+        paymentMethod: current.paymentMode === 'Prepay4' ? 'Online (Prepaid ×4)' : 'Cash on Delivery',
+        paymentStatus: current.paymentMode === 'Prepay4' ? 'Paid Online' : '',
+        rzpPaymentId: '',
+      }, { subscriptionId: current.id });
+
+      notifyNewOrder(result.orderId,
+        { name: current.name, phone: current.phone, address: current.address, deliveryLabel: label },
+        result.aptKey, result.q250, result.q500, result.q750, result.q1kg,
+        result.totalGrams, result.totalRs, result.prevGrams, result.newGrams, current.id);
+
+      sheet.getRange(rowIndex, SUB_COL.LAST_MATERIALIZED).setValue(date);
+
+      if (current.paymentMode === 'Prepay4') {
+        const remaining = (current.prepaidRemaining || 0) - 1;
+        sheet.getRange(rowIndex, SUB_COL.PREPAID_REMAINING).setValue(remaining);
+        if (remaining === 0) {
+          const { unit } = parseApt(current.address);
+          tg(`⚠️ <b>Subscription needs renewal</b>\n${esc(current.id)} — ${esc(current.name)}${unit ? ', ' + esc(unit) : ''}\nJust used their last prepaid delivery. Nudge them from the ops Subs tab when convenient.`);
+        }
+      }
+    });
+  });
+}
+
 // ── ORDER NOTIFICATION ────────────────────────────────────────
 
-function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams) {
+function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams, subscriptionId) {
   const newKg  = (newGrams / 1000).toFixed(2);
   const meta   = aptMeta(aptKey);
 
@@ -376,9 +759,12 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   if (q1kg) items.push(`1kg × ${q1kg}  —  ₹${q1kg*550}`);
 
   const { unit } = parseApt(data.address);
+  const title = subscriptionId
+    ? `🔁 Subscription Delivery — ${esc(orderId)}`
+    : `New Order — ${esc(orderId)}`;
 
   const msg = [
-    `<b>${meta.emoji} New Order — ${esc(orderId)}</b>`,
+    `<b>${meta.emoji} ${title}</b>`,
     ``,
     `${esc(data.name)}${unit ? ', ' + esc(unit) : ''}, ${esc(data.phone)}`,
     `${esc(data.deliveryLabel)}`,
@@ -440,7 +826,7 @@ function buildDashboardData() {
   for (const apt of APARTMENTS.map(a => a.key)) {
     const sheet = ss.getSheetByName(apt);
     if (!sheet || sheet.getLastRow() < 2) continue;
-    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 20).getValues();
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 21).getValues();
     rows.forEach(r => {
       if (!r[1]) return;
       const deliveryDate = r[6] instanceof Date ? fmt(r[6], 'yyyy-MM-dd') : String(r[6]);
@@ -499,7 +885,7 @@ function getDashboardSummary() {
   for (const apt of APARTMENTS.map(a => a.key)) {
     const sheet = ss.getSheetByName(apt);
     if (!sheet || sheet.getLastRow() < 2) continue;
-    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 20).getValues();
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 21).getValues();
     rows.forEach(r => {
       if (!r[1]) return;
       const rs   = parseInt(r[13]) || 0;
@@ -977,6 +1363,12 @@ function setupTriggers() {
   ScriptApp.newTrigger('sendCutoffSummary')
     .timeBased().atHour(20).everyDays(1).create();
 
+  // Subscription materialization: 6am every day, well before the 8pm
+  // vendor-order cutoff, so today's subscription deliveries are ordinary
+  // rows by the time that summary runs its procurement math.
+  ScriptApp.newTrigger('materializeSubscriptions')
+    .timeBased().atHour(6).everyDays(1).create();
+
   Logger.log('Triggers set up successfully.');
 }
 
@@ -1029,7 +1421,7 @@ function getRunningTotalGrams(sheet, deliveryDate) {
 function statsForDate(sheet, dateStr) {
   const s = { orders:0, totalGrams:0, totalRs:0, q250:0, q500:0, q750:0, q1kg:0 };
   if (sheet.getLastRow() < 2) return s;
-  sheet.getRange(2, 1, sheet.getLastRow()-1, 20).getValues().forEach(row => {
+  sheet.getRange(2, 1, sheet.getLastRow()-1, 21).getValues().forEach(row => {
     if (!matchDate(row[6], dateStr)) return;
     s.orders++;
     s.q250       += parseInt(row[8])  || 0;
@@ -1044,7 +1436,7 @@ function statsForDate(sheet, dateStr) {
 
 function ordersForDate(sheet, dateStr) {
   if (sheet.getLastRow() < 2) return [];
-  return sheet.getRange(2, 1, sheet.getLastRow()-1, 20).getValues()
+  return sheet.getRange(2, 1, sheet.getLastRow()-1, 21).getValues()
     .filter(r => matchDate(r[6], dateStr))
     .map(r => ({ name:r[2], phone:r[3], address:r[4],
       q250:parseInt(r[8])||0, q500:parseInt(r[9])||0,
@@ -1083,6 +1475,13 @@ function nextDeliveryDates(n) {
     });
   }
   return result;
+}
+
+// Is dateStr one of the next two valid delivery dates? Used to reject a
+// one-off order or a new subscription's first delivery once that date's
+// ordering window has effectively passed.
+function isDateOrderable(dateStr) {
+  return nextDeliveryDates(2).some(d => d.date === dateStr);
 }
 
 function esc(s) {
@@ -1187,7 +1586,7 @@ function fixSheetHeaders() {
     'Delivery Date', 'Delivery Label', '250g', '500g', '750g', '1kg',
     'Total (g)', 'Total (₹)', 'Status',
     'Payment Method', 'Payment Status', 'RZP Payment ID',
-    'Delivered', 'Payment Collected'
+    'Delivered', 'Payment Collected', 'Subscription ID'
   ];
   for (const aptName of APARTMENTS.map(a => a.key)) {
     const sheet = ss.getSheetByName(aptName);
