@@ -1,18 +1,24 @@
 // ============================================================
 //  Dairy Bliss — Service Worker
-//  Strategy: cache-first for static assets, network-first for
-//  API calls. Failed order submissions are queued in
-//  localStorage and retried via Background Sync.
+//  Strategy: network-first for pages (HTML) so deploys arrive
+//  without a cache-version bump; cache-first for static assets.
+//  Failed order submissions are queued in localStorage and
+//  retried via Background Sync.
 // ============================================================
 
-const CACHE_NAME = 'dairy-bliss-v6';
+const CACHE_NAME = 'dairy-bliss-v7';
 
-// Assets to precache on install
+// Assets to precache on install (both order apps + shared shell)
 const PRECACHE_ASSETS = [
   './',
-  './index.html',
   './manifest.json',
-  './icons/logo.png',
+  './spc/',
+  './spc/manifest.json',
+  './bnr/',
+  './bnr/manifest.json',
+  './icons/icon-192.png',
+  './icons/favicon.png',
+  '../assets/logo.webp',
 ];
 
 // ── INSTALL ──────────────────────────────────────────────────
@@ -38,6 +44,15 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Pick the right offline page for a navigation request:
+// installed SPC/BNR apps must fall back to their own order form,
+// not the apartment picker.
+function offlineFallbackFor(url) {
+  if (url.pathname.includes('/orders/spc')) return caches.match('./spc/');
+  if (url.pathname.includes('/orders/bnr')) return caches.match('./bnr/');
+  return caches.match('./');
+}
+
 // ── FETCH ────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
   const { request } = event;
@@ -61,7 +76,26 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache-first for local assets
+  // Network-first for pages: users always get the latest deploy,
+  // with the cached copy (then the precached shell) as offline fallback.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(c => c.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then(cached => cached || offlineFallbackFor(url))
+        )
+    );
+    return;
+  }
+
+  // Cache-first for static assets (images, manifest, icons)
   event.respondWith(
     caches.match(request).then(cached => {
       if (cached) return cached;
@@ -79,14 +113,7 @@ self.addEventListener('fetch', event => {
           }
           return response;
         })
-        .catch(() => {
-          // Offline fallback: serve index.html for navigation requests
-          if (request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-          // For other failed requests, return empty 503
-          return new Response('Offline', { status: 503 });
-        });
+        .catch(() => new Response('Offline', { status: 503 }));
     })
   );
 });

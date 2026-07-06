@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="../icons/favicon.png">
   <link rel="apple-touch-icon" href="../icons/favicon.png">
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <link rel="preconnect" href="https://checkout.razorpay.com">
 
   <style>
     :root {
@@ -405,7 +405,7 @@ const APT = {
 <!-- HEADER -->
 <header class="hd">
   <div class="logo-wrap">
-    <img src="../../assets/logo.png" alt="DairyBliss"
+    <img src="../../assets/logo.webp" alt="DairyBliss"
          onerror="this.style.display='none'">
   </div>
 </header>
@@ -435,13 +435,13 @@ const APT = {
 
     <div class="field">
       <input type="text" id="f-name" placeholder="Enter your name"
-             autocomplete="name"uired>
+             autocomplete="name" required>
       <p class="field-err" id="e-name">Please enter your full name.</p>
     </div>
 
     <div class="field">
       <input type="tel" id="f-phone" placeholder="Enter your mobile number"
-             maxlength="10" inputmode="numeric" autocomplete="tel"uired>
+             maxlength="10" inputmode="numeric" autocomplete="tel" required>
       <p class="field-err" id="e-phone">Enter a valid 10-digit number.</p>
     </div>
   </div>
@@ -454,7 +454,7 @@ const APT = {
     </div>
 
     <div class="field">
-      <input type="text" id="f-flat"uired placeholder="Enter your flat number (e.g. A-801)">
+      <input type="text" id="f-flat" required placeholder="Enter your flat number (e.g. A-801)">
       <p class="field-err" id="e-flat">Please enter your flat number.</p>
     </div>
   </div>
@@ -598,7 +598,7 @@ const APT = {
 <!-- INSTALL BANNER -->
 <div class="inst-banner" id="install-banner">
   <div class="inst-ico">
-    <img src="../../assets/logo.png" alt="" onerror="this.parentElement.textContent='🥛'">
+    <img src="../../assets/logo.webp" alt="" onerror="this.parentElement.textContent='🥛'">
   </div>
   <div class="inst-text">
     <strong>Add to Home Screen</strong>
@@ -854,9 +854,26 @@ async function sendToSheet(d, payStatus, rzpPaymentId) {
 }
 
 // ── Razorpay checkout ─────────────────────────────────────────
+// checkout.js is loaded on demand so it never blocks first paint
+let rzpScriptPromise = null;
+function loadRazorpayScript() {
+  if (window.Razorpay) return Promise.resolve();
+  if (!rzpScriptPromise) {
+    rzpScriptPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      s.onload = resolve;
+      s.onerror = () => { rzpScriptPromise = null; reject(new Error('Razorpay script failed to load')); };
+      document.head.appendChild(s);
+    });
+  }
+  return rzpScriptPromise;
+}
+
 async function openRazorpay(d) {
   setBusy(true);
   try {
+    await loadRazorpayScript();
     const resp = await fetch(CONFIG.WEBHOOK_URL, {
       method:   'POST',
       redirect: 'follow',
