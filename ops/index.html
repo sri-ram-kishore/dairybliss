@@ -987,7 +987,7 @@ async function savePin() {
       activeUser  = data.user;
       activeToken = data.token;
       saveAuth(data.user, data.token);
-      showApp();
+      showApp({ dashboard: data.dashboard });
     } else {
       flashPinError(data.message || 'Setup failed — try again');
       setPinMode('setup-pin');
@@ -1009,7 +1009,7 @@ async function checkPin() {
       activeUser  = data.user;
       activeToken = data.token;
       saveAuth(data.user, data.token);
-      showApp();
+      showApp({ dashboard: data.dashboard });
     } else {
       flashPinError('Incorrect PIN. Try again.');
     }
@@ -1037,21 +1037,36 @@ function flashPinError(msg) {
   }, 1000);
 }
 
-function showApp() {
+function showApp(opts) {
   document.getElementById('screen-pin').style.display = 'none';
   const app = document.getElementById('screen-app');
   app.style.display = 'flex'; app.style.flexDirection = 'column';
   document.getElementById('hd-user').textContent = activeUser;
   try { expensesCache = JSON.parse(localStorage.getItem('db_expenses') || '[]'); } catch { expensesCache = []; }
+
+  // Fresh dashboard data piggybacked on the login response — render it
+  // directly and skip the redundant fetch (saves an Apps Script round-trip)
+  let gotFreshOrders = false;
+  const dash = opts && opts.dashboard;
+  if (dash && Array.isArray(dash.orders)) {
+    orders = dash.orders;
+    if (dash.vendorOrdered) vendorOrdered = dash.vendorOrdered;
+    localStorage.setItem('db_orders', JSON.stringify(orders));
+    renderToday(); renderOrders();
+    gotFreshOrders = true;
+  }
+
   // Render cached data immediately so the dashboard isn't blank while fetching
   try {
-    const cachedOrders = localStorage.getItem('db_orders');
-    if (cachedOrders) { orders = JSON.parse(cachedOrders); renderToday(); renderOrders(); }
+    if (!gotFreshOrders) {
+      const cachedOrders = localStorage.getItem('db_orders');
+      if (cachedOrders) { orders = JSON.parse(cachedOrders); renderToday(); renderOrders(); }
+    }
     const cachedSummary = localStorage.getItem('db_summary');
     if (cachedSummary) { summaryData = JSON.parse(cachedSummary); renderAccounts(); }
   } catch {}
   // Then fetch fresh data silently in the background
-  fetchOrders();
+  if (!gotFreshOrders) fetchOrders();
   fetchSummary();
   loadExpensesFromBackend();
   renderExpenseList();

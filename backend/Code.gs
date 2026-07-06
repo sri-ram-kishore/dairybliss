@@ -119,7 +119,13 @@ function handleVerifyPin(payload) {
   const expires = new Date().getTime() + (14 * 60 * 60 * 1000); // 14 hours
   p.setProperty('TOKEN_' + token, user + ':' + expires);
 
-  return jsonOk({ ok: true, user, token });
+  // Piggyback dashboard data so the app renders immediately after
+  // login instead of waiting on a second Apps Script round-trip.
+  // Never let a dashboard failure break login itself.
+  let dashboard = null;
+  try { dashboard = buildDashboardData(); } catch (_) {}
+
+  return jsonOk({ ok: true, user, token, dashboard });
 }
 
 function handleRequestOtp(payload) {
@@ -211,7 +217,10 @@ function handleSetupPin(payload) {
   const tokenExpiry = new Date().getTime() + (14 * 60 * 60 * 1000);
   p.setProperty('TOKEN_' + token, apt + ':' + tokenExpiry);
 
-  return jsonOk({ ok: true, user: apt, token });
+  let dashboard = null;
+  try { dashboard = buildDashboardData(); } catch (_) {}
+
+  return jsonOk({ ok: true, user: apt, token, dashboard });
 }
 
 function validateToken(token) {
@@ -415,6 +424,13 @@ function checkStockAlerts(prevGrams, newGrams, label, meta) {
 // ── DASHBOARD READ ───────────────────────────────────────────
 
 function getDashboardOrders() {
+  return jsonOk(buildDashboardData());
+}
+
+// Plain-object version so verify_pin/setup_pin can piggyback the
+// dashboard payload on the login response (saves the client a
+// second round-trip on first login).
+function buildDashboardData() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   const today = fmt(new Date(), 'yyyy-MM-dd');
   const deliveryDates = nextDeliveryDates(2).map(d => d.date);
@@ -466,7 +482,7 @@ function getDashboardOrders() {
     vendorOrdered[d.date] = p2.getProperty('VENDOR_ORDERED_' + d.date) === 'Y';
   });
 
-  return jsonOk({ orders, vendorOrdered });
+  return { orders, vendorOrdered };
 }
 
 function getDashboardSummary() {
