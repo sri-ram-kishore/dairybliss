@@ -9,7 +9,7 @@
 const props         = PropertiesService.getScriptProperties();
 const TELEGRAM_TOKEN   = props.getProperty('TG_TOKEN')   || '';
 const TELEGRAM_CHAT_ID = props.getProperty('TG_CHAT_ID') || '';
-const SHEET_ID         = '12GmEb14sM0YC40TkpeyK2eBF2VxKPniCskIMzAWD-P0';
+const SHEET_ID         = '1JqZ6YhCldPSaS9S-RPm4vpJM9CHlr67OLY5HEajZHvQ';
 
 const BLOCK_KG        = 3;     // stock bought in 3 kg blocks
 const ALERT_BEFORE_KG = 0.5;  // alert this many kg before each block boundary
