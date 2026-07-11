@@ -301,7 +301,11 @@ function handleOrder(data) {
 // the 21-element row shape is constructed, so both paths always agree.
 function insertOrderRow(data, opts) {
   const ss       = SpreadsheetApp.openById(SHEET_ID);
-  const aptKey   = parseApt(data.address).apt;           // 'SPC', 'BNR', 'ADG', or 'Other'
+  // Prefer an explicit apartment (e.g. a subscription's stored Apartment
+  // column) over parsing it out of the address text. This lets the address
+  // hold just the flat (e.g. "G301") without misrouting to "Other".
+  const optApt   = opts && opts.apt;
+  const aptKey   = (optApt && optApt !== 'Other') ? optApt : parseApt(data.address).apt;
   const tabName  = aptKey !== 'Other' ? aptKey : 'Other';
   const sheet    = getOrCreate(ss, tabName);
   ensureOrderHeaders(sheet);
@@ -569,7 +573,7 @@ function handleCreateSubscription(data) {
     paymentMethod: isPrepaid ? 'Online (Prepaid ×4)' : 'Cash on Delivery',
     paymentStatus: isPrepaid ? 'Paid Online' : '',
     rzpPaymentId:  data.rzpPaymentId || '',
-  }, { subscriptionId: subId });
+  }, { subscriptionId: subId, apt: aptKey });
 
   if (isPrepaid) {
     subSheet.getRange(subRow, SUB_COL.PREPAID_REMAINING).setValue(3);
@@ -725,7 +729,7 @@ function materializeSubscriptions() {
         paymentMethod: current.paymentMode === 'Prepay4' ? 'Online (Prepaid ×4)' : 'Cash on Delivery',
         paymentStatus: current.paymentMode === 'Prepay4' ? 'Paid Online' : '',
         rzpPaymentId: '',
-      }, { subscriptionId: current.id });
+      }, { subscriptionId: current.id, apt: current.apt });
 
       notifyNewOrder(result.orderId,
         { name: current.name, phone: current.phone, address: current.address, deliveryLabel: label },
