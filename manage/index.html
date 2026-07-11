@@ -227,7 +227,7 @@ async function api(action, extra) {
 }
 
 function render() {
-  document.getElementById('v-apt').textContent  = ({SPC:'Sobha Palm Court', BNR:'Brigade North Ridge', ADG:'Adarsh Greens'})[sub.apt] || sub.apt;
+  document.getElementById('v-apt').textContent  = ({SPC:'Sobha Palm Court', BNR:'Brigade North Ridge', ADG:'Adarsh Greens', BNL:'Bren Northern Lights'})[sub.apt] || sub.apt;
   document.getElementById('v-flat').textContent = (sub.address.split(',').pop() || '').trim();
   document.getElementById('v-freq').textContent = FREQ_LABELS[sub.frequency] || sub.frequency;
 

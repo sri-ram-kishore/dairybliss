@@ -1063,13 +1063,15 @@ function markOrderColumn(orderId, apt, col, value) {
 const APARTMENTS = [
   { key: 'SPC', label: 'Sobha Palm Court',   emoji: '🟢' },
   { key: 'BNR', label: 'Brigade North Ridge', emoji: '🔵' },
-  { key: 'ADG', label: 'Adarsh Greens',       emoji: '🟣' }
+  { key: 'ADG', label: 'Adarsh Greens',       emoji: '🟣' },
+  { key: 'BNL', label: 'Bren Northern Lights', emoji: '🟡' }
 ];
 
 const APT_PATTERNS = {
   SPC: ['sobha palm court'],
   BNR: ['brigade north ridge', 'brigade northridge', 'brigade north-ridge'],
-  ADG: ['adarsh greens', 'adarsh green']
+  ADG: ['adarsh greens', 'adarsh green'],
+  BNL: ['bren northern lights', 'bren northern light', 'bren northernlights']
 };
 
 /**
@@ -1085,7 +1087,7 @@ function parseApt(address) {
   }
 
   // Extract the unit — first short segment that doesn't contain the complex name or city
-  const skipWords = ['sobha', 'brigade', 'adarsh', 'bangalore', 'bengaluru', 'karnataka', 'india'];
+  const skipWords = ['sobha', 'brigade', 'adarsh', 'bren', 'bangalore', 'bengaluru', 'karnataka', 'india'];
   const unit = String(address || '')
     .split(',')
     .map(p => p.trim())
@@ -1138,7 +1140,7 @@ function sendCutoffSummary(aptFilter) {
     // ── Manual /summary SPC or /summary BNR — per-apartment detail ──
     const apts = APARTMENTS.filter(a => a.key === aptFilter);
     if (apts.length === 0) {
-      tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC, BNR, or ADG.`); return;
+      tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC, BNR, ADG, or BNL.`); return;
     }
     apts.forEach(({ key, emoji }) => {
       const sheet  = getOrCreate(ss, key);
@@ -1270,9 +1272,9 @@ function handleTelegramUpdate(update) {
       tg([
         `<b>DairyBliss Bot — Commands</b>`,
         `/status — All apartments running totals`,
-        `/status SPC, BNR, or ADG — one apartment`,
+        `/status SPC, BNR, ADG, or BNL — one apartment`,
         `/summary — Full order list (all apartments)`,
-        `/summary SPC, BNR, or ADG — one apartment`,
+        `/summary SPC, BNR, ADG, or BNL — one apartment`,
         `/pause — Stop accepting orders`,
         `/resume — Resume accepting orders`,
         `/debug — Confirm bot is alive`
@@ -1301,7 +1303,7 @@ function sendStatus(aptFilter) {
   const apts  = aptFilter ? APARTMENTS.filter(a => a.key === aptFilter) : APARTMENTS;
 
   if (aptFilter && apts.length === 0) {
-    tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC, BNR, or ADG.`); return;
+    tg(`Unknown apartment: <code>${esc(aptFilter)}</code>. Use SPC, BNR, ADG, or BNL.`); return;
   }
 
   const lines = [`📊 <b>Running Totals — ${fmt(now, 'EEE d MMM, h:mm a')}</b>`, ``];
@@ -1408,6 +1410,74 @@ function tg(text) {
 
 function getOrCreate(ss, name) {
   return ss.getSheetByName(name) || ss.insertSheet(name);
+}
+
+// ── ONE-OFF: migrate Nithin Kailas (Bren Northern Lights) ADG → BNL ──
+// A customer in Bren Northern Lights was forwarded the Adarsh Greens order
+// page, so his order + subscription got filed under ADG with the flat typed
+// into the address. This moves his order row(s) to the BNL sheet and relocates
+// his subscription to BNL, fixing the address to "Bren Northern Lights, G301".
+//
+// SAFE TO RUN ONCE. Call migrateNithinToBNL(true) first for a dry-run preview
+// (logs what it *would* do, changes nothing), then migrateNithinToBNL() to apply.
+// Idempotent: re-running after it's applied finds nothing left in ADG to move.
+function migrateNithinToBNL(dryRun) {
+  const PHONE10   = '8056081140';                       // canonical identifier
+  const NEW_ADDR  = 'Bren Northern Lights, G301';
+  const FROM_APT  = 'ADG';
+  const TO_APT    = 'BNL';
+  const norm = v => String(v || '').replace(/\D/g, '').slice(-10);
+  const log  = [];
+
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+
+  // 1) Move order rows: ADG sheet → BNL sheet, address rewritten.
+  const src = ss.getSheetByName(FROM_APT);
+  let moved = 0;
+  if (src && src.getLastRow() >= 2) {
+    const width = src.getLastColumn();
+    const rows  = src.getRange(2, 1, src.getLastRow() - 1, width).getValues();
+    const dst   = getOrCreate(ss, TO_APT);
+    ensureOrderHeaders(dst);
+    const toDelete = [];                                // sheet row indices (1-based)
+    rows.forEach((row, i) => {
+      if (norm(row[3]) !== PHONE10) return;             // col 4 = Phone
+      const newRow = row.slice();
+      newRow[4] = NEW_ADDR;                             // col 5 = Address
+      log.push(`ORDER ${row[1]}: ADG → BNL, address "${row[4]}" → "${NEW_ADDR}"`);
+      if (!dryRun) dst.appendRow(newRow);
+      toDelete.push(i + 2);
+      moved++;
+    });
+    // Delete moved rows from ADG bottom-up so indices stay valid.
+    if (!dryRun) toDelete.sort((a, b) => b - a).forEach(r => src.deleteRow(r));
+  }
+
+  // 2) Relocate subscription(s): apartment → BNL, address fixed. Keeps status
+  //    as-is (Active stays Active) so his twice-weekly deliveries continue,
+  //    just materialised into the BNL sheet from now on.
+  const subs = ss.getSheetByName('Subscriptions');
+  let relocated = 0;
+  if (subs && subs.getLastRow() >= 2) {
+    const data = subs.getRange(2, 1, subs.getLastRow() - 1, subs.getLastColumn()).getValues();
+    data.forEach((row, i) => {
+      if (norm(row[SUB_COL.PHONE - 1]) !== PHONE10) return;
+      const rowIndex = i + 2;
+      log.push(`SUB ${row[SUB_COL.ID - 1]}: apt "${row[SUB_COL.APT - 1]}" → ${TO_APT}, ` +
+               `address "${row[SUB_COL.ADDRESS - 1]}" → "${NEW_ADDR}"`);
+      if (!dryRun) {
+        subs.getRange(rowIndex, SUB_COL.APT).setValue(TO_APT);
+        subs.getRange(rowIndex, SUB_COL.ADDRESS).setValue(NEW_ADDR);
+      }
+      relocated++;
+    });
+  }
+
+  const summary = `${dryRun ? '[DRY RUN] ' : ''}Nithin → BNL: ` +
+                  `${moved} order row(s) moved, ${relocated} subscription(s) relocated.`;
+  Logger.log(summary);
+  log.forEach(l => Logger.log('  ' + l));
+  return summary;
 }
 
 function fmt(date, pattern) {

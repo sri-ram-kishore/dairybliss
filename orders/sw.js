@@ -6,7 +6,7 @@
 //  retried via Background Sync.
 // ============================================================
 
-const CACHE_NAME = 'dairy-bliss-v8';
+const CACHE_NAME = 'dairy-bliss-v9';
 
 // Assets to precache on install (all order apps + shared shell)
 const PRECACHE_ASSETS = [
@@ -18,6 +18,8 @@ const PRECACHE_ASSETS = [
   './bnr/manifest.json',
   './adg/',
   './adg/manifest.json',
+  './bnl/',
+  './bnl/manifest.json',
   './icons/icon-any-192.png',
   './icons/favicon.png',
   '../assets/logo.webp',
@@ -53,6 +55,7 @@ function offlineFallbackFor(url) {
   if (url.pathname.includes('/orders/spc')) return caches.match('./spc/');
   if (url.pathname.includes('/orders/bnr')) return caches.match('./bnr/');
   if (url.pathname.includes('/orders/adg')) return caches.match('./adg/');
+  if (url.pathname.includes('/orders/bnl')) return caches.match('./bnl/');
   return caches.match('./');
 }
 

@@ -804,6 +804,7 @@ const APTS = [
   { key: 'SPC', name: 'Sobha Palm Court',   owner: 'SPC' },
   { key: 'BNR', name: 'Brigade North Ridge', owner: 'BNR' },
   { key: 'ADG', name: 'Adarsh Greens',       owner: 'BNR' },
+  { key: 'BNL', name: 'Bren Northern Lights', owner: 'SPC' },
 ];
 const APT_NAMES = Object.fromEntries(APTS.map(a => [a.key, a.name]));
 function myApts(user)    { return APTS.filter(a => a.owner === user).map(a => a.key); }
@@ -1345,7 +1346,7 @@ function computeBuy(list) {
 }
 function flatFromAddress(address) {
   const parts = String(address || '').split(',');
-  const skip  = ['sobha','brigade','adarsh','bangalore','bengaluru','karnataka','india'];
+  const skip  = ['sobha','brigade','adarsh','bren','bangalore','bengaluru','karnataka','india'];
   return parts.map(p => p.trim()).find(p =>
     p.length < 25 && !skip.some(w => p.toLowerCase().includes(w))
   ) || address;

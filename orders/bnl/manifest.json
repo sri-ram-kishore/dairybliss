@@ -1,0 +1,39 @@
+{
+  "name": "Dairy Bliss · BNL",
+  "short_name": "DairyBliss",
+  "description": "Order fresh paneer — Bren Northern Lights. Delivered every Wednesday and Saturday.",
+  "start_url": "/orders/bnl/",
+  "scope": "/orders/bnl/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#faf8f4",
+  "background_color": "#faf8f4",
+  "lang": "en",
+  "categories": ["food", "shopping"],
+  "icons": [
+    {
+      "src": "../icons/icon-any-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/icon-any-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "../icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
