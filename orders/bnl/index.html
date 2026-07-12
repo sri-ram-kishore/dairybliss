@@ -212,8 +212,6 @@
       background: var(--green-light); border-radius: 20px; padding: 1.5px 7px;
       vertical-align: 2px; margin-left: 2px; white-space: nowrap;
     }
-    /* paneer + extras render as one continuous list */
-    #qty-cards .qty-row:last-child { border-bottom: 1px solid var(--border); }
 
     /* inline delivery-day chips on the paneer row */
     .qty-row--paneer { flex-wrap: wrap; }
@@ -516,18 +514,19 @@ const APT = {
     </div>
   </div>
 
-  <!-- ── STEP 3: WHAT WOULD YOU LIKE? (all products, one cart) ── -->
+  <!-- ── STEP 3: FRESH PANEER (Wed & Sat) ── -->
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">3</span>
-      <span class="step-title">What would you like?</span>
+      <span class="step-title">Fresh Paneer</span>
     </div>
+    <p class="sub-note">Delivered every Wednesday &amp; Saturday</p>
 
     <div class="qty-rows" id="qty-cards">
       <div class="qty-row qty-row--paneer">
         <div class="qty-info">
           <span class="qty-label">Paneer</span>
-          <span class="qty-price">₹145/250g · ₹550/kg</span>
+          <span class="qty-price">₹145/250g</span>
         </div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -551,10 +550,19 @@ const APT = {
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ── STEP 4: SATURDAY SPECIALS (delivered Saturdays only) ── -->
+  <div class="fc">
+    <div class="step-hd">
+      <span class="step-n">4</span>
+      <span class="step-title">Saturday Specials</span>
+    </div>
+    <p class="sub-note">Delivered on Saturdays · next delivery <b id="sat-next">—</b></p>
 
     <div class="qty-rows" id="extra-cards">
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price">₹150 · 500g <span class="qty-tag extra-day">Sat</span></span></div>
+        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price">₹150 · 500g</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('chaap',-1)">−</button>
@@ -565,7 +573,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price">₹475 · 500ml <span class="qty-tag extra-day">Sat</span></span></div>
+        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price">₹475 · 500ml</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('ghee',-1)">−</button>
@@ -576,7 +584,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">White Butter</span><span class="qty-price">₹180 · 250g <span class="qty-tag extra-day">Sat</span></span></div>
+        <div class="qty-info"><span class="qty-label">White Butter</span><span class="qty-price">₹180 · 250g</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('butter',-1)">−</button>
@@ -587,7 +595,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price">₹175 · 250g <span class="qty-tag extra-day">Sat</span></span></div>
+        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price">₹175 · 250g</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('khoya',-1)">−</button>
@@ -604,7 +612,6 @@ const APT = {
       <span class="amt-lbl">Total amount</span>
       <span class="amt-val" id="amount-val">₹0</span>
     </div>
-    <p class="day-note" id="day-note"></p>
   </div>
 
 
@@ -615,7 +622,7 @@ const APT = {
   <!-- ── STEP 6: PAYMENT ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">4</span>
+      <span class="step-n">5</span>
       <span class="step-title">How would you like to pay?</span>
     </div>
 
@@ -739,9 +746,9 @@ function populateDates() {
   document.getElementById('r-sat').dataset.fullDate   = fmtDate(sd);
   document.getElementById('r-sat').dataset.isoDate    = toISO(sd);
   document.getElementById('r-sat').dataset.shortLabel = fmtLabel(sd);
-  // Extras rows show their actual arrival date (always the next Saturday).
-  document.querySelectorAll('.extra-day').forEach(el =>
-    el.textContent = 'Sat, ' + fmtDayOnly(sd));
+  // The Saturday Specials header shows the next Saturday run.
+  const satNext = document.getElementById('sat-next');
+  if (satNext) satNext.textContent = fmtLabel(sd);
 }
 
 // Soonest date first inside the paneer row's chip pair.
@@ -901,37 +908,12 @@ function extrasTotal() {
   return Object.values(EXTRA_STATE).reduce((s, v) => s + v, 0);
 }
 
-// Cart-driven UI. Each product carries its own delivery date: paneer's
-// day chips (Wed/Sat) appear on its row while it's in the cart; extras
-// rows always show the next Saturday. The note under the total sums up
-// what arrives when, so a split order is never a surprise.
+// Paneer's day chips (Wed/Sat) appear on its row while paneer is in the
+// cart. The two product blocks carry their own delivery info, and a split
+// order is called out on the confirmation screen.
 function syncProductUI() {
-  const hasExtras = extrasTotal() > 0;
-  const hasPaneer = qtyTotal() > 0;
-
-  document.getElementById('paneer-days').classList.toggle('v', hasPaneer);
-
-  const note   = document.getElementById('day-note');
-  const rWed   = document.getElementById('r-wed');
-  const rSat   = document.getElementById('r-sat');
-  const satLbl = rSat.dataset.shortLabel || 'Saturday';
-  if (hasPaneer && hasExtras && rWed.checked) {
-    const wedLbl = rWed.dataset.shortLabel || 'Wednesday';
-    note.textContent = `Two deliveries: paneer arrives ${wedLbl} · extras arrive ${satLbl}.`;
-    note.classList.add('v');
-  } else if (hasPaneer && hasExtras) {
-    note.textContent = `Everything arrives together on ${satLbl}.`;
-    note.classList.add('v');
-  } else if (hasExtras) {
-    note.textContent = `Your order arrives ${satLbl}.`;
-    note.classList.add('v');
-  } else {
-    note.classList.remove('v');
-  }
+  document.getElementById('paneer-days').classList.toggle('v', qtyTotal() > 0);
 }
-// The note depends on the chosen day too, not just the cart.
-document.querySelectorAll('input[name="delivery_day"]').forEach(r =>
-  r.addEventListener('change', syncProductUI));
 // Show/hide a row's line total (₹ subtotal) as its quantity changes.
 function updateLine(key, amt) {
   const el = document.getElementById('qline-' + key);
@@ -1254,7 +1236,7 @@ function showConfirmation(d, payStatus, subResult) {
   document.getElementById('confirm-msg').textContent = isSub
     ? `Your paneer subscription starts ${d.fullDate}. We've notified Deepa.`
     : split
-      ? `Your order is confirmed — arriving in two deliveries. We've notified Deepa.`
+      ? `Order confirmed — two deliveries: paneer arrives ${d.shortLabel}, your Saturday Specials arrive ${d.satLabel}. We've notified Deepa.`
       : `Your order is confirmed for ${d.paneerLabel ? d.fullDate : d.satLabel}. We've notified Deepa.`;
 
   const pmDisplay = payStatus || d.payLabel;
