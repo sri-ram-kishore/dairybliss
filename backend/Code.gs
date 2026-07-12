@@ -1156,8 +1156,8 @@ function markOrderColumn(orderId, apt, col, value) {
 const APARTMENTS = [
   { key: 'SPC', label: 'Sobha Palm Court',   emoji: '🟠' },
   { key: 'BNR', label: 'Brigade North Ridge', emoji: '🔵' },
-  { key: 'ADG', label: 'Adarsh Greens',       emoji: '🟣' },
-  { key: 'BNL', label: 'Bren Northern Lights', emoji: '🌸' }
+  { key: 'ADG', label: 'Adarsh Greens',       emoji: '🟤' },
+  { key: 'BNL', label: 'Bren Northern Lights', emoji: '🟣' }
 ];
 
 // Which PIN identity (login) owns each apartment's orders. Must match the
