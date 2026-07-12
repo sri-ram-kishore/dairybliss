@@ -167,8 +167,9 @@
       background: var(--white); border: 1px solid var(--border);
       border-radius: 12px; box-shadow: var(--shadow);
       padding: 16px 18px; margin-bottom: 12px;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
     }
-    .count-seg       { flex: 1; }
+    .count-seg       { flex: 1 0 auto; min-width: 58px; }
     .count-seg--mid  { text-align: center; }
     .count-seg--end  { text-align: right; }
     .count-divider {
@@ -764,15 +765,6 @@
       </svg>
       <span class="tab-label">Orders</span>
     </button>
-    <button class="tab-item" id="tb-accounts" onclick="setTab('accounts')">
-      <!-- Summary: bar chart -->
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3"  y="12" width="4" height="9" rx="1" opacity="0.9"/>
-        <rect x="10" y="6"  width="4" height="15" rx="1" opacity="0.9"/>
-        <rect x="17" y="9"  width="4" height="12" rx="1" opacity="0.9"/>
-      </svg>
-      <span class="tab-label">Summary</span>
-    </button>
     <button class="tab-item" id="tb-subs" onclick="setTab('subs')">
       <!-- Subs: repeat/cycle arrows -->
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -781,6 +773,15 @@
         <path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
       </svg>
       <span class="tab-label">Subs</span>
+    </button>
+    <button class="tab-item" id="tb-accounts" onclick="setTab('accounts')">
+      <!-- Summary: bar chart -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3"  y="12" width="4" height="9" rx="1" opacity="0.9"/>
+        <rect x="10" y="6"  width="4" height="15" rx="1" opacity="0.9"/>
+        <rect x="17" y="9"  width="4" height="12" rx="1" opacity="0.9"/>
+      </svg>
+      <span class="tab-label">Summary</span>
     </button>
   </nav>
 </div>
@@ -1393,8 +1394,13 @@ function renderToday() {
   });
 
   const today = todayISO();
+  // Only my own apartments are collectable here — you can't mark someone
+  // else's building as paid. (Other apartments stay visible, view-only, in
+  // the Orders tab.)
+  const mineKeys = myApts(activeUser);
   const pendingCOD = orders.filter(o =>
     o.deliveryDate < today &&
+    mineKeys.includes(o.apt) &&
     !isUpiPaid(o) &&
     !o.paymentCollected
   ).sort((a, b) => a.deliveryDate < b.deliveryDate ? 1 : -1);
@@ -1415,7 +1421,9 @@ function renderToday() {
   // Order summary bar (each segment scrolls to its section)
   const totalOrders = byApt.reduce((s, a) => s + a.list.length, 0);
   const pendingTotal = pendingCOD.reduce((s, o) => s + o.totalRs, 0);
-  const aptSegs = byApt.map((a, i) => `
+  // Only show apartments that actually have orders today — keeps the top bar
+  // uncluttered as more apartments are added.
+  const aptSegs = byApt.filter(a => a.list.length > 0).map((a, i) => `
       <div class="count-seg${i > 0 ? ' count-seg--mid' : ''} tap" onclick="scrollToSection('sec-${a.key.toLowerCase()}')">
         <div class="count-val">${a.breakdown.kg.toFixed(2)} kg</div>
         <div class="count-sub">${a.list.length} order${a.list.length !== 1 ? 's' : ''}</div>

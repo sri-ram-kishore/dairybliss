@@ -580,6 +580,7 @@ function handleCreateSubscription(data) {
   }
   subSheet.getRange(subRow, SUB_COL.LAST_MATERIALIZED).setValue(anchorDate);
 
+  data.paymentStatus = isPrepaid ? 'Paid Online' : '';
   notifyNewOrder(orderResult.orderId, data, orderResult.aptKey, q250, q500, q750, q1kg,
     orderResult.totalGrams, orderResult.totalRs, orderResult.prevGrams, orderResult.newGrams,
     subId);
@@ -732,7 +733,8 @@ function materializeSubscriptions() {
       }, { subscriptionId: current.id, apt: current.apt });
 
       notifyNewOrder(result.orderId,
-        { name: current.name, phone: current.phone, address: current.address, deliveryLabel: label },
+        { name: current.name, phone: current.phone, address: current.address, deliveryLabel: label,
+          paymentStatus: current.paymentMode === 'Prepay4' ? 'Paid Online' : '' },
         result.aptKey, result.q250, result.q500, result.q750, result.q1kg,
         result.totalGrams, result.totalRs, result.prevGrams, result.newGrams, current.id);
 
@@ -767,6 +769,11 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
     ? `🔁 Subscription Delivery — ${esc(orderId)}`
     : `New Order — ${esc(orderId)}`;
 
+  const isPaidOnline = String(data.paymentStatus || '').toLowerCase().includes('paid');
+  const payLine = isPaidOnline
+    ? `✅ Paid online — ₹${totalRs}`
+    : `💰 COD — ₹${totalRs} to collect`;
+
   const msg = [
     `<b>${meta.emoji} ${title}</b>`,
     ``,
@@ -775,6 +782,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
     ``,
     items.map(esc).join('\n'),
     `<b>Total: ${(totalGrams/1000).toFixed(2)} kg  ·  ₹${totalRs}</b>`,
+    payLine,
     ``,
     `${esc(meta.key)} running total: <b>${newKg} kg</b>`
   ].join('\n');
@@ -916,11 +924,26 @@ function getDashboardSummary() {
   });
 }
 
+// Only the login that owns an apartment may change its orders' delivered/paid
+// state. Rekha can't mark Deepa's buildings and vice-versa.
+function authorizeAptAction(payload) {
+  const user = validateToken(payload.token);
+  if (!user) return { ok: false, resp: jsonOk({ ok: false, error: 'unauthorized' }) };
+  if (APT_OWNER[payload.apt] !== user) {
+    return { ok: false, resp: jsonOk({ ok: false, error: 'forbidden' }) };
+  }
+  return { ok: true };
+}
+
 function handleMarkDelivered(payload) {
+  const auth = authorizeAptAction(payload);
+  if (!auth.ok) return auth.resp;
   return markOrderColumn(payload.orderId, payload.apt, 19, payload.value ? 'Y' : '');
 }
 
 function handleMarkPaid(payload) {
+  const auth = authorizeAptAction(payload);
+  if (!auth.ok) return auth.resp;
   return markOrderColumn(payload.orderId, payload.apt, 20, payload.value ? 'Y' : '');
 }
 
@@ -1070,6 +1093,11 @@ const APARTMENTS = [
   { key: 'ADG', label: 'Adarsh Greens',       emoji: '🟣' },
   { key: 'BNL', label: 'Bren Northern Lights', emoji: '🟡' }
 ];
+
+// Which PIN identity (login) owns each apartment's orders. Must match the
+// APTS `owner` map in ops/index.html. Rekha (SPC) handles SPC + BNL;
+// Deepa (BNR) handles BNR + ADG.
+const APT_OWNER = { SPC: 'SPC', BNL: 'SPC', BNR: 'BNR', ADG: 'BNR' };
 
 const APT_PATTERNS = {
   SPC: ['sobha palm court'],
