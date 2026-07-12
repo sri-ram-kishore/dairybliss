@@ -217,7 +217,7 @@
     .qty-row--paneer { flex-wrap: wrap; }
     .qty-days {
       flex-basis: 100%; display: none; align-items: center; gap: 8px;
-      margin-top: 10px;
+      flex-wrap: wrap; margin-top: 10px;
     }
     .qty-days.v { display: flex; }
     .qty-days-lbl {
@@ -229,13 +229,17 @@
       border: 1.5px solid var(--border); border-radius: 20px;
       padding: 6px 13px; font-size: 12.5px; font-weight: 600;
       color: var(--text); cursor: pointer; background: var(--cream-card);
-      -webkit-tap-highlight-color: transparent;
+      -webkit-tap-highlight-color: transparent; white-space: nowrap;
       transition: border-color 0.15s, background 0.15s;
     }
     .day-chip input { position: absolute; opacity: 0; pointer-events: none; }
     .day-chip.chosen {
       border-color: var(--green); background: var(--green-light);
       color: var(--green); font-weight: 700;
+    }
+    .days-hint {
+      flex-basis: 100%; font-size: 12px; color: var(--text-soft);
+      margin-top: 4px;
     }
 
     /* delivery-day reactions to cart contents */
@@ -523,33 +527,66 @@ const APT = {
     <p class="sub-note">Delivered every Wednesday &amp; Saturday</p>
 
     <div class="qty-rows" id="qty-cards">
-      <div class="qty-row qty-row--paneer">
-        <div class="qty-info">
-          <span class="qty-label">Paneer</span>
-          <span class="qty-price">₹145/250g</span>
-        </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price">₹145</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
-            <button type="button" class="qty-btn" onclick="stepPaneer(-1)">−</button>
-            <span class="qty-count qty-count--wide" id="qcount-paneer">0</span>
-            <button type="button" class="qty-btn" onclick="stepPaneer(1)">+</button>
+            <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
+            <span class="qty-count" id="qcount-250g">0</span>
+            <button type="button" class="qty-btn" onclick="stepQty('250g',1)">+</button>
           </div>
-          <span class="qty-line zero" id="qline-paneer">—</span>
+          <span class="qty-line zero" id="qline-250g">—</span>
         </div>
-        <!-- Paneer picks its own delivery day (next Wed / next Sat) -->
-        <div class="qty-days" id="paneer-days">
-          <span class="qty-days-lbl">Delivery</span>
-          <label class="day-chip" id="dch-wed">
-            <input type="radio" name="delivery_day" value="Wednesday" id="r-wed">
-            Wed, <span id="ds-wed">—</span>
-          </label>
-          <label class="day-chip" id="dch-sat">
-            <input type="radio" name="delivery_day" value="Saturday" id="r-sat">
-            Sat, <span id="ds-sat">—</span>
-          </label>
+      </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">500g</span><span class="qty-price">₹280</span></div>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepQty('500g',-1)">−</button>
+            <span class="qty-count" id="qcount-500g">0</span>
+            <button type="button" class="qty-btn" onclick="stepQty('500g',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-500g">—</span>
+        </div>
+      </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">750g</span><span class="qty-price">₹420</span></div>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepQty('750g',-1)">−</button>
+            <span class="qty-count" id="qcount-750g">0</span>
+            <button type="button" class="qty-btn" onclick="stepQty('750g',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-750g">—</span>
+        </div>
+      </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">1 kg</span><span class="qty-price">₹550</span></div>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepQty('1kg',-1)">−</button>
+            <span class="qty-count" id="qcount-1kg">0</span>
+            <button type="button" class="qty-btn" onclick="stepQty('1kg',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-1kg">—</span>
         </div>
       </div>
     </div>
+
+    <!-- Deliver on one day or both — checkboxes, not either/or -->
+    <div class="qty-days" id="paneer-days">
+      <span class="qty-days-lbl">Deliver on</span>
+      <label class="day-chip" id="dch-wed">
+        <input type="checkbox" id="r-wed">
+        Wed, <span id="ds-wed">—</span>
+      </label>
+      <label class="day-chip" id="dch-sat">
+        <input type="checkbox" id="r-sat">
+        Sat, <span id="ds-sat">—</span>
+      </label>
+      <span class="days-hint" id="days-hint">Tick one day — or both</span>
+    </div>
+    <p class="field-err" id="e-days" style="margin-top:6px;">Please pick a delivery day for your paneer.</p>
   </div>
 
   <!-- ── STEP 4: SATURDAY SPECIALS (delivered Saturdays only) ── -->
@@ -814,7 +851,6 @@ function wireCards(name) {
     });
   });
 }
-wireCards('delivery_day');
 wireCards('payment');
 wireCards('frequency');
 // Initial state: default the paneer day to the soonest delivery, then let
@@ -864,32 +900,16 @@ function frequencyLabel(freq) {
 }
 
 // ── quantity steppers ─────────────────────────────────────────
-// Paneer is one line: the stepper counts 250g units and the price always
-// uses the cheapest pack combination (1kg ₹550 beats 4×250g ₹580, etc.).
-// The combo is decomposed back to q250/q500/q750/q1kg for the backend.
-let PANEER_UNITS = 0;                 // 1 unit = 250g
-const PANEER_MAX_UNITS = 16;          // 4 kg cap per order
+// Paneer sizes are separate rows — each size has its own price, and the
+// steppers show plain counts. Delivery can be Wednesday, Saturday, or
+// both (the same basket goes out each ticked day).
+const QTY_STATE   = { '250g': 0, '500g': 0, '750g': 0, '1kg': 0 };
 const EXTRA_STATE = { chaap: 0, ghee: 0, butter: 0, khoya: 0 };
 
-function paneerDecompose(units) {
-  const q1kg = Math.floor(units / 4), r = units % 4;
-  return { q250: r === 1 ? 1 : 0, q500: r === 2 ? 1 : 0, q750: r === 3 ? 1 : 0, q1kg };
-}
-function paneerCost(units) {
-  const q = paneerDecompose(units), P = CONFIG.PRICES;
-  return q.q250 * P['250g'].amount + q.q500 * P['500g'].amount +
-         q.q750 * P['750g'].amount + q.q1kg * P['1kg'].amount;
-}
-function weightLabel(units) {
-  const g = units * 250;
-  return g < 1000 ? g + 'g' : (g / 1000) + ' kg';
-}
-
-function stepPaneer(delta) {
-  PANEER_UNITS = Math.min(PANEER_MAX_UNITS, Math.max(0, PANEER_UNITS + delta));
-  document.getElementById('qcount-paneer').textContent =
-    PANEER_UNITS > 0 ? weightLabel(PANEER_UNITS) : '0';
-  updateLine('paneer', paneerCost(PANEER_UNITS));
+function stepQty(key, delta) {
+  QTY_STATE[key] = Math.max(0, (QTY_STATE[key] || 0) + delta);
+  document.getElementById('qcount-' + key).textContent = QTY_STATE[key];
+  updateLine(key, QTY_STATE[key] * (CONFIG.PRICES[key]?.amount || 0));
   updateTotalPill();
   updatePayCardForFrequency();
   syncProductUI();
@@ -908,12 +928,30 @@ function extrasTotal() {
   return Object.values(EXTRA_STATE).reduce((s, v) => s + v, 0);
 }
 
-// Paneer's day chips (Wed/Sat) appear on its row while paneer is in the
-// cart. The two product blocks carry their own delivery info, and a split
-// order is called out on the confirmation screen.
+// The day checkboxes appear once paneer is in the basket. Ticking both
+// days doubles the paneer (same basket delivered twice) and the hint
+// spells out the maths so the total is never a surprise.
 function syncProductUI() {
-  document.getElementById('paneer-days').classList.toggle('v', qtyTotal() > 0);
+  const hasPaneer = qtyTotal() > 0;
+  document.getElementById('paneer-days').classList.toggle('v', hasPaneer);
+  const hint = document.getElementById('days-hint');
+  if (hasPaneer && selectedDays().length === 2) {
+    const amt = qtyAmount();
+    hint.textContent = `₹${amt.toLocaleString('en-IN')} × 2 deliveries = ₹${(amt * 2).toLocaleString('en-IN')}`;
+  } else {
+    hint.textContent = 'Tick one day — or both';
+  }
 }
+// Day checkbox behaviour: highlight the chip, clear errors, refresh totals.
+['r-wed', 'r-sat'].forEach(id => {
+  const r = document.getElementById(id);
+  r.addEventListener('change', () => {
+    r.closest('label').classList.toggle('chosen', r.checked);
+    setCardsErr('paneer-days', 'e-days', false);
+    updateTotalPill();
+    syncProductUI();
+  });
+});
 // Show/hide a row's line total (₹ subtotal) as its quantity changes.
 function updateLine(key, amt) {
   const el = document.getElementById('qline-' + key);
@@ -922,16 +960,24 @@ function updateLine(key, amt) {
   else         { el.textContent = '—'; el.classList.add('zero'); }
 }
 function qtyTotal() {
-  return PANEER_UNITS;
+  return Object.values(QTY_STATE).reduce((s, v) => s + v, 0);
 }
 function qtyAmount() {
-  return paneerCost(PANEER_UNITS);
+  return Object.entries(QTY_STATE).reduce((s, [k, v]) => s + (CONFIG.PRICES[k]?.amount || 0) * v, 0);
 }
 function extrasAmount() {
   return Object.entries(EXTRA_STATE).reduce((s, [k, v]) => s + (CONFIG.EXTRAS[k]?.amount || 0) * v, 0);
 }
+// Days ticked for the paneer basket (0, 1 or 2), with their date info.
+function selectedDays() {
+  return ['r-wed', 'r-sat']
+    .map(id => document.getElementById(id))
+    .filter(r => r && r.checked)
+    .map(r => ({ iso: r.dataset.isoDate || '', label: r.dataset.shortLabel || '', full: r.dataset.fullDate || '' }));
+}
 function grandTotal() {
-  return qtyAmount() + extrasAmount();
+  const days = qtyTotal() > 0 ? Math.max(1, selectedDays().length) : 0;
+  return qtyAmount() * days + extrasAmount();
 }
 function updateTotalPill() {
   const total = grandTotal();
@@ -976,6 +1022,9 @@ function validateAll() {
   const hasQty = qtyTotal() + extrasTotal() > 0;
   setCardsErr('qty-cards','e-qty', !hasQty); if (!hasQty) ok = false;
 
+  const needsDay = qtyTotal() > 0 && selectedDays().length === 0;
+  setCardsErr('paneer-days','e-days', needsDay); if (needsDay) ok = false;
+
   const pay = document.querySelector('input[name="payment"]:checked');
   setCardsErr('pay-cards','e-pay', !pay); if (!pay) ok = false;
 
@@ -984,37 +1033,41 @@ function validateAll() {
 
 // ── collect form data ─────────────────────────────────────────
 function collectData() {
-  const pay    = document.querySelector('input[name="payment"]:checked').value;
-  const dayRad = document.querySelector('input[name="delivery_day"]:checked');
-  const freq   = 'once'; // subscriptions paused — every order is one-time
-  // Paneer and extras tracked separately: the chosen day applies to paneer,
-  // extras always ride the Saturday run (split into two orders if needed).
-  const qp        = paneerDecompose(PANEER_UNITS);
-  const paneerAmt = qtyAmount();
+  const pay  = document.querySelector('input[name="payment"]:checked').value;
+  const freq = 'once'; // subscriptions paused — every order is one-time
+  // Paneer goes out on every ticked day (same basket each time); Saturday
+  // Specials always ride the Saturday run.
+  const days      = selectedDays();
+  const paneerAmt = qtyAmount();                         // per delivery
+  const dayCount  = qtyTotal() > 0 ? Math.max(1, days.length) : 0;
   const extrasAmt = extrasAmount();
-  const amount    = paneerAmt + extrasAmt;
+  const amount    = paneerAmt * dayCount + extrasAmt;
+  const paneerLabel = Object.entries(QTY_STATE)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${k} × ${v}`)
+    .join(', ');
   const extrasLabel = Object.entries(EXTRA_STATE)
     .filter(([, v]) => v > 0)
     .map(([k, v]) => `${CONFIG.EXTRAS[k].label} × ${v}`)
     .join(', ');
-  const paneerLabel = PANEER_UNITS > 0 ? `Paneer ${weightLabel(PANEER_UNITS)}` : '';
-  const qtyLabel = [paneerLabel, extrasLabel].filter(Boolean).join(', ');
-  const rSat = document.getElementById('r-sat');
+  const qtyLabel = [paneerLabel && `Paneer ${paneerLabel}`, extrasLabel].filter(Boolean).join(', ');
+  const rSat  = document.getElementById('r-sat');
+  const first = days[0] || null;
 
   return {
     name:       document.getElementById('f-name').value.trim(),
     phone:      document.getElementById('f-phone').value.trim(),
     apartment:  APT.name,
     flat:       document.getElementById('f-flat').value.trim(),
-    day:        dayRad.value,
-    weekday:    dayRad.value === 'Wednesday' ? 'Wed' : 'Sat',
-    fullDate:   dayRad.dataset.fullDate   || dayRad.value,
-    isoDate:    dayRad.dataset.isoDate    || '',
-    shortLabel: dayRad.dataset.shortLabel || dayRad.value,
-    q250: qp.q250,
-    q500: qp.q500,
-    q750: qp.q750,
-    q1kg: qp.q1kg,
+    paneerDays: days,
+    weekday:    first && first.label.startsWith('Wed') ? 'Wed' : 'Sat',
+    fullDate:   first ? first.full  : (rSat.dataset.fullDate   || 'Saturday'),
+    isoDate:    first ? first.iso   : (rSat.dataset.isoDate    || ''),
+    shortLabel: first ? first.label : (rSat.dataset.shortLabel || 'Saturday'),
+    q250: QTY_STATE['250g'],
+    q500: QTY_STATE['500g'],
+    q750: QTY_STATE['750g'],
+    q1kg: QTY_STATE['1kg'],
     qChaap:  EXTRA_STATE.chaap,
     qGhee:   EXTRA_STATE.ghee,
     qButter: EXTRA_STATE.butter,
@@ -1031,26 +1084,42 @@ function collectData() {
 
 // ── backend POST ──────────────────────────────────────────────
 // Returns true if order was accepted, false if paused/rejected
-// One order per delivery day. Paneer goes out on the chosen day; extras
-// always ride the Saturday run. Same day → one combined order; paneer on
-// Wednesday + extras → two orders (Wed paneer, Sat extras).
+// One order per delivery day. The paneer basket goes out on every ticked
+// day; Saturday Specials always ride the Saturday run and merge into a
+// Saturday paneer order when there is one.
 function buildDeliveryGroups(d) {
   const hasPaneer = d.q250 + d.q500 + d.q750 + d.q1kg > 0;
   const hasExtras = d.qChaap + d.qGhee + d.qButter + d.qKhoya > 0;
-  const paneerQ = { q250: d.q250, q500: d.q500, q750: d.q750, q1kg: d.q1kg,
-                    qChaap: 0, qGhee: 0, qButter: 0, qKhoya: 0 };
-  const extrasQ = { q250: 0, q500: 0, q750: 0, q1kg: 0,
-                    qChaap: d.qChaap, qGhee: d.qGhee, qButter: d.qButter, qKhoya: d.qKhoya };
-  const allQ    = { q250: d.q250, q500: d.q500, q750: d.q750, q1kg: d.q1kg,
-                    qChaap: d.qChaap, qGhee: d.qGhee, qButter: d.qButter, qKhoya: d.qKhoya };
+  const paneerQ = { q250: d.q250, q500: d.q500, q750: d.q750, q1kg: d.q1kg };
+  const extrasQ = { qChaap: d.qChaap, qGhee: d.qGhee, qButter: d.qButter, qKhoya: d.qKhoya };
+  const zeroP   = { q250: 0, q500: 0, q750: 0, q1kg: 0 };
+  const zeroX   = { qChaap: 0, qGhee: 0, qButter: 0, qKhoya: 0 };
 
-  if (!hasExtras) return [{ isoDate: d.isoDate, label: d.shortLabel, ...paneerQ }];
-  if (!hasPaneer) return [{ isoDate: d.satIso, label: d.satLabel, ...extrasQ }];
-  if (d.isoDate === d.satIso) return [{ isoDate: d.isoDate, label: d.shortLabel, ...allQ }];
-  return [
-    { isoDate: d.isoDate, label: d.shortLabel, ...paneerQ },
-    { isoDate: d.satIso,  label: d.satLabel,   ...extrasQ },
-  ];
+  const groups = [];
+  if (hasPaneer) {
+    d.paneerDays.forEach(day =>
+      groups.push({ isoDate: day.iso, label: day.label, ...paneerQ, ...zeroX }));
+  }
+  if (hasExtras) {
+    const sat = groups.find(g => g.isoDate === d.satIso);
+    if (sat) Object.assign(sat, extrasQ);
+    else groups.push({ isoDate: d.satIso, label: d.satLabel, ...zeroP, ...extrasQ });
+  }
+  return groups;
+}
+
+// Human list of a delivery group's contents ("Paneer 500g × 1, Khoya × 2").
+function groupItemsLabel(g) {
+  const parts = [];
+  if (g.q250) parts.push(`Paneer 250g × ${g.q250}`);
+  if (g.q500) parts.push(`Paneer 500g × ${g.q500}`);
+  if (g.q750) parts.push(`Paneer 750g × ${g.q750}`);
+  if (g.q1kg) parts.push(`Paneer 1 kg × ${g.q1kg}`);
+  if (g.qChaap)  parts.push(`${CONFIG.EXTRAS.chaap.label} × ${g.qChaap}`);
+  if (g.qGhee)   parts.push(`${CONFIG.EXTRAS.ghee.label} × ${g.qGhee}`);
+  if (g.qButter) parts.push(`${CONFIG.EXTRAS.butter.label} × ${g.qButter}`);
+  if (g.qKhoya)  parts.push(`${CONFIG.EXTRAS.khoya.label} × ${g.qKhoya}`);
+  return parts.join(', ');
 }
 
 async function sendToSheet(d, payStatus, rzpPaymentId) {
@@ -1231,13 +1300,13 @@ function showConfirmation(d, payStatus, subResult) {
   hide('screen-form');
   show('screen-confirm'); goTop();
 
-  const isSub = d.frequency !== 'once';
-  const split = d.paneerLabel && d.extrasLabel && d.isoDate !== d.satIso;
+  const isSub  = d.frequency !== 'once';
+  const groups = buildDeliveryGroups(d);
   document.getElementById('confirm-msg').textContent = isSub
     ? `Your paneer subscription starts ${d.fullDate}. We've notified Deepa.`
-    : split
-      ? `Order confirmed — two deliveries: paneer arrives ${d.shortLabel}, your Saturday Specials arrive ${d.satLabel}. We've notified Deepa.`
-      : `Your order is confirmed for ${d.paneerLabel ? d.fullDate : d.satLabel}. We've notified Deepa.`;
+    : groups.length > 1
+      ? `Order confirmed — ${groups.length} deliveries: ${groups.map(g => g.label).join(' and ')}. We've notified Deepa.`
+      : `Your order is confirmed for ${groups[0] ? groups[0].label : d.fullDate}. We've notified Deepa.`;
 
   const pmDisplay = payStatus || d.payLabel;
   let rows = `
@@ -1245,13 +1314,14 @@ function showConfirmation(d, payStatus, subResult) {
     <div class="cr"><span class="ck">Phone</span><span class="cv">${esc(d.phone)}</span></div>
     <div class="cr"><span class="ck">Apartment</span><span class="cv">Bren Northern Lights</span></div>
     <div class="cr"><span class="ck">Flat</span><span class="cv">${esc(d.flat)}</span></div>`;
-  // One "Arriving <day>" row per delivery, so a split order is explicit.
-  if (split) {
-    rows += `<div class="cr"><span class="ck">${esc(d.shortLabel)}</span><span class="cv">${esc(d.paneerLabel)}</span></div>`;
-    rows += `<div class="cr"><span class="ck">${esc(d.satLabel)}</span><span class="cv">${esc(d.extrasLabel)}</span></div>`;
+  // One "arriving <day>" row per delivery, so multi-day orders are explicit.
+  if (groups.length > 1) {
+    groups.forEach(g => {
+      rows += `<div class="cr"><span class="ck">${esc(g.label)}</span><span class="cv">${esc(groupItemsLabel(g))}</span></div>`;
+    });
   } else {
     rows += `<div class="cr"><span class="ck">Items</span><span class="cv">${esc(d.qtyLabel)}</span></div>`;
-    rows += `<div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(d.paneerLabel ? d.fullDate : d.satLabel)}</span></div>`;
+    rows += `<div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(groups[0] ? groups[0].label : d.fullDate)}</span></div>`;
   }
   rows += `<div class="cr"><span class="ck">Total</span><span class="cv">${esc(d.amtDisp)}</span></div>`;
   if (isSub) {
@@ -1284,9 +1354,11 @@ function resetForm() {
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));
   document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
   document.querySelectorAll('.cards-error').forEach(e => e.classList.remove('cards-error'));
-  PANEER_UNITS = 0;
-  document.getElementById('qcount-paneer').textContent = '0';
-  updateLine('paneer', 0);
+  Object.keys(QTY_STATE).forEach(k => {
+    QTY_STATE[k] = 0;
+    document.getElementById('qcount-' + k).textContent = '0';
+    updateLine(k, 0);
+  });
   Object.keys(EXTRA_STATE).forEach(k => {
     EXTRA_STATE[k] = 0;
     document.getElementById('qcount-' + k).textContent = '0';
