@@ -286,6 +286,7 @@
     .inv-row { display: none; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13.5px; color: var(--text-mid); }
     .inv-row.v { display: flex; }
     .inv-row .inv-v { font-weight: 600; color: var(--text); white-space: nowrap; }
+    .inv-date { font-weight: 700; color: var(--green); white-space: nowrap; }
     .inv-total { border-top: none; margin-top: 0; padding-top: 3px; }
     /* separator only once there are item lines above the total */
     .inv-row.v ~ .inv-total { border-top: 1px dashed rgba(28,47,92,0.18); margin-top: 6px; padding-top: 8px; }
@@ -995,13 +996,13 @@ function updateTotalPill() {
   document.getElementById('sub-specials-v').textContent = inr(xAmt);
 
   document.getElementById('inv-paneer').classList.toggle('v', pAmt > 0);
-  document.getElementById('inv-paneer-k').textContent =
-    PANEER_NEXT ? `Paneer · ${PANEER_NEXT.label}` : 'Paneer';
+  document.getElementById('inv-paneer-k').innerHTML =
+    PANEER_NEXT ? `Paneer · <span class="inv-date">${PANEER_NEXT.label}</span>` : 'Paneer';
   document.getElementById('inv-paneer-v').textContent = inr(pAmt);
 
   document.getElementById('inv-specials').classList.toggle('v', xAmt > 0);
-  document.getElementById('inv-specials-k').textContent =
-    SAT_NEXT ? `Saturday Specials · ${SAT_NEXT.label}` : 'Saturday Specials';
+  document.getElementById('inv-specials-k').innerHTML =
+    SAT_NEXT ? `Saturday Specials · <span class="inv-date">${SAT_NEXT.label}</span>` : 'Saturday Specials';
   document.getElementById('inv-specials-v').textContent = inr(xAmt);
 
   document.getElementById('inv-total-v').textContent = inr(grandTotal());
