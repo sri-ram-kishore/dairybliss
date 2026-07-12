@@ -430,6 +430,42 @@ h1 {
 }
 .hero-photo img.is-active { opacity: 1; }
 
+/* Carousel dots — sit over the fully-opaque right portion of the photo
+   (past the text mask), so they read clearly against the image and never
+   compete with the headline. .hero-photo has pointer-events:none, so this
+   re-enables clicks just for the dots. */
+.hero-dots {
+  position: absolute;
+  right: 6%;
+  bottom: 24px;
+  z-index: 4;
+  display: flex;
+  gap: 10px;
+  pointer-events: auto;
+}
+.hero-dot {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: rgba(255,255,255,0.55);
+  cursor: pointer;
+  transition: background 160ms, transform 160ms, box-shadow 160ms;
+}
+.hero-dot::before {
+  content: '';
+  position: absolute;
+  inset: -8px; /* larger invisible tap target, same visual dot size */
+}
+.hero-dot:hover { background: rgba(255,255,255,0.85); }
+.hero-dot.is-active {
+  background: #fff;
+  transform: scale(1.3);
+  box-shadow: 0 0 0 2px rgba(61,122,26,0.55);
+}
+
 .scroll-indicator {
   position: absolute;
   bottom: 28px;

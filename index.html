@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=63">
+  <link rel="stylesheet" href="styles.css?v=64">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -35,15 +35,18 @@
       <div class="hero-copy">
         <div class="hero-headline-group">
           <p class="eyebrow reveal">The DairyBliss Standard</p>
-          <h1 id="hero-title" class="reveal reveal-delay-1">Made fresh. Tastes like it.</h1>
+          <h1 id="hero-title" class="reveal reveal-delay-1">Paneer so soft, the gravy is just an afterthought.</h1>
         </div>
-        <p class="reveal reveal-delay-1">Paneer, ghee, chaap and more — pure buffalo milk, delivered fresh to your door.</p>
+        <p id="hero-sub" class="reveal reveal-delay-1">Soft, clean-tasting, and made from pure buffalo milk.</p>
         <figure class="hero-photo" id="hero-carousel">
           <img src="assets/hero.webp" fetchpriority="high" alt="Dairy Bliss paneer pack, fresh paneer, and ghee on a kitchen counter" class="is-active">
           <img data-src="assets/hero-chaap-butter.webp" alt="Soya chaap and white butter on a kitchen counter" aria-hidden="true">
           <img data-src="assets/hero-khoya.webp" alt="Fresh khoya with mithai ingredients" aria-hidden="true">
-          <img data-src="assets/hero1.webp" alt="DairyBliss fresh dairy range" aria-hidden="true">
-          <img data-src="assets/hero2.webp" alt="DairyBliss products in a home kitchen" aria-hidden="true">
+          <div class="hero-dots" id="hero-dots" role="tablist" aria-label="Featured products">
+            <button type="button" class="hero-dot is-active" role="tab" aria-label="Paneer" aria-selected="true"></button>
+            <button type="button" class="hero-dot" role="tab" aria-label="Soya Chaap &amp; White Butter" aria-selected="false"></button>
+            <button type="button" class="hero-dot" role="tab" aria-label="Khoya" aria-selected="false"></button>
+          </div>
         </figure>
         <div class="hero-sub-block">
           <div class="hero-trust-icons reveal reveal-delay-2">
@@ -369,19 +372,61 @@
   <script src="script.js?v=5"></script>
   <script>
     /* ── HERO CAROUSEL ── */
+    // Three product stories, each with its own headline/subline synced to
+    // the photo. Slide 1 (paneer) is the eager LCP image; slides 2-3
+    // late-load on window.load so they never compete for first paint.
     (function () {
+      const COPY = [
+        { h1: 'Paneer so soft, the gravy is just an afterthought.',
+          sub: 'Soft, clean-tasting, and made from pure buffalo milk.' },
+        { h1: 'Chaap that grills like it means it.',
+          sub: 'High-protein soya chaap and creamy white butter — fresh every Saturday.' },
+        { h1: 'Khoya rich enough to skip the mithai shop.',
+          sub: 'Traditional, slow-made khoya — the base of every great sweet.' },
+      ];
       const slides = Array.from(document.querySelectorAll('#hero-carousel img'));
+      const dots   = Array.from(document.querySelectorAll('.hero-dot'));
+      const h1El   = document.getElementById('hero-title');
+      const subEl  = document.getElementById('hero-sub');
       if (slides.length < 2) return;
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      // Late-load the other slides so slide 1 keeps its LCP priority
+      // Inline transition overrides the slower .reveal opacity transition
+      // (0.65s) that's still attached to these elements post-reveal, so the
+      // text crossfade stays snappy and in sync with the photo.
+      h1El.style.transition = subEl.style.transition = 'opacity 250ms ease';
+
+      let i = 0, timer = null;
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function goTo(next) {
+        if (next === i) return;
+        slides[i].classList.remove('is-active');
+        dots[i]?.classList.remove('is-active');
+        dots[i]?.setAttribute('aria-selected', 'false');
+        i = next;
+        slides[i].classList.add('is-active');
+        dots[i]?.classList.add('is-active');
+        dots[i]?.setAttribute('aria-selected', 'true');
+        // Swap text with a quick crossfade, synced to the photo transition.
+        h1El.style.opacity = 0; subEl.style.opacity = 0;
+        setTimeout(function () {
+          h1El.textContent  = COPY[i].h1;
+          subEl.textContent = COPY[i].sub;
+          h1El.style.opacity = 1; subEl.style.opacity = 1;
+        }, 260);
+      }
+      function restartTimer() {
+        if (reduceMotion) return;
+        clearInterval(timer);
+        timer = setInterval(function () { goTo((i + 1) % slides.length); }, 4000);
+      }
+      dots.forEach((dot, idx) => dot.addEventListener('click', function () {
+        goTo(idx);
+        restartTimer();
+      }));
+
       window.addEventListener('load', function () {
         slides.slice(1).forEach(img => { img.src = img.dataset.src; });
-        let i = 0;
-        setInterval(function () {
-          slides[i].classList.remove('is-active');
-          i = (i + 1) % slides.length;
-          slides[i].classList.add('is-active');
-        }, 5500);
+        restartTimer();
       });
     })();
 
