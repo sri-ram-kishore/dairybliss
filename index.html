@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=59">
+  <link rel="stylesheet" href="styles.css?v=60">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -265,10 +265,10 @@
       <div class="order-modal-header">
         <p class="eyebrow" style="justify-content:flex-start;margin-bottom:12px;">Place your order</p>
         <h3 id="order-modal-title">Fresh goodness,<br>delivered to you.</h3>
-        <p class="order-modal-sub">Wed &amp; Sat delivery. Select what you need and we'll confirm on WhatsApp.</p>
+        <p class="order-modal-sub">Paneer arrives Wednesdays &amp; Saturdays; Saturday Specials on Saturdays. We'll confirm on WhatsApp.</p>
       </div>
       <div class="order-modal-inner">
-        <div class="order-modal-right">
+        <div class="order-details">
           <div class="order-field">
             <label for="o-name">Your name</label>
             <input id="o-name" type="text" placeholder="Full name" autocomplete="name" required>
@@ -279,22 +279,18 @@
             <input id="o-phone" type="tel" placeholder="10-digit number" inputmode="numeric" maxlength="10" autocomplete="tel" required>
             <p class="order-field-error" id="err-phone"></p>
           </div>
-          <div class="order-field">
+          <div class="order-field order-field--wide">
             <label for="o-loc">Where should we deliver?</label>
             <input id="o-loc" name="dropoff" type="text" placeholder="Building, street, area" autocomplete="off" required>
             <p class="order-field-error" id="err-address"></p>
           </div>
-          <div class="order-field">
-            <label for="o-date">When do you need it?</label>
-            <select id="o-date" class="ph" required>
-              <option value="">Pick a delivery date</option>
-            </select>
-            <p class="order-field-error" id="err-date"></p>
-          </div>
         </div>
-        <div class="order-modal-left">
+
+        <p class="order-arrival" id="order-arrival"></p>
+
+        <div class="order-products">
           <div class="order-items">
-            <p class="order-section-label">How much paneer?</p>
+            <p class="order-section-label">Fresh Paneer · Wed &amp; Sat</p>
             <label class="order-item">
               <div class="order-item-info"><span>250g</span><span class="order-price">₹145</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q250',-1)">−</button><span id="q250">0</span><button type="button" onclick="adjustQty('q250',1)">+</button></div>
@@ -311,7 +307,9 @@
               <div class="order-item-info"><span>1 kg</span><span class="order-price">₹550</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q1kg',-1)">−</button><span id="q1kg">0</span><button type="button" onclick="adjustQty('q1kg',1)">+</button></div>
             </label>
-            <p class="order-section-label" style="margin-top:18px">Saturday Specials <span style="font-weight:500;text-transform:none;letter-spacing:0">· delivered Saturdays only</span></p>
+          </div>
+          <div class="order-items">
+            <p class="order-section-label">Saturday Specials · Saturdays only</p>
             <label class="order-item">
               <div class="order-item-info"><span>Soya Chaap · 500g</span><span class="order-price">₹150</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('qChaap',-1)">−</button><span id="qChaap">0</span><button type="button" onclick="adjustQty('qChaap',1)">+</button></div>
@@ -328,12 +326,13 @@
               <div class="order-item-info"><span>Khoya · 250g</span><span class="order-price">₹175</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('qKhoya',-1)">−</button><span id="qKhoya">0</span><button type="button" onclick="adjustQty('qKhoya',1)">+</button></div>
             </label>
-            <div class="order-total" id="order-total" style="display:none">
-              Total: <strong id="order-total-val"></strong>
-            </div>
-            <p class="order-field-error" id="err-qty" style="margin-top:10px"></p>
           </div>
         </div>
+
+        <div class="order-total" id="order-total" style="display:none">
+          Total: <strong id="order-total-val"></strong>
+        </div>
+        <p class="order-field-error" id="err-qty" style="margin-top:10px"></p>
       </div>
       <div class="order-modal-footer">
         <button class="button primary order-submit" onclick="submitOrder()">Send Order on WhatsApp →</button>
@@ -369,33 +368,39 @@
                      qChaap: 'Soya Chaap 500g', qGhee: 'Desi Ghee 500ml', qButter: 'White Butter 250g', qKhoya: 'Khoya 250g' };
     let _placeUrl = null; // Google Maps URL from Places autocomplete
 
-    function populateDeliveryDates() {
-      const sel = document.getElementById('o-date');
-      // Keep only the placeholder option
-      while (sel.options.length > 1) sel.remove(1);
-      const days = [3, 6]; // Wednesday = 3, Saturday = 6
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    // Next delivery runs, cutoff-aware (order by 8 PM the evening before).
+    // Paneer ships on the sooner of the next Wed/Sat; Specials next Saturday.
+    const CUTOFF_HOUR = 20;
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const DAYS3  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    let PANEER_NEXT_L = '', SAT_NEXT_L = '';
+
+    function nextRun(targetDay) {
       const now = new Date();
-      // Start from tomorrow to avoid same-day orders
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      let added = 0;
-      for (let offset = 0; added < 6; offset++) {
-        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + offset);
-        if (days.includes(d.getDay())) {
-          const label = dayNames[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
-          const value = d.toISOString().slice(0, 10); // YYYY-MM-DD
-          sel.add(new Option(label, value));
-          added++;
-        }
+      for (let offset = 1; offset < 15; offset++) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+        if (d.getDay() !== targetDay) continue;
+        const cutoff = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1, CUTOFF_HOUR, 0, 0);
+        if (now < cutoff) return d;
       }
+    }
+    function runLabel(d) {
+      return DAYS3[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+    }
+    function fillArrival() {
+      const w = nextRun(3), sat = nextRun(6);
+      const p = w < sat ? w : sat;
+      PANEER_NEXT_L = runLabel(p);
+      SAT_NEXT_L    = runLabel(sat);
+      document.getElementById('order-arrival').innerHTML =
+        'Paneer arrives <b>' + PANEER_NEXT_L + '</b> · Saturday Specials arrive <b>' +
+        SAT_NEXT_L + '</b>. Order by 8 PM the evening before.';
     }
 
     function openOrderModal() {
       document.getElementById('order-modal').classList.add('is-open');
       document.body.style.overflow = 'hidden';
-      populateDeliveryDates();
-      document.getElementById('o-date').classList.add('ph');
+      fillArrival();
     }
     function closeOrderModal() {
       document.getElementById('order-modal').classList.remove('is-open');
@@ -446,12 +451,8 @@
       document.getElementById('pincode-modal').classList.add('is-open');
     }
     function clearAllErrors() {
-      ['err-qty','err-date','err-name','err-phone','err-address'].forEach(id => setFieldError(id, ''));
+      ['err-qty','err-name','err-phone','err-address'].forEach(id => setFieldError(id, ''));
     }
-    document.getElementById('o-date').addEventListener('change', function() {
-      setFieldError('err-date', '');
-      this.classList.remove('ph');
-    });
     ['o-name','o-phone','o-loc'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', () => {
         setFieldError('err-' + id.slice(2), '');
@@ -461,40 +462,41 @@
     });
 
     function submitOrder() {
-      const deliveryDate = document.getElementById('o-date').value;
-      const name = document.getElementById('o-name').value.trim();
-      const phone = document.getElementById('o-phone').value.trim();
+      const name    = document.getElementById('o-name').value.trim();
+      const phone   = document.getElementById('o-phone').value.trim();
       const address = document.getElementById('o-loc').value.trim();
 
-      let items = [];
-      Object.keys(PRICES).forEach(k => {
-        const qty = parseInt(document.getElementById(k).textContent);
-        if (qty > 0) items.push(qty + ' × ' + LABELS[k] + ' (₹' + (qty * PRICES[k]) + ')');
-      });
+      const lineFor = k => {
+        const q = parseInt(document.getElementById(k).textContent);
+        return q > 0 ? '- ' + LABELS[k] + ' x ' + q + ' = Rs' + (q * PRICES[k]) : null;
+      };
+      const paneerLines  = ['q250','q500','q750','q1kg'].map(lineFor).filter(Boolean);
+      const specialLines = ['qChaap','qGhee','qButter','qKhoya'].map(lineFor).filter(Boolean);
 
       clearAllErrors();
       let valid = true;
-      if (!items.length) { setFieldError('err-qty', 'Please select at least one quantity.'); valid = false; }
+      if (!paneerLines.length && !specialLines.length) { setFieldError('err-qty', 'Please select at least one item.'); valid = false; }
       if (!name) { setFieldError('err-name', 'Please enter your name.'); valid = false; }
       if (!/^\d{10}$/.test(phone)) { setFieldError('err-phone', 'Please enter a valid 10-digit number.'); valid = false; }
       if (!address) { setFieldError('err-address', 'Please enter your delivery address.'); valid = false; }
-      if (!deliveryDate) { setFieldError('err-date', 'Please select a delivery date.'); valid = false; }
       if (!valid) return;
 
-      // Format the selected date nicely for the message (e.g. "Wed, 28 May")
-      const dateLabel = document.getElementById('o-date').options[document.getElementById('o-date').selectedIndex].text;
+      fillArrival(); // make sure dates are current even if the modal sat open past a cutoff
+      const total = Object.keys(PRICES).reduce((s, k) => s + parseInt(document.getElementById(k).textContent) * PRICES[k], 0);
 
-      const total = Object.keys(PRICES).reduce((s,k) => s + parseInt(document.getElementById(k).textContent)*PRICES[k], 0);
-      let msg = 'Hi Dairy Bliss, I\'d like to place an order:\n\n';
-      msg += items.join('\n');
-      msg += '\n\nTotal: ₹' + total;
-      msg += '\n\nDelivery Date: ' + dateLabel;
-      const hasSpecials = ['qChaap','qGhee','qButter','qKhoya'].some(k => parseInt(document.getElementById(k).textContent) > 0);
-      if (hasSpecials) msg += '\n(Saturday Specials arrive on the Saturday run)';
-      msg += '\nName: ' + name;
-      msg += '\nPhone: ' + phone;
-      msg += '\nAddress: ' + address;
-      if (_placeUrl) msg += '\nMap: ' + _placeUrl;
+      let msg = 'Hi Dairy Bliss! New order:\n';
+      msg += '\n*Name:* ' + name;
+      msg += '\n*Phone:* ' + phone;
+      msg += '\n*Address:* ' + address;
+      if (_placeUrl) msg += '\n*Map:* ' + _placeUrl;
+      msg += '\n';
+      if (paneerLines.length && specialLines.length && PANEER_NEXT_L === SAT_NEXT_L) {
+        msg += '\n*Arriving ' + SAT_NEXT_L + ':*\n' + paneerLines.concat(specialLines).join('\n') + '\n';
+      } else {
+        if (paneerLines.length)  msg += '\n*Arriving ' + PANEER_NEXT_L + ' — Paneer:*\n' + paneerLines.join('\n') + '\n';
+        if (specialLines.length) msg += '\n*Arriving ' + SAT_NEXT_L + ' — Saturday Specials:*\n' + specialLines.join('\n') + '\n';
+      }
+      msg += '\n*Total: Rs' + total + '*';
 
       openWhatsApp('https://wa.me/919620099600?text=' + encodeURIComponent(msg));
     }

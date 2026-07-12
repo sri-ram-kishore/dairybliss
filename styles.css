@@ -1181,22 +1181,36 @@ h1 {
 }
 
 .order-modal-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-  position: relative;
+  display: block;
+  padding: 24px 32px 4px;
 }
 
-/* Partial-height separator — doesn't run to the full column edge */
-.order-modal-inner::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 10%;
-  height: 80%;
-  width: 1px;
-  background: var(--line);
-  pointer-events: none;
+/* Details on top: name + phone side by side, address full width */
+.order-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 22px;
+}
+.order-field--wide { grid-column: 1 / -1; }
+
+/* Arrival strip — the delivery promise, cutoff-aware, no picker */
+.order-arrival {
+  margin: 18px 0 4px;
+  padding: 10px 14px;
+  background: #eaf3e2;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.order-arrival b { color: var(--green); font-weight: 700; }
+
+/* Products: paneer left, Saturday Specials right */
+.order-products {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 40px;
+  margin-top: 16px;
 }
 
 .order-modal-left {
@@ -1372,10 +1386,9 @@ h1 {
 }
 
 @media (max-width: 640px) {
-  .order-modal-inner { grid-template-columns: 1fr; }
-  .order-modal-inner::after { display: none; }
-  .order-modal-left { border-top: 1px solid var(--line); padding: 24px 20px 28px; }
-  .order-modal-right { padding: 24px 20px 0; }
+  .order-modal-inner { padding: 20px 20px 0; }
+  .order-details { grid-template-columns: 1fr; gap: 12px; }
+  .order-products { grid-template-columns: 1fr; gap: 4px; }
   .order-modal-header { padding: 20px 20px 16px; }
 }
 
