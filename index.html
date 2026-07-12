@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=61">
+  <link rel="stylesheet" href="styles.css?v=62">
 </head>
 <body>
   <header class="site-header" id="home">
@@ -38,8 +38,12 @@
           <h1 id="hero-title" class="reveal reveal-delay-1">Paneer so soft, the gravy is just an afterthought.</h1>
         </div>
         <p class="reveal reveal-delay-1">Soft, clean-tasting, and made from pure buffalo milk.</p>
-        <figure class="hero-photo">
-          <img src="assets/hero.webp" fetchpriority="high" alt="Dairy Bliss paneer pack, fresh paneer, and ghee on a kitchen counter">
+        <figure class="hero-photo" id="hero-carousel">
+          <img src="assets/hero.webp" fetchpriority="high" alt="Dairy Bliss paneer pack, fresh paneer, and ghee on a kitchen counter" class="is-active">
+          <img data-src="assets/hero-chaap-butter.webp" alt="Soya chaap and white butter on a kitchen counter" aria-hidden="true">
+          <img data-src="assets/hero-khoya.webp" alt="Fresh khoya with mithai ingredients" aria-hidden="true">
+          <img data-src="assets/hero1.webp" alt="DairyBliss fresh dairy range" aria-hidden="true">
+          <img data-src="assets/hero2.webp" alt="DairyBliss products in a home kitchen" aria-hidden="true">
         </figure>
         <div class="hero-sub-block">
           <div class="hero-trust-icons reveal reveal-delay-2">
@@ -172,7 +176,6 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:7px;flex-shrink:0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           Order Now
         </a>
-        <p class="products-cta-note">Paneer &amp; Saturday Specials — one order, delivered to your door.</p>
       </div>
     </section>
 
@@ -365,6 +368,23 @@
   </script>
   <script src="script.js?v=5"></script>
   <script>
+    /* ── HERO CAROUSEL ── */
+    (function () {
+      const slides = Array.from(document.querySelectorAll('#hero-carousel img'));
+      if (slides.length < 2) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      // Late-load the other slides so slide 1 keeps its LCP priority
+      window.addEventListener('load', function () {
+        slides.slice(1).forEach(img => { img.src = img.dataset.src; });
+        let i = 0;
+        setInterval(function () {
+          slides[i].classList.remove('is-active');
+          i = (i + 1) % slides.length;
+          slides[i].classList.add('is-active');
+        }, 5500);
+      });
+    })();
+
     /* ── ORDER MODAL ── */
     const PRICES = { q250: 145, q500: 280, q750: 420, q1kg: 550,
                      qChaap: 150, qGhee: 475, qButter: 180, qKhoya: 175 };
