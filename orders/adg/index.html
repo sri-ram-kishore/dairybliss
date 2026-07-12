@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#faf8f4">
-  <meta name="description" content="Order fresh paneer — Adarsh Greens.">
+  <meta name="description" content="Order fresh paneer, desi ghee, chaap &amp; more — Adarsh Greens.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DairyBliss · ADG">
@@ -70,7 +70,7 @@
     .page-title-row {
       max-width: 520px; margin: 0 auto;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 14px 4px;
+      padding: 16px 14px 2px;
     }
     .apt-back {
       display: inline-flex; align-items: center; flex-shrink: 0;
@@ -79,8 +79,15 @@
       -webkit-tap-highlight-color: transparent;
     }
     .apt-back:hover { opacity: 0.9; color: var(--green); }
+    .page-eyebrow {
+      display: inline-block;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--green);
+      background: var(--green-light); border-radius: 20px;
+      padding: 4px 12px; margin: 0 0 7px;
+    }
     .page-title {
-      font-size: 26px; font-weight: 760; color: var(--text);
+      font-size: 24px; font-weight: 760; color: var(--text);
       letter-spacing: -0.5px; line-height: 1.1;
       padding: 0;
     }
@@ -92,24 +99,24 @@
     .fc {
       background: rgba(255,255,255,0.72);
       border-radius: 12px;
-      margin: 16px 14px 0;
-      padding: 20px 18px;
+      margin: 12px 14px 0;
+      padding: 16px 16px;
       box-shadow: var(--shadow);
       border: 1px solid var(--border);
     }
 
     /* ── STEP HEADER ── */
-    .step-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .step-hd { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
     .step-n {
-      width: 28px; height: 28px; background: var(--green); color: #fff;
+      width: 24px; height: 24px; background: var(--green); color: #fff;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700; flex-shrink: 0;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
     }
-    .step-title { font-size: 17px; font-weight: 700; color: var(--text); }
+    .step-title { font-size: 16px; font-weight: 700; color: var(--text); }
     .req::after { content: ' *'; color: var(--err); font-size: 13px; }
 
     /* ── FIELD ── */
-    .field { margin-bottom: 14px; }
+    .field { margin-bottom: 12px; }
     .field:last-child { margin-bottom: 0; }
 
     .fl {
@@ -150,17 +157,19 @@
     .day-cards { display: flex; flex-direction: column; gap: 8px; }
 
     .day-card {
-      display: flex; align-items: center; gap: 14px;
-      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px;
       border: 1.5px solid var(--border); border-radius: 11px;
       cursor: pointer; background: var(--cream-card);
       transition: border-color 0.15s, background 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
+    /* fixed-date card (Saturday Specials): ticked, not changeable */
+    .day-card--fixed { pointer-events: none; }
     .day-card:hover { border-color: rgba(28,47,92,0.3); }
     .day-card.chosen { border-color: var(--green); box-shadow: 0 0 0 2px rgba(61,122,26,0.12); }
-    .day-card input[type="radio"] {
-      width: 20px; height: 20px; accent-color: var(--green);
+    .day-card input[type="radio"], .day-card input[type="checkbox"] {
+      width: 18px; height: 18px; accent-color: var(--green);
       flex-shrink: 0; cursor: pointer;
     }
     .day-card-body { flex: 1; }
@@ -171,12 +180,16 @@
         .qty-rows { display: flex; flex-direction: column; }
     .qty-row {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 12px; border-bottom: 1px solid var(--border);
+      padding: 8px 10px; border-bottom: 1px solid var(--border);
     }
     .qty-row:last-child { border-bottom: none; }
-    .qty-info { display: flex; align-items: baseline; gap: 10px; }
-    .qty-label { font-size: 16px; font-weight: 600; color: var(--text); }
-    .qty-price { font-size: 14px; font-weight: 500; color: var(--green); }
+    .qty-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+    /* paneer size labels are short — keep size + price on one line */
+    #qty-cards .qty-info { flex-direction: row; align-items: baseline; gap: 8px; }
+    /* two-line Specials rows breathe a little more */
+    #extra-cards .qty-row { padding-top: 12px; padding-bottom: 12px; }
+    .qty-label { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; }
+    .qty-price { font-size: 12.5px; font-weight: 500; color: var(--green); }
     .qty-stepper { display: flex; align-items: center; gap: 16px; }
     .qty-btn {
       width: 36px; height: 36px; border-radius: 50%;
@@ -188,6 +201,7 @@
     }
     .qty-btn:active { opacity: 0.6; }
     .qty-count { font-size: 17px; font-weight: 600; color: var(--text); min-width: 20px; text-align: center; }
+    .qty-count--wide { min-width: 52px; font-size: 15px; white-space: nowrap; }
 
     .amt-row {
       display: none; align-items: center; justify-content: space-between;
@@ -198,6 +212,104 @@
     .amt-row.v { display: flex; }
     .amt-lbl { font-size: 13px; color: var(--text-soft); }
     .amt-val { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; color: var(--green); }
+
+    /* multi-product cart: per-line totals + section note */
+    .qty-right { display: flex; align-items: center; gap: 12px; }
+    .qty-line { min-width: 52px; text-align: right; font-size: 13.5px; font-weight: 700; color: var(--text); }
+    .qty-line.zero { color: var(--text-soft); font-weight: 500; }
+    .sub-note { font-size: 12px; color: var(--text-soft); margin: -6px 2px 12px; line-height: 1.4; }
+
+    /* per-product availability chip ("Sat only") */
+    .qty-tag {
+      font-size: 10px; font-weight: 700; color: var(--green);
+      background: var(--green-light); border-radius: 20px; padding: 1.5px 7px;
+      vertical-align: 2px; margin-left: 2px; white-space: nowrap;
+    }
+
+    /* inline delivery-day chips on the paneer row */
+    .qty-row--paneer { flex-wrap: wrap; }
+    .qty-days {
+      flex-basis: 100%; display: none; align-items: center; gap: 8px;
+      flex-wrap: wrap; margin-top: 10px;
+    }
+    .qty-days.v { display: flex; }
+    .qty-days-lbl {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--text-soft); margin-right: 2px;
+    }
+    .day-chip {
+      position: relative; display: inline-flex; align-items: center;
+      border: 1.5px solid var(--border); border-radius: 20px;
+      padding: 6px 13px; font-size: 12.5px; font-weight: 600;
+      color: var(--text); cursor: pointer; background: var(--cream-card);
+      -webkit-tap-highlight-color: transparent; white-space: nowrap;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .day-chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .day-chip.chosen {
+      border-color: var(--green); background: var(--green-light);
+      color: var(--green); font-weight: 700;
+    }
+    .days-hint {
+      flex-basis: 100%; font-size: 12px; color: var(--text-soft);
+      margin-top: 4px;
+    }
+
+    /* per-block subtotal line */
+    .blk-sub {
+      display: none; justify-content: space-between; align-items: center;
+      margin-top: 8px; padding: 8px 10px 0;
+      border-top: 1px solid var(--border); font-size: 13.5px;
+    }
+    .blk-sub.v { display: flex; }
+    .blk-sub .k  { color: var(--text-soft); }
+    .blk-sub .v2 { font-weight: 700; color: var(--text); }
+
+    /* "When do you need it?" rows */
+    .when-rows { display: flex; flex-direction: column; gap: 12px; }
+    .when-group { display: none; }
+    .when-group.v { display: block; }
+    .when-lbl { font-size: 14.5px; font-weight: 600; color: var(--text); margin: 0 0 8px; }
+    .when-lbl-sub { font-size: 12px; font-weight: 500; color: var(--text-soft); }
+    .when-row {
+      display: none; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap;
+    }
+    .when-row.v { display: flex; }
+    .when-name { font-size: 14.5px; font-weight: 600; color: var(--text); }
+    .when-chips { display: flex; gap: 8px; }
+    .when-fixed {
+      font-size: 12.5px; font-weight: 700; color: var(--green);
+      background: var(--green-light); border-radius: 20px; padding: 6px 13px;
+      border: 1.5px solid transparent; /* height-match with the tick-chips */
+      white-space: nowrap;
+    }
+    .when-empty { font-size: 13px; color: var(--text-soft); display: none; margin: 0; }
+    .when-empty.v { display: block; }
+
+    /* mini-bill inside the payment step */
+    .invoice {
+      background: var(--cream); border: 1.5px solid rgba(61,122,26,0.2);
+      border-radius: 10px; padding: 14px 16px; margin: 6px 0 18px;
+    }
+    .inv-row { display: none; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: 13.5px; color: var(--text-mid); }
+    .inv-row.v { display: flex; }
+    .inv-row .inv-v { font-weight: 600; color: var(--text); white-space: nowrap; }
+    .inv-date { font-weight: 700; color: var(--green); white-space: nowrap; }
+    .inv-total { border-top: none; margin-top: 0; padding-top: 5px; }
+    /* separator only once there are item lines above the total */
+    .inv-row.v ~ .inv-total { border-top: 1px dashed rgba(28,47,92,0.18); margin-top: 8px; padding-top: 10px; }
+    .inv-total .inv-k { font-weight: 700; color: var(--text); font-size: 14px; }
+    .inv-total .inv-v { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; color: var(--green); }
+
+    /* delivery-day reactions to cart contents */
+    .day-card.dc-disabled { opacity: 0.45; pointer-events: none; }
+    .day-note {
+      display: none; font-size: 12.5px; line-height: 1.45; color: var(--green);
+      background: var(--green-light); border-radius: 8px;
+      padding: 8px 11px; margin-top: 8px;
+    }
+    .day-note.v { display: block; }
 
     /* ── PAYMENT CARDS ── */
     .pay-cards { display: flex; flex-direction: column; gap: 8px; }
@@ -393,6 +505,13 @@ const CONFIG = {
     "750g": { label: "750g",  display: "₹420", amount: 420, desc: "Weekly staple" },
     "1kg":  { label: "1 Kg", display: "₹550", amount: 550, desc: "Best value" },
   },
+  // New products — one-time add-ons, Saturday delivery only.
+  EXTRAS: {
+    chaap:  { label: "Soya Chaap",   unit: "500g",  amount: 150 },
+    ghee:   { label: "Desi Ghee",    unit: "500ml", amount: 475 },
+    butter: { label: "White Butter", unit: "250g",  amount: 180 },
+    khoya:  { label: "Khoya",        unit: "250g",  amount: 175 },
+  },
 };
 
 // Apartment pre-filled for this page
@@ -416,7 +535,10 @@ const APT = {
 <div id="screen-form">
 <div class="page">
 <div class="page-title-row">
-  <p class="page-title">Order fresh paneer</p>
+  <div>
+    <p class="page-eyebrow">Adarsh Greens</p>
+    <p class="page-title">Order fresh goodness</p>
+  </div>
   <a class="apt-back" href="../">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -430,7 +552,7 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">1</span>
-      <span class="step-title">Who's ordering?</span>
+      <span class="step-title">Your details</span>
     </div>
 
     <div class="field">
@@ -444,14 +566,6 @@ const APT = {
              maxlength="10" inputmode="numeric" autocomplete="tel" required>
       <p class="field-err" id="e-phone">Enter a valid 10-digit number.</p>
     </div>
-  </div>
-
-  <!-- ── STEP 2: DELIVERY ADDRESS ── -->
-  <div class="fc">
-    <div class="step-hd">
-      <span class="step-n">2</span>
-      <span class="step-title">Where in Adarsh Greens?</span>
-    </div>
 
     <div class="field">
       <input type="text" id="f-flat" required placeholder="Enter your flat number (e.g. A-1234)">
@@ -459,126 +573,160 @@ const APT = {
     </div>
   </div>
 
-  <!-- ── STEP 3: DELIVERY ── -->
+  <!-- ── STEP 2: FRESH PANEER (Wed & Sat) ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">3</span>
-      <span class="step-title">When do you need it?</span>
+      <span class="step-n">2</span>
+      <span class="step-title">Fresh Paneer</span>
     </div>
-
-    <div class="day-cards" id="day-cards">
-      <label class="day-card" id="dc-wed">
-        <input type="radio" name="delivery_day" value="Wednesday" id="r-wed">
-        <div class="day-card-body">
-          <div class="day-name">Wednesday</div>
-          <div class="day-sub" id="ds-wed">—</div>
-        </div>
-      </label>
-      <label class="day-card" id="dc-sat">
-        <input type="radio" name="delivery_day" value="Saturday" id="r-sat">
-        <div class="day-card-body">
-          <div class="day-name">Saturday</div>
-          <div class="day-sub" id="ds-sat">—</div>
-        </div>
-      </label>
-    </div>
-    <p class="field-err" id="e-day" style="margin-top:6px;">Please choose a delivery date.</p>
-
-  </div>
-
-  <!-- ── STEP 4: QUANTITY ── -->
-  <div class="fc">
-    <div class="step-hd">
-      <span class="step-n">4</span>
-      <span class="step-title">How much paneer?</span>
-    </div>
+    <p class="sub-note">Delivered every Wednesday &amp; Saturday · next delivery <b id="paneer-next">—</b></p>
 
     <div class="qty-rows" id="qty-cards">
       <div class="qty-row">
         <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price">₹145</span></div>
-        <div class="qty-stepper">
-          <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
-          <span class="qty-count" id="qcount-250g">0</span>
-          <button type="button" class="qty-btn" onclick="stepQty('250g',1)">+</button>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
+            <span class="qty-count" id="qcount-250g">0</span>
+            <button type="button" class="qty-btn" onclick="stepQty('250g',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-250g">—</span>
         </div>
       </div>
       <div class="qty-row">
         <div class="qty-info"><span class="qty-label">500g</span><span class="qty-price">₹280</span></div>
-        <div class="qty-stepper">
-          <button type="button" class="qty-btn" onclick="stepQty('500g',-1)">−</button>
-          <span class="qty-count" id="qcount-500g">0</span>
-          <button type="button" class="qty-btn" onclick="stepQty('500g',1)">+</button>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepQty('500g',-1)">−</button>
+            <span class="qty-count" id="qcount-500g">0</span>
+            <button type="button" class="qty-btn" onclick="stepQty('500g',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-500g">—</span>
         </div>
       </div>
       <div class="qty-row">
         <div class="qty-info"><span class="qty-label">750g</span><span class="qty-price">₹420</span></div>
-        <div class="qty-stepper">
-          <button type="button" class="qty-btn" onclick="stepQty('750g',-1)">−</button>
-          <span class="qty-count" id="qcount-750g">0</span>
-          <button type="button" class="qty-btn" onclick="stepQty('750g',1)">+</button>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepQty('750g',-1)">−</button>
+            <span class="qty-count" id="qcount-750g">0</span>
+            <button type="button" class="qty-btn" onclick="stepQty('750g',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-750g">—</span>
         </div>
       </div>
       <div class="qty-row">
         <div class="qty-info"><span class="qty-label">1 kg</span><span class="qty-price">₹550</span></div>
-        <div class="qty-stepper">
-          <button type="button" class="qty-btn" onclick="stepQty('1kg',-1)">−</button>
-          <span class="qty-count" id="qcount-1kg">0</span>
-          <button type="button" class="qty-btn" onclick="stepQty('1kg',1)">+</button>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepQty('1kg',-1)">−</button>
+            <span class="qty-count" id="qcount-1kg">0</span>
+            <button type="button" class="qty-btn" onclick="stepQty('1kg',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-1kg">—</span>
         </div>
       </div>
     </div>
 
-
-    <p class="field-err" id="e-qty" style="margin-top:6px;">Please select a quantity.</p>
-    <div class="amt-row" id="amount-pill">
-      <span class="amt-lbl">Total amount</span>
-      <span class="amt-val" id="amount-val">₹0</span>
+    <div class="blk-sub" id="blk-sub-paneer">
+      <span class="k" id="sub-paneer-k">Subtotal</span>
+      <span class="v2" id="sub-paneer-v">₹0</span>
     </div>
   </div>
 
-  <!-- ── STEP 5: FREQUENCY ── -->
+  <!-- ── STEP 3: SATURDAY SPECIALS (delivered Saturdays only) ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">5</span>
-      <span class="step-title">How often?</span>
+      <span class="step-n">3</span>
+      <span class="step-title">Saturday Specials</span>
+    </div>
+    <p class="sub-note">Delivered on Saturdays · next delivery <b id="sat-next">—</b></p>
+
+    <div class="qty-rows" id="extra-cards">
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price">₹150 · 500g</span></div>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepExtra('chaap',-1)">−</button>
+            <span class="qty-count" id="qcount-chaap">0</span>
+            <button type="button" class="qty-btn" onclick="stepExtra('chaap',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-chaap">—</span>
+        </div>
+      </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price">₹475 · 500ml</span></div>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepExtra('ghee',-1)">−</button>
+            <span class="qty-count" id="qcount-ghee">0</span>
+            <button type="button" class="qty-btn" onclick="stepExtra('ghee',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-ghee">—</span>
+        </div>
+      </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">White Butter</span><span class="qty-price">₹180 · 250g</span></div>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepExtra('butter',-1)">−</button>
+            <span class="qty-count" id="qcount-butter">0</span>
+            <button type="button" class="qty-btn" onclick="stepExtra('butter',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-butter">—</span>
+        </div>
+      </div>
+      <div class="qty-row">
+        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price">₹175 · 250g</span></div>
+        <div class="qty-right">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepExtra('khoya',-1)">−</button>
+            <span class="qty-count" id="qcount-khoya">0</span>
+            <button type="button" class="qty-btn" onclick="stepExtra('khoya',1)">+</button>
+          </div>
+          <span class="qty-line zero" id="qline-khoya">—</span>
+        </div>
+      </div>
     </div>
 
-    <div class="day-cards" id="freq-cards">
-      <label class="day-card chosen" id="fc-once">
-        <input type="radio" name="frequency" value="once" checked>
-        <div class="day-card-body">
-          <div class="day-name">Just this once</div>
-        </div>
-      </label>
-      <label class="day-card" id="fc-weekly">
-        <input type="radio" name="frequency" value="weekly">
-        <div class="day-card-body">
-          <div class="day-name">Every week</div>
-          <div class="day-sub">Same day, every week</div>
-        </div>
-      </label>
-      <label class="day-card" id="fc-both">
-        <input type="radio" name="frequency" value="both_days">
-        <div class="day-card-body">
-          <div class="day-name">Every Wed &amp; Sat</div>
-          <div class="day-sub">Twice a week</div>
-        </div>
-      </label>
-      <label class="day-card" id="fc-biweekly">
-        <input type="radio" name="frequency" value="biweekly">
-        <div class="day-card-body">
-          <div class="day-name">Every other week</div>
-          <div class="day-sub">Once a fortnight</div>
-        </div>
-      </label>
+    <div class="blk-sub" id="blk-sub-specials">
+      <span class="k">Subtotal</span>
+      <span class="v2" id="sub-specials-v">₹0</span>
     </div>
+    <p class="field-err" id="e-qty" style="margin-top:6px;">Please add at least one item.</p>
   </div>
+
+  <!-- No delivery-day step: orders always go out on the next run. Paneer
+       ships on the sooner of the next Wed/Sat, Saturday Specials on the
+       next Saturday; each block header and the bill state the dates.
+       (The Wed/Sat/both picker lives in commit 9b88caa if ever needed.) -->
+
+
+  <!-- Subscriptions are paused for the multi-product launch. The full
+       subscription step (UI + cart-driven visibility) lives in commit
+       87949c3 — reintroduce from there when ready. -->
 
   <!-- ── STEP 6: PAYMENT ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">6</span>
+      <span class="step-n">4</span>
       <span class="step-title">How would you like to pay?</span>
+    </div>
+
+    <!-- Mini-bill: exactly what they're paying, right above the pay buttons -->
+    <div class="invoice">
+      <div class="inv-row" id="inv-paneer">
+        <span class="inv-k" id="inv-paneer-k">Paneer</span>
+        <span class="inv-v" id="inv-paneer-v">₹0</span>
+      </div>
+      <div class="inv-row" id="inv-specials">
+        <span class="inv-k" id="inv-specials-k">Saturday Specials</span>
+        <span class="inv-v" id="inv-specials-v">₹0</span>
+      </div>
+      <div class="inv-row inv-total v">
+        <span class="inv-k">Total payable</span>
+        <span class="inv-v" id="inv-total-v">₹0</span>
+      </div>
     </div>
 
     <div class="pay-cards" id="pay-cards">
@@ -593,7 +741,7 @@ const APT = {
         <input type="radio" name="payment" value="cod">
         <div class="pay-body">
           <div class="pay-name">Cash on Delivery</div>
-          <div class="pay-sub">Pay when your paneer arrives</div>
+          <div class="pay-sub">Pay when your order arrives</div>
         </div>
       </label>
     </div>
@@ -602,7 +750,7 @@ const APT = {
   </div>
 
   <button type="submit" class="btn-submit" id="btn-submit">Proceed to Pay →</button>
-  <p class="foot">Pure paneer. Delivered twice a week.</p>
+  <p class="foot">Pure goodness. Delivered fresh to your door.</p>
 
 </form>
 </div>
@@ -690,31 +838,23 @@ function toISO(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+// Next runs (cutoff-aware): paneer ships on the sooner of the next
+// Wednesday/Saturday; Saturday Specials always on the next Saturday.
+// No day picker — the block headers and the bill state the dates.
+let PANEER_NEXT = null;
+let SAT_NEXT    = null;
+
 function populateDates() {
   const wd = nextDeliveryDate(3);
   const sd = nextDeliveryDate(6);
-  document.getElementById('ds-wed').textContent       = fmtDayOnly(wd);
-  document.getElementById('ds-sat').textContent       = fmtDayOnly(sd);
-  document.getElementById('r-wed').dataset.fullDate   = fmtDate(wd);
-  document.getElementById('r-wed').dataset.isoDate    = toISO(wd);
-  document.getElementById('r-wed').dataset.shortLabel = fmtLabel(wd);
-  document.getElementById('r-sat').dataset.fullDate   = fmtDate(sd);
-  document.getElementById('r-sat').dataset.isoDate    = toISO(sd);
-  document.getElementById('r-sat').dataset.shortLabel = fmtLabel(sd);
-}
-
-function reorderCards() {
-  const wd = nextDeliveryDate(3);
-  const sd = nextDeliveryDate(6);
-  const container = document.getElementById('day-cards');
-  const wedCard   = document.getElementById('dc-wed');
-  const satCard   = document.getElementById('dc-sat');
-  if (sd < wd) container.insertBefore(satCard, wedCard);
-  else         container.insertBefore(wedCard, satCard);
+  const pd = wd <= sd ? wd : sd;
+  PANEER_NEXT = { iso: toISO(pd), label: fmtLabel(pd), full: fmtDate(pd) };
+  SAT_NEXT    = { iso: toISO(sd), label: fmtLabel(sd), full: fmtDate(sd) };
+  document.getElementById('paneer-next').textContent = PANEER_NEXT.label;
+  document.getElementById('sat-next').textContent    = SAT_NEXT.label;
 }
 
 populateDates();
-reorderCards();
 
 
 // ── cutoff popup ──────────────────────────────────────────────
@@ -751,14 +891,15 @@ function wireCards(name) {
       document.querySelectorAll(`input[name="${name}"]`).forEach(x =>
         x.closest('label')?.classList.remove('chosen'));
       r.closest('label')?.classList.add('chosen');
-      const errIds = { delivery_day: ['day-cards','e-day'], quantity: ['qty-cards','e-qty'], payment: ['pay-cards','e-pay'] };
+      const errIds = { quantity: ['qty-cards','e-qty'], payment: ['pay-cards','e-pay'] };
       if (errIds[name]) { setCardsErr(errIds[name][0], errIds[name][1], false); }
     });
   });
 }
-wireCards('delivery_day');
 wireCards('payment');
 wireCards('frequency');
+// Initial state: stamp the delivery dates onto the bill lines.
+document.addEventListener('DOMContentLoaded', () => updateTotalPill());
 
 // Update submit button label when payment method or frequency changes
 function updateSubmitLabel() {
@@ -786,7 +927,7 @@ function updatePayCardForFrequency() {
     nameEl.textContent = 'Pay Online';
     subEl.textContent  = 'UPI · Cards · Netbanking';
   } else {
-    const amt = qtyAmount() * 4;
+    const amt = qtyAmount() * 4 + extrasAmount();
     nameEl.textContent = 'Prepay for 4 deliveries';
     subEl.textContent  = amt > 0 ? `₹${amt.toLocaleString('en-IN')} charged now` : 'UPI · Cards · Netbanking';
   }
@@ -800,14 +941,38 @@ function frequencyLabel(freq) {
 }
 
 // ── quantity steppers ─────────────────────────────────────────
-const QTY_STATE = { '250g': 0, '500g': 0, '750g': 0, '1kg': 0 };
+// Paneer sizes are separate rows — each size has its own price, and the
+// steppers show plain counts. Delivery can be Wednesday, Saturday, or
+// both (the same basket goes out each ticked day).
+const QTY_STATE   = { '250g': 0, '500g': 0, '750g': 0, '1kg': 0 };
+const EXTRA_STATE = { chaap: 0, ghee: 0, butter: 0, khoya: 0 };
 
 function stepQty(key, delta) {
   QTY_STATE[key] = Math.max(0, (QTY_STATE[key] || 0) + delta);
   document.getElementById('qcount-' + key).textContent = QTY_STATE[key];
+  updateLine(key, QTY_STATE[key] * (CONFIG.PRICES[key]?.amount || 0));
   updateTotalPill();
   updatePayCardForFrequency();
-  if (qtyTotal() > 0) setCardsErr('qty-cards', 'e-qty', false);
+  if (qtyTotal() + extrasTotal() > 0) setCardsErr('qty-cards', 'e-qty', false);
+}
+function stepExtra(key, delta) {
+  EXTRA_STATE[key] = Math.max(0, (EXTRA_STATE[key] || 0) + delta);
+  document.getElementById('qcount-' + key).textContent = EXTRA_STATE[key];
+  updateLine(key, EXTRA_STATE[key] * (CONFIG.EXTRAS[key]?.amount || 0));
+  updateTotalPill();
+  updatePayCardForFrequency();
+  if (qtyTotal() + extrasTotal() > 0) setCardsErr('qty-cards', 'e-qty', false);
+}
+function extrasTotal() {
+  return Object.values(EXTRA_STATE).reduce((s, v) => s + v, 0);
+}
+
+// Show/hide a row's line total (₹ subtotal) as its quantity changes.
+function updateLine(key, amt) {
+  const el = document.getElementById('qline-' + key);
+  if (!el) return;
+  if (amt > 0) { el.textContent = '₹' + amt.toLocaleString('en-IN'); el.classList.remove('zero'); }
+  else         { el.textContent = '—'; el.classList.add('zero'); }
 }
 function qtyTotal() {
   return Object.values(QTY_STATE).reduce((s, v) => s + v, 0);
@@ -815,14 +980,36 @@ function qtyTotal() {
 function qtyAmount() {
   return Object.entries(QTY_STATE).reduce((s, [k, v]) => s + (CONFIG.PRICES[k]?.amount || 0) * v, 0);
 }
+function extrasAmount() {
+  return Object.entries(EXTRA_STATE).reduce((s, [k, v]) => s + (CONFIG.EXTRAS[k]?.amount || 0) * v, 0);
+}
+function grandTotal() {
+  return qtyAmount() + extrasAmount();
+}
+// Money summary: per-block subtotals plus the payment step's mini-bill.
+// Each bill line carries its arrival date — the passive confirmation of
+// what arrives when (Paneer · Wed, 15 Jul / Saturday Specials · Sat, 18 Jul).
 function updateTotalPill() {
-  const total = qtyAmount();
-  if (total > 0) {
-    document.getElementById('amount-val').textContent = '₹' + total.toLocaleString('en-IN');
-    document.getElementById('amount-pill').classList.add('v');
-  } else {
-    document.getElementById('amount-pill').classList.remove('v');
-  }
+  const inr  = n => '₹' + n.toLocaleString('en-IN');
+  const pAmt = qtyAmount(), xAmt = extrasAmount();
+
+  document.getElementById('blk-sub-paneer').classList.toggle('v', pAmt > 0);
+  document.getElementById('sub-paneer-v').textContent = inr(pAmt);
+
+  document.getElementById('blk-sub-specials').classList.toggle('v', xAmt > 0);
+  document.getElementById('sub-specials-v').textContent = inr(xAmt);
+
+  document.getElementById('inv-paneer').classList.toggle('v', pAmt > 0);
+  document.getElementById('inv-paneer-k').innerHTML =
+    PANEER_NEXT ? `Paneer · <span class="inv-date">${PANEER_NEXT.label}</span>` : 'Paneer';
+  document.getElementById('inv-paneer-v').textContent = inr(pAmt);
+
+  document.getElementById('inv-specials').classList.toggle('v', xAmt > 0);
+  document.getElementById('inv-specials-k').innerHTML =
+    SAT_NEXT ? `Saturday Specials · <span class="inv-date">${SAT_NEXT.label}</span>` : 'Saturday Specials';
+  document.getElementById('inv-specials-v').textContent = inr(xAmt);
+
+  document.getElementById('inv-total-v').textContent = inr(grandTotal());
 }
 
 // phone: digits only + clear error
@@ -855,10 +1042,7 @@ function validateAll() {
   const flat  = document.getElementById('f-flat').value.trim();
   setErr('f-flat','e-flat', !flat); if (!flat) ok = false;
 
-  const day = document.querySelector('input[name="delivery_day"]:checked');
-  setCardsErr('day-cards','e-day', !day); if (!day) ok = false;
-
-  const hasQty = qtyTotal() > 0;
+  const hasQty = qtyTotal() + extrasTotal() > 0;
   setCardsErr('qty-cards','e-qty', !hasQty); if (!hasQty) ok = false;
 
   const pay = document.querySelector('input[name="payment"]:checked');
@@ -869,30 +1053,45 @@ function validateAll() {
 
 // ── collect form data ─────────────────────────────────────────
 function collectData() {
-  const pay    = document.querySelector('input[name="payment"]:checked').value;
-  const dayRad = document.querySelector('input[name="delivery_day"]:checked');
-  const freq   = document.querySelector('input[name="frequency"]:checked').value;
-  const amount = qtyAmount();
-  const qtyLabel = Object.entries(QTY_STATE)
+  const pay  = document.querySelector('input[name="payment"]:checked').value;
+  const freq = 'once'; // subscriptions paused — every order is one-time
+  // No day choice: paneer ships on the next run (sooner of Wed/Sat),
+  // Saturday Specials on the next Saturday.
+  const paneerAmt = qtyAmount();
+  const extrasAmt = extrasAmount();
+  const amount    = paneerAmt + extrasAmt;
+  const paneerLabel = Object.entries(QTY_STATE)
     .filter(([, v]) => v > 0)
     .map(([k, v]) => `${k} × ${v}`)
     .join(', ');
+  const extrasLabel = Object.entries(EXTRA_STATE)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${CONFIG.EXTRAS[k].label} × ${v}`)
+    .join(', ');
+  const qtyLabel = [paneerLabel && `Paneer ${paneerLabel}`, extrasLabel].filter(Boolean).join(', ');
 
   return {
     name:       document.getElementById('f-name').value.trim(),
     phone:      document.getElementById('f-phone').value.trim(),
     apartment:  APT.name,
     flat:       document.getElementById('f-flat').value.trim(),
-    day:        dayRad.value,
-    weekday:    dayRad.value === 'Wednesday' ? 'Wed' : 'Sat',
-    fullDate:   dayRad.dataset.fullDate   || dayRad.value,
-    isoDate:    dayRad.dataset.isoDate    || '',
-    shortLabel: dayRad.dataset.shortLabel || dayRad.value,
+    paneerDays: qtyTotal() > 0 ? [PANEER_NEXT] : [],
+    weekday:    PANEER_NEXT && PANEER_NEXT.label.startsWith('Wed') ? 'Wed' : 'Sat',
+    fullDate:   qtyTotal() > 0 ? PANEER_NEXT.full : SAT_NEXT.full,
+    isoDate:    qtyTotal() > 0 ? PANEER_NEXT.iso  : SAT_NEXT.iso,
+    shortLabel: qtyTotal() > 0 ? PANEER_NEXT.label : SAT_NEXT.label,
     q250: QTY_STATE['250g'],
     q500: QTY_STATE['500g'],
     q750: QTY_STATE['750g'],
     q1kg: QTY_STATE['1kg'],
-    qtyLabel, amount, amtDisp: '₹' + amount.toLocaleString('en-IN'),
+    qChaap:  EXTRA_STATE.chaap,
+    qGhee:   EXTRA_STATE.ghee,
+    qButter: EXTRA_STATE.butter,
+    qKhoya:  EXTRA_STATE.khoya,
+    qtyLabel, paneerLabel, extrasLabel, amount, paneerAmt, extrasAmt,
+    satIso:   SAT_NEXT.iso,
+    satLabel: SAT_NEXT.label,
+    amtDisp: '₹' + amount.toLocaleString('en-IN'),
     frequency: freq,
     payKey: pay,
     payLabel: pay === 'cod' ? 'Cash on Delivery' : 'Online',
@@ -901,41 +1100,84 @@ function collectData() {
 
 // ── backend POST ──────────────────────────────────────────────
 // Returns true if order was accepted, false if paused/rejected
-async function sendToSheet(d, payStatus, rzpPaymentId) {
-  const payload = {
-    action:        'order',
-    name:          d.name,
-    phone:         d.phone,
-    address:       `${d.apartment}, ${d.flat}`,
-    mapUrl:        '',
-    deliveryDate:  d.isoDate,
-    deliveryLabel: d.shortLabel,
-    q250:  d.q250,
-    q500:  d.q500,
-    q750:  d.q750,
-    q1kg:  d.q1kg,
-    paymentMethod: d.payLabel,
-    paymentStatus: payStatus,
-    rzpPaymentId:  rzpPaymentId || '',
-  };
-  try {
-    const resp = await fetch(CONFIG.WEBHOOK_URL, {
-      method: 'POST', redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload),
-    });
-    const data = await resp.json();
-    if (data.paused) return false;
-    return true;
-  } catch {
-    const q = JSON.parse(localStorage.getItem('db_q') || '[]');
-    q.push({ ...payload, ts: new Date().toISOString() });
-    localStorage.setItem('db_q', JSON.stringify(q));
-    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-      try { (await navigator.serviceWorker.ready).sync.register('sync-orders'); } catch(_) {}
-    }
-    return true;
+// One order per delivery day. The paneer basket goes out on the next run;
+// Saturday Specials always ride the Saturday run and merge into a
+// Saturday paneer order when there is one.
+function buildDeliveryGroups(d) {
+  const hasPaneer = d.q250 + d.q500 + d.q750 + d.q1kg > 0;
+  const hasExtras = d.qChaap + d.qGhee + d.qButter + d.qKhoya > 0;
+  const paneerQ = { q250: d.q250, q500: d.q500, q750: d.q750, q1kg: d.q1kg };
+  const extrasQ = { qChaap: d.qChaap, qGhee: d.qGhee, qButter: d.qButter, qKhoya: d.qKhoya };
+  const zeroP   = { q250: 0, q500: 0, q750: 0, q1kg: 0 };
+  const zeroX   = { qChaap: 0, qGhee: 0, qButter: 0, qKhoya: 0 };
+
+  const groups = [];
+  if (hasPaneer) {
+    d.paneerDays.forEach(day =>
+      groups.push({ isoDate: day.iso, label: day.label, ...paneerQ, ...zeroX }));
   }
+  if (hasExtras) {
+    const sat = groups.find(g => g.isoDate === d.satIso);
+    if (sat) Object.assign(sat, extrasQ);
+    else groups.push({ isoDate: d.satIso, label: d.satLabel, ...zeroP, ...extrasQ });
+  }
+  return groups;
+}
+
+// Human list of a delivery group's contents ("Paneer 500g × 1, Khoya × 2").
+function groupItemsLabel(g) {
+  const parts = [];
+  if (g.q250) parts.push(`Paneer 250g × ${g.q250}`);
+  if (g.q500) parts.push(`Paneer 500g × ${g.q500}`);
+  if (g.q750) parts.push(`Paneer 750g × ${g.q750}`);
+  if (g.q1kg) parts.push(`Paneer 1 kg × ${g.q1kg}`);
+  if (g.qChaap)  parts.push(`${CONFIG.EXTRAS.chaap.label} × ${g.qChaap}`);
+  if (g.qGhee)   parts.push(`${CONFIG.EXTRAS.ghee.label} × ${g.qGhee}`);
+  if (g.qButter) parts.push(`${CONFIG.EXTRAS.butter.label} × ${g.qButter}`);
+  if (g.qKhoya)  parts.push(`${CONFIG.EXTRAS.khoya.label} × ${g.qKhoya}`);
+  return parts.join(', ');
+}
+
+async function sendToSheet(d, payStatus, rzpPaymentId) {
+  for (const g of buildDeliveryGroups(d)) {
+    const payload = {
+      action:        'order',
+      name:          d.name,
+      phone:         d.phone,
+      address:       `${d.apartment}, ${d.flat}`,
+      mapUrl:        '',
+      deliveryDate:  g.isoDate,
+      deliveryLabel: g.label,
+      q250:  g.q250,
+      q500:  g.q500,
+      q750:  g.q750,
+      q1kg:  g.q1kg,
+      qChaap:  g.qChaap,
+      qGhee:   g.qGhee,
+      qButter: g.qButter,
+      qKhoya:  g.qKhoya,
+      paymentMethod: d.payLabel,
+      paymentStatus: payStatus,
+      rzpPaymentId:  rzpPaymentId || '',
+    };
+    try {
+      const resp = await fetch(CONFIG.WEBHOOK_URL, {
+        method: 'POST', redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+      });
+      const data = await resp.json();
+      if (data.paused) return false;
+    } catch {
+      const q = JSON.parse(localStorage.getItem('db_q') || '[]');
+      q.push({ ...payload, ts: new Date().toISOString() });
+      localStorage.setItem('db_q', JSON.stringify(q));
+      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        try { (await navigator.serviceWorker.ready).sync.register('sync-orders'); } catch(_) {}
+      }
+    }
+  }
+  return true;
 }
 
 // ── Razorpay checkout ─────────────────────────────────────────
@@ -995,6 +1237,9 @@ async function openRazorpay(d) {
 // No offline queue here (unlike sendToSheet) — a subscription signup
 // tied to a Razorpay charge isn't safe to silently replay later, so a
 // network failure just surfaces an error and the customer retries.
+// NOTE: Subscriptions are paused for the multi-product launch — the UI step
+// was removed (frequency is hardcoded 'once'), so the functions below are
+// currently unreachable. Kept intact for reintroduction; full UI in 87949c3.
 async function createSubscription(d, rzpPaymentId) {
   const payload = {
     action:        'create_subscription',
@@ -1005,6 +1250,7 @@ async function createSubscription(d, rzpPaymentId) {
     frequency:     d.frequency,
     weekday:       d.weekday,
     q250: d.q250, q500: d.q500, q750: d.q750, q1kg: d.q1kg,
+    qChaap: d.qChaap, qGhee: d.qGhee, qButter: d.qButter, qKhoya: d.qKhoya,
     paymentMethod: rzpPaymentId ? 'prepay4' : 'cod',
     rzpPaymentId:  rzpPaymentId || '',
     deliveryDate:  d.isoDate,
@@ -1028,7 +1274,8 @@ async function openRazorpaySubscription(d) {
   setBusy(true);
   try {
     await loadRazorpayScript();
-    const totalAmount = d.amount * 4;
+    // Prepay covers 4 paneer deliveries; extras are one-time, charged once.
+    const totalAmount = d.paneerAmt * 4 + d.extrasAmt;
     const resp = await fetch(CONFIG.WEBHOOK_URL, {
       method:   'POST',
       redirect: 'follow',
@@ -1069,19 +1316,30 @@ function showConfirmation(d, payStatus, subResult) {
   hide('screen-form');
   show('screen-confirm'); goTop();
 
-  const isSub = d.frequency !== 'once';
+  const isSub  = d.frequency !== 'once';
+  const groups = buildDeliveryGroups(d);
   document.getElementById('confirm-msg').textContent = isSub
     ? `Your paneer subscription starts ${d.fullDate}. We've notified Deepa.`
-    : `Your paneer is confirmed for ${d.fullDate}. We've notified Deepa.`;
+    : groups.length > 1
+      ? `Order confirmed — ${groups.length} deliveries: ${groups.map(g => g.label).join(' and ')}. We've notified Deepa.`
+      : `Your order is confirmed for ${groups[0] ? groups[0].label : d.fullDate}. We've notified Deepa.`;
 
   const pmDisplay = payStatus || d.payLabel;
   let rows = `
     <div class="cr"><span class="ck">Name</span><span class="cv">${esc(d.name)}</span></div>
     <div class="cr"><span class="ck">Phone</span><span class="cv">${esc(d.phone)}</span></div>
     <div class="cr"><span class="ck">Apartment</span><span class="cv">Adarsh Greens</span></div>
-    <div class="cr"><span class="ck">Flat</span><span class="cv">${esc(d.flat)}</span></div>
-    <div class="cr"><span class="ck">Quantity</span><span class="cv">${esc(d.qtyLabel)} — ${esc(d.amtDisp)}</span></div>
-    <div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(d.fullDate)}</span></div>`;
+    <div class="cr"><span class="ck">Flat</span><span class="cv">${esc(d.flat)}</span></div>`;
+  // One "arriving <day>" row per delivery, so multi-day orders are explicit.
+  if (groups.length > 1) {
+    groups.forEach(g => {
+      rows += `<div class="cr"><span class="ck">${esc(g.label)}</span><span class="cv">${esc(groupItemsLabel(g))}</span></div>`;
+    });
+  } else {
+    rows += `<div class="cr"><span class="ck">Items</span><span class="cv">${esc(d.qtyLabel)}</span></div>`;
+    rows += `<div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(groups[0] ? groups[0].label : d.fullDate)}</span></div>`;
+  }
+  rows += `<div class="cr"><span class="ck">Total</span><span class="cv">${esc(d.amtDisp)}</span></div>`;
   if (isSub) {
     rows += `<div class="cr"><span class="ck">Frequency</span><span class="cv">${esc(frequencyLabel(d.frequency))}</span></div>`;
   }
@@ -1108,15 +1366,21 @@ function showConfirmation(d, payStatus, subResult) {
 // ── reset ─────────────────────────────────────────────────────
 function resetForm() {
   document.getElementById('orderForm').reset();
-  document.querySelectorAll('.day-card, .pay-card').forEach(c => c.classList.remove('chosen'));
+  document.querySelectorAll('.day-card:not(.day-card--fixed), .pay-card, .day-chip').forEach(c => c.classList.remove('chosen'));
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));
   document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
   document.querySelectorAll('.cards-error').forEach(e => e.classList.remove('cards-error'));
   Object.keys(QTY_STATE).forEach(k => {
     QTY_STATE[k] = 0;
     document.getElementById('qcount-' + k).textContent = '0';
+    updateLine(k, 0);
   });
-  document.getElementById('amount-pill').classList.remove('v');
+  Object.keys(EXTRA_STATE).forEach(k => {
+    EXTRA_STATE[k] = 0;
+    document.getElementById('qcount-' + k).textContent = '0';
+    updateLine(k, 0);
+  });
+  updateTotalPill();
   document.getElementById('manage-block').style.display = 'none';
   updatePayCardForFrequency();
   hide('screen-confirm');

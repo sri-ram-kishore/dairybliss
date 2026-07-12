@@ -1,7 +1,7 @@
 {
   "name": "Dairy Bliss · ADG",
   "short_name": "DairyBliss",
-  "description": "Order fresh paneer — Adarsh Greens. Delivered every Wednesday and Saturday.",
+  "description": "Order fresh paneer, desi ghee, chaap & more — Adarsh Greens. Delivered every Wednesday and Saturday.",
   "start_url": "/orders/adg/",
   "scope": "/orders/adg/",
   "display": "standalone",

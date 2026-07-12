@@ -1,7 +1,7 @@
 {
   "name": "Dairy Bliss · BNR",
   "short_name": "DairyBliss",
-  "description": "Order fresh paneer — Brigade North Ridge. Delivered every Wednesday and Saturday.",
+  "description": "Order fresh paneer, desi ghee, chaap & more — Brigade North Ridge. Delivered every Wednesday and Saturday.",
   "start_url": "/orders/bnr/",
   "scope": "/orders/bnr/",
   "display": "standalone",
