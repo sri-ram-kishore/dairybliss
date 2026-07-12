@@ -70,7 +70,7 @@
     .page-title-row {
       max-width: 520px; margin: 0 auto;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 14px 4px;
+      padding: 12px 14px 2px;
     }
     .apt-back {
       display: inline-flex; align-items: center; flex-shrink: 0;
@@ -80,7 +80,7 @@
     }
     .apt-back:hover { opacity: 0.9; color: var(--green); }
     .page-title {
-      font-size: 26px; font-weight: 760; color: var(--text);
+      font-size: 24px; font-weight: 760; color: var(--text);
       letter-spacing: -0.5px; line-height: 1.1;
       padding: 0;
     }
@@ -92,24 +92,24 @@
     .fc {
       background: rgba(255,255,255,0.72);
       border-radius: 12px;
-      margin: 16px 14px 0;
-      padding: 20px 18px;
+      margin: 12px 14px 0;
+      padding: 16px 16px;
       box-shadow: var(--shadow);
       border: 1px solid var(--border);
     }
 
     /* ── STEP HEADER ── */
-    .step-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .step-hd { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
     .step-n {
-      width: 28px; height: 28px; background: var(--green); color: #fff;
+      width: 24px; height: 24px; background: var(--green); color: #fff;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700; flex-shrink: 0;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
     }
-    .step-title { font-size: 17px; font-weight: 700; color: var(--text); }
+    .step-title { font-size: 16px; font-weight: 700; color: var(--text); }
     .req::after { content: ' *'; color: var(--err); font-size: 13px; }
 
     /* ── FIELD ── */
-    .field { margin-bottom: 14px; }
+    .field { margin-bottom: 12px; }
     .field:last-child { margin-bottom: 0; }
 
     .fl {
@@ -171,7 +171,7 @@
         .qty-rows { display: flex; flex-direction: column; }
     .qty-row {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 12px; border-bottom: 1px solid var(--border);
+      padding: 8px 10px; border-bottom: 1px solid var(--border);
     }
     .qty-row:last-child { border-bottom: none; }
     .qty-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
@@ -204,7 +204,7 @@
     .qty-right { display: flex; align-items: center; gap: 12px; }
     .qty-line { min-width: 52px; text-align: right; font-size: 13.5px; font-weight: 700; color: var(--text); }
     .qty-line.zero { color: var(--text-soft); font-weight: 500; }
-    .sub-note { font-size: 12px; color: var(--text-soft); margin: 0 2px 12px; line-height: 1.4; }
+    .sub-note { font-size: 12px; color: var(--text-soft); margin: -6px 2px 12px; line-height: 1.4; }
 
     /* per-product availability chip ("Sat only") */
     .qty-tag {
@@ -245,7 +245,7 @@
     /* per-block subtotal line */
     .blk-sub {
       display: none; justify-content: space-between; align-items: center;
-      margin-top: 10px; padding: 10px 12px 0;
+      margin-top: 8px; padding: 8px 10px 0;
       border-top: 1px solid var(--border); font-size: 13.5px;
     }
     .blk-sub.v { display: flex; }
@@ -253,7 +253,7 @@
     .blk-sub .v2 { font-weight: 700; color: var(--text); }
 
     /* "When do you need it?" rows */
-    .when-rows { display: flex; flex-direction: column; gap: 14px; }
+    .when-rows { display: flex; flex-direction: column; gap: 12px; }
     .when-row {
       display: none; align-items: center; justify-content: space-between;
       gap: 10px; flex-wrap: wrap;
@@ -264,6 +264,7 @@
     .when-fixed {
       font-size: 12.5px; font-weight: 700; color: var(--green);
       background: var(--green-light); border-radius: 20px; padding: 6px 13px;
+      border: 1.5px solid transparent; /* height-match with the tick-chips */
       white-space: nowrap;
     }
     .when-empty { font-size: 13px; color: var(--text-soft); display: none; margin: 0; }
