@@ -1319,10 +1319,10 @@ function showConfirmation(d, payStatus, subResult) {
   const isSub  = d.frequency !== 'once';
   const groups = buildDeliveryGroups(d);
   document.getElementById('confirm-msg').textContent = isSub
-    ? `Your paneer subscription starts ${d.fullDate}. We've notified Rekha.`
+    ? `Your paneer subscription starts ${d.fullDate}. We're on it!`
     : groups.length > 1
-      ? `Order confirmed — ${groups.length} deliveries: ${groups.map(g => g.label).join(' and ')}. We've notified Rekha.`
-      : `Your order is confirmed for ${groups[0] ? groups[0].label : d.fullDate}. We've notified Rekha.`;
+      ? `Order confirmed — ${groups.length} deliveries: ${groups.map(g => g.label).join(' and ')}. We're on it!`
+      : `Your order is confirmed for ${groups[0] ? groups[0].label : d.fullDate}. We're on it!`;
 
   const pmDisplay = payStatus || d.payLabel;
   let rows = `
