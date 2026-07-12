@@ -70,7 +70,7 @@
     .page-title-row {
       max-width: 520px; margin: 0 auto;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 14px 2px;
+      padding: 16px 14px 2px;
     }
     .apt-back {
       display: inline-flex; align-items: center; flex-shrink: 0;
@@ -80,9 +80,11 @@
     }
     .apt-back:hover { opacity: 0.9; color: var(--green); }
     .page-eyebrow {
-      font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em;
+      display: inline-block;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.07em;
       text-transform: uppercase; color: var(--green);
-      margin: 0 0 3px; padding: 0;
+      background: var(--green-light); border-radius: 20px;
+      padding: 4px 12px; margin: 0 0 7px;
     }
     .page-title {
       font-size: 24px; font-weight: 760; color: var(--text);
@@ -184,6 +186,8 @@
     .qty-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
     /* paneer size labels are short — keep size + price on one line */
     #qty-cards .qty-info { flex-direction: row; align-items: baseline; gap: 8px; }
+    /* two-line Specials rows breathe a little more */
+    #extra-cards .qty-row { padding-top: 12px; padding-bottom: 12px; }
     .qty-label { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; }
     .qty-price { font-size: 12.5px; font-weight: 500; color: var(--green); }
     .qty-stepper { display: flex; align-items: center; gap: 16px; }
@@ -286,15 +290,15 @@
     /* mini-bill inside the payment step */
     .invoice {
       background: var(--cream); border: 1.5px solid rgba(61,122,26,0.2);
-      border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+      border-radius: 10px; padding: 14px 16px; margin: 6px 0 18px;
     }
-    .inv-row { display: none; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13.5px; color: var(--text-mid); }
+    .inv-row { display: none; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: 13.5px; color: var(--text-mid); }
     .inv-row.v { display: flex; }
     .inv-row .inv-v { font-weight: 600; color: var(--text); white-space: nowrap; }
     .inv-date { font-weight: 700; color: var(--green); white-space: nowrap; }
-    .inv-total { border-top: none; margin-top: 0; padding-top: 3px; }
+    .inv-total { border-top: none; margin-top: 0; padding-top: 5px; }
     /* separator only once there are item lines above the total */
-    .inv-row.v ~ .inv-total { border-top: 1px dashed rgba(28,47,92,0.18); margin-top: 6px; padding-top: 8px; }
+    .inv-row.v ~ .inv-total { border-top: 1px dashed rgba(28,47,92,0.18); margin-top: 8px; padding-top: 10px; }
     .inv-total .inv-k { font-weight: 700; color: var(--text); font-size: 14px; }
     .inv-total .inv-v { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; color: var(--green); }
 
