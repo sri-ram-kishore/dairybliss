@@ -188,6 +188,7 @@
     }
     .qty-btn:active { opacity: 0.6; }
     .qty-count { font-size: 17px; font-weight: 600; color: var(--text); min-width: 20px; text-align: center; }
+    .qty-count--wide { min-width: 52px; font-size: 15px; white-space: nowrap; }
 
     .amt-row {
       display: none; align-items: center; justify-content: space-between;
@@ -499,47 +500,17 @@ const APT = {
 
     <div class="qty-rows" id="qty-cards">
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Paneer · 250g</span><span class="qty-price">₹145</span></div>
-        <div class="qty-right">
-          <div class="qty-stepper">
-            <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
-            <span class="qty-count" id="qcount-250g">0</span>
-            <button type="button" class="qty-btn" onclick="stepQty('250g',1)">+</button>
-          </div>
-          <span class="qty-line zero" id="qline-250g">—</span>
+        <div class="qty-info">
+          <span class="qty-label">Paneer</span>
+          <span class="qty-price">₹145/250g · ₹550/kg</span>
         </div>
-      </div>
-      <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Paneer · 500g</span><span class="qty-price">₹280</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
-            <button type="button" class="qty-btn" onclick="stepQty('500g',-1)">−</button>
-            <span class="qty-count" id="qcount-500g">0</span>
-            <button type="button" class="qty-btn" onclick="stepQty('500g',1)">+</button>
+            <button type="button" class="qty-btn" onclick="stepPaneer(-1)">−</button>
+            <span class="qty-count qty-count--wide" id="qcount-paneer">0</span>
+            <button type="button" class="qty-btn" onclick="stepPaneer(1)">+</button>
           </div>
-          <span class="qty-line zero" id="qline-500g">—</span>
-        </div>
-      </div>
-      <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Paneer · 750g</span><span class="qty-price">₹420</span></div>
-        <div class="qty-right">
-          <div class="qty-stepper">
-            <button type="button" class="qty-btn" onclick="stepQty('750g',-1)">−</button>
-            <span class="qty-count" id="qcount-750g">0</span>
-            <button type="button" class="qty-btn" onclick="stepQty('750g',1)">+</button>
-          </div>
-          <span class="qty-line zero" id="qline-750g">—</span>
-        </div>
-      </div>
-      <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Paneer · 1 kg</span><span class="qty-price">₹550</span></div>
-        <div class="qty-right">
-          <div class="qty-stepper">
-            <button type="button" class="qty-btn" onclick="stepQty('1kg',-1)">−</button>
-            <span class="qty-count" id="qcount-1kg">0</span>
-            <button type="button" class="qty-btn" onclick="stepQty('1kg',1)">+</button>
-          </div>
-          <span class="qty-line zero" id="qline-1kg">—</span>
+          <span class="qty-line zero" id="qline-paneer">—</span>
         </div>
       </div>
     </div>
@@ -649,7 +620,7 @@ const APT = {
         <input type="radio" name="payment" value="cod">
         <div class="pay-body">
           <div class="pay-name">Cash on Delivery</div>
-          <div class="pay-sub">Pay when your paneer arrives</div>
+          <div class="pay-sub">Pay when your order arrives</div>
         </div>
       </label>
     </div>
@@ -858,13 +829,32 @@ function frequencyLabel(freq) {
 }
 
 // ── quantity steppers ─────────────────────────────────────────
-const QTY_STATE   = { '250g': 0, '500g': 0, '750g': 0, '1kg': 0 };
+// Paneer is one line: the stepper counts 250g units and the price always
+// uses the cheapest pack combination (1kg ₹550 beats 4×250g ₹580, etc.).
+// The combo is decomposed back to q250/q500/q750/q1kg for the backend.
+let PANEER_UNITS = 0;                 // 1 unit = 250g
+const PANEER_MAX_UNITS = 16;          // 4 kg cap per order
 const EXTRA_STATE = { chaap: 0, ghee: 0, butter: 0, khoya: 0 };
 
-function stepQty(key, delta) {
-  QTY_STATE[key] = Math.max(0, (QTY_STATE[key] || 0) + delta);
-  document.getElementById('qcount-' + key).textContent = QTY_STATE[key];
-  updateLine(key, QTY_STATE[key] * (CONFIG.PRICES[key]?.amount || 0));
+function paneerDecompose(units) {
+  const q1kg = Math.floor(units / 4), r = units % 4;
+  return { q250: r === 1 ? 1 : 0, q500: r === 2 ? 1 : 0, q750: r === 3 ? 1 : 0, q1kg };
+}
+function paneerCost(units) {
+  const q = paneerDecompose(units), P = CONFIG.PRICES;
+  return q.q250 * P['250g'].amount + q.q500 * P['500g'].amount +
+         q.q750 * P['750g'].amount + q.q1kg * P['1kg'].amount;
+}
+function weightLabel(units) {
+  const g = units * 250;
+  return g < 1000 ? g + 'g' : (g / 1000) + ' kg';
+}
+
+function stepPaneer(delta) {
+  PANEER_UNITS = Math.min(PANEER_MAX_UNITS, Math.max(0, PANEER_UNITS + delta));
+  document.getElementById('qcount-paneer').textContent =
+    PANEER_UNITS > 0 ? weightLabel(PANEER_UNITS) : '0';
+  updateLine('paneer', paneerCost(PANEER_UNITS));
   updateTotalPill();
   updatePayCardForFrequency();
   syncProductUI();
@@ -883,21 +873,47 @@ function extrasTotal() {
   return Object.values(EXTRA_STATE).reduce((s, v) => s + v, 0);
 }
 
-// Cart-driven UI: extras deliver Saturdays only, so any extra in the cart
-// locks the delivery day to Saturday (Wednesday greys out with a note).
+// Cart-driven UI. Extras deliver Saturdays only, but they never move the
+// paneer: the day picker chooses the PANEER day. Mixed cart + Wednesday
+// simply becomes two deliveries (both runs happen anyway). Wednesday is
+// only locked when the cart is extras-only (nothing to deliver that day).
 function syncProductUI() {
   const hasExtras = extrasTotal() > 0;
+  const hasPaneer = qtyTotal() > 0;
+  const extrasOnly = hasExtras && !hasPaneer;
 
   const rWed = document.getElementById('r-wed');
   const rSat = document.getElementById('r-sat');
-  document.getElementById('dc-wed').classList.toggle('dc-disabled', hasExtras);
-  rWed.disabled = hasExtras;
-  document.getElementById('day-note').classList.toggle('v', hasExtras);
-  if (hasExtras && !rSat.checked) {
+  document.getElementById('dc-wed').classList.toggle('dc-disabled', extrasOnly);
+  rWed.disabled = extrasOnly;
+  if (extrasOnly && !rSat.checked) {
     rSat.checked = true;
     rSat.dispatchEvent(new Event('change', { bubbles: true }));
   }
+
+  // Explain what arrives when, per the current cart + chosen day.
+  const note   = document.getElementById('day-note');
+  const satLbl = rSat.dataset.shortLabel || 'Saturday';
+  const wedChosen = rWed.checked;
+  if (!hasExtras) {
+    note.classList.remove('v');
+  } else {
+    note.classList.add('v');
+    if (extrasOnly) {
+      note.textContent = `Extras are delivered on Saturdays — arriving ${satLbl}.`;
+    } else if (wedChosen) {
+      const wedLbl = rWed.dataset.shortLabel || 'Wednesday';
+      note.textContent = `Two deliveries: paneer arrives ${wedLbl}, your extras arrive ${satLbl}.`;
+    } else if (rSat.checked) {
+      note.textContent = `Everything arrives together on ${satLbl}.`;
+    } else {
+      note.textContent = `Your extras arrive ${satLbl} — pick a delivery day for your paneer.`;
+    }
+  }
 }
+// The note depends on the chosen day too, not just the cart.
+document.querySelectorAll('input[name="delivery_day"]').forEach(r =>
+  r.addEventListener('change', syncProductUI));
 // Show/hide a row's line total (₹ subtotal) as its quantity changes.
 function updateLine(key, amt) {
   const el = document.getElementById('qline-' + key);
@@ -906,10 +922,10 @@ function updateLine(key, amt) {
   else         { el.textContent = '—'; el.classList.add('zero'); }
 }
 function qtyTotal() {
-  return Object.values(QTY_STATE).reduce((s, v) => s + v, 0);
+  return PANEER_UNITS;
 }
 function qtyAmount() {
-  return Object.entries(QTY_STATE).reduce((s, [k, v]) => s + (CONFIG.PRICES[k]?.amount || 0) * v, 0);
+  return paneerCost(PANEER_UNITS);
 }
 function extrasAmount() {
   return Object.entries(EXTRA_STATE).reduce((s, [k, v]) => s + (CONFIG.EXTRAS[k]?.amount || 0) * v, 0);
@@ -974,15 +990,19 @@ function collectData() {
   const pay    = document.querySelector('input[name="payment"]:checked').value;
   const dayRad = document.querySelector('input[name="delivery_day"]:checked');
   const freq   = 'once'; // subscriptions paused — every order is one-time
-  // Paneer and extras tracked separately: subscriptions repeat (and prepay ×4)
-  // paneer only — extras are one-time and charged/delivered once.
+  // Paneer and extras tracked separately: the chosen day applies to paneer,
+  // extras always ride the Saturday run (split into two orders if needed).
+  const qp        = paneerDecompose(PANEER_UNITS);
   const paneerAmt = qtyAmount();
   const extrasAmt = extrasAmount();
   const amount    = paneerAmt + extrasAmt;
-  const qtyLabel = [
-    ...Object.entries(QTY_STATE).filter(([, v]) => v > 0).map(([k, v]) => `${k} × ${v}`),
-    ...Object.entries(EXTRA_STATE).filter(([, v]) => v > 0).map(([k, v]) => `${CONFIG.EXTRAS[k].label} × ${v}`),
-  ].join(', ');
+  const extrasLabel = Object.entries(EXTRA_STATE)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${CONFIG.EXTRAS[k].label} × ${v}`)
+    .join(', ');
+  const paneerLabel = PANEER_UNITS > 0 ? `Paneer ${weightLabel(PANEER_UNITS)}` : '';
+  const qtyLabel = [paneerLabel, extrasLabel].filter(Boolean).join(', ');
+  const rSat = document.getElementById('r-sat');
 
   return {
     name:       document.getElementById('f-name').value.trim(),
@@ -994,15 +1014,17 @@ function collectData() {
     fullDate:   dayRad.dataset.fullDate   || dayRad.value,
     isoDate:    dayRad.dataset.isoDate    || '',
     shortLabel: dayRad.dataset.shortLabel || dayRad.value,
-    q250: QTY_STATE['250g'],
-    q500: QTY_STATE['500g'],
-    q750: QTY_STATE['750g'],
-    q1kg: QTY_STATE['1kg'],
+    q250: qp.q250,
+    q500: qp.q500,
+    q750: qp.q750,
+    q1kg: qp.q1kg,
     qChaap:  EXTRA_STATE.chaap,
     qGhee:   EXTRA_STATE.ghee,
     qButter: EXTRA_STATE.butter,
     qKhoya:  EXTRA_STATE.khoya,
-    qtyLabel, amount, paneerAmt, extrasAmt,
+    qtyLabel, paneerLabel, extrasLabel, amount, paneerAmt, extrasAmt,
+    satIso:   rSat.dataset.isoDate    || '',
+    satLabel: rSat.dataset.shortLabel || 'Saturday',
     amtDisp: '₹' + amount.toLocaleString('en-IN'),
     frequency: freq,
     payKey: pay,
@@ -1012,45 +1034,68 @@ function collectData() {
 
 // ── backend POST ──────────────────────────────────────────────
 // Returns true if order was accepted, false if paused/rejected
+// One order per delivery day. Paneer goes out on the chosen day; extras
+// always ride the Saturday run. Same day → one combined order; paneer on
+// Wednesday + extras → two orders (Wed paneer, Sat extras).
+function buildDeliveryGroups(d) {
+  const hasPaneer = d.q250 + d.q500 + d.q750 + d.q1kg > 0;
+  const hasExtras = d.qChaap + d.qGhee + d.qButter + d.qKhoya > 0;
+  const paneerQ = { q250: d.q250, q500: d.q500, q750: d.q750, q1kg: d.q1kg,
+                    qChaap: 0, qGhee: 0, qButter: 0, qKhoya: 0 };
+  const extrasQ = { q250: 0, q500: 0, q750: 0, q1kg: 0,
+                    qChaap: d.qChaap, qGhee: d.qGhee, qButter: d.qButter, qKhoya: d.qKhoya };
+  const allQ    = { q250: d.q250, q500: d.q500, q750: d.q750, q1kg: d.q1kg,
+                    qChaap: d.qChaap, qGhee: d.qGhee, qButter: d.qButter, qKhoya: d.qKhoya };
+
+  if (!hasExtras) return [{ isoDate: d.isoDate, label: d.shortLabel, ...paneerQ }];
+  if (!hasPaneer) return [{ isoDate: d.satIso, label: d.satLabel, ...extrasQ }];
+  if (d.isoDate === d.satIso) return [{ isoDate: d.isoDate, label: d.shortLabel, ...allQ }];
+  return [
+    { isoDate: d.isoDate, label: d.shortLabel, ...paneerQ },
+    { isoDate: d.satIso,  label: d.satLabel,   ...extrasQ },
+  ];
+}
+
 async function sendToSheet(d, payStatus, rzpPaymentId) {
-  const payload = {
-    action:        'order',
-    name:          d.name,
-    phone:         d.phone,
-    address:       `${d.apartment}, ${d.flat}`,
-    mapUrl:        '',
-    deliveryDate:  d.isoDate,
-    deliveryLabel: d.shortLabel,
-    q250:  d.q250,
-    q500:  d.q500,
-    q750:  d.q750,
-    q1kg:  d.q1kg,
-    qChaap:  d.qChaap,
-    qGhee:   d.qGhee,
-    qButter: d.qButter,
-    qKhoya:  d.qKhoya,
-    paymentMethod: d.payLabel,
-    paymentStatus: payStatus,
-    rzpPaymentId:  rzpPaymentId || '',
-  };
-  try {
-    const resp = await fetch(CONFIG.WEBHOOK_URL, {
-      method: 'POST', redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload),
-    });
-    const data = await resp.json();
-    if (data.paused) return false;
-    return true;
-  } catch {
-    const q = JSON.parse(localStorage.getItem('db_q') || '[]');
-    q.push({ ...payload, ts: new Date().toISOString() });
-    localStorage.setItem('db_q', JSON.stringify(q));
-    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-      try { (await navigator.serviceWorker.ready).sync.register('sync-orders'); } catch(_) {}
+  for (const g of buildDeliveryGroups(d)) {
+    const payload = {
+      action:        'order',
+      name:          d.name,
+      phone:         d.phone,
+      address:       `${d.apartment}, ${d.flat}`,
+      mapUrl:        '',
+      deliveryDate:  g.isoDate,
+      deliveryLabel: g.label,
+      q250:  g.q250,
+      q500:  g.q500,
+      q750:  g.q750,
+      q1kg:  g.q1kg,
+      qChaap:  g.qChaap,
+      qGhee:   g.qGhee,
+      qButter: g.qButter,
+      qKhoya:  g.qKhoya,
+      paymentMethod: d.payLabel,
+      paymentStatus: payStatus,
+      rzpPaymentId:  rzpPaymentId || '',
+    };
+    try {
+      const resp = await fetch(CONFIG.WEBHOOK_URL, {
+        method: 'POST', redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+      });
+      const data = await resp.json();
+      if (data.paused) return false;
+    } catch {
+      const q = JSON.parse(localStorage.getItem('db_q') || '[]');
+      q.push({ ...payload, ts: new Date().toISOString() });
+      localStorage.setItem('db_q', JSON.stringify(q));
+      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        try { (await navigator.serviceWorker.ready).sync.register('sync-orders'); } catch(_) {}
+      }
     }
-    return true;
   }
+  return true;
 }
 
 // ── Razorpay checkout ─────────────────────────────────────────
@@ -1190,18 +1235,28 @@ function showConfirmation(d, payStatus, subResult) {
   show('screen-confirm'); goTop();
 
   const isSub = d.frequency !== 'once';
+  const split = d.paneerLabel && d.extrasLabel && d.isoDate !== d.satIso;
   document.getElementById('confirm-msg').textContent = isSub
     ? `Your paneer subscription starts ${d.fullDate}. We've notified Deepa.`
-    : `Your paneer is confirmed for ${d.fullDate}. We've notified Deepa.`;
+    : split
+      ? `Your order is confirmed — arriving in two deliveries. We've notified Deepa.`
+      : `Your order is confirmed for ${d.paneerLabel ? d.fullDate : d.satLabel}. We've notified Deepa.`;
 
   const pmDisplay = payStatus || d.payLabel;
   let rows = `
     <div class="cr"><span class="ck">Name</span><span class="cv">${esc(d.name)}</span></div>
     <div class="cr"><span class="ck">Phone</span><span class="cv">${esc(d.phone)}</span></div>
     <div class="cr"><span class="ck">Apartment</span><span class="cv">Bren Northern Lights</span></div>
-    <div class="cr"><span class="ck">Flat</span><span class="cv">${esc(d.flat)}</span></div>
-    <div class="cr"><span class="ck">Quantity</span><span class="cv">${esc(d.qtyLabel)} — ${esc(d.amtDisp)}</span></div>
-    <div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(d.fullDate)}</span></div>`;
+    <div class="cr"><span class="ck">Flat</span><span class="cv">${esc(d.flat)}</span></div>`;
+  // One "Arriving <day>" row per delivery, so a split order is explicit.
+  if (split) {
+    rows += `<div class="cr"><span class="ck">${esc(d.shortLabel)}</span><span class="cv">${esc(d.paneerLabel)}</span></div>`;
+    rows += `<div class="cr"><span class="ck">${esc(d.satLabel)}</span><span class="cv">${esc(d.extrasLabel)}</span></div>`;
+  } else {
+    rows += `<div class="cr"><span class="ck">Items</span><span class="cv">${esc(d.qtyLabel)}</span></div>`;
+    rows += `<div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(d.paneerLabel ? d.fullDate : d.satLabel)}</span></div>`;
+  }
+  rows += `<div class="cr"><span class="ck">Total</span><span class="cv">${esc(d.amtDisp)}</span></div>`;
   if (isSub) {
     rows += `<div class="cr"><span class="ck">Frequency</span><span class="cv">${esc(frequencyLabel(d.frequency))}</span></div>`;
   }
@@ -1232,11 +1287,16 @@ function resetForm() {
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));
   document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
   document.querySelectorAll('.cards-error').forEach(e => e.classList.remove('cards-error'));
-  Object.keys(QTY_STATE).forEach(k => {
-    QTY_STATE[k] = 0;
+  PANEER_UNITS = 0;
+  document.getElementById('qcount-paneer').textContent = '0';
+  updateLine('paneer', 0);
+  Object.keys(EXTRA_STATE).forEach(k => {
+    EXTRA_STATE[k] = 0;
     document.getElementById('qcount-' + k).textContent = '0';
+    updateLine(k, 0);
   });
   document.getElementById('amount-pill').classList.remove('v');
+  syncProductUI();
   document.getElementById('manage-block').style.display = 'none';
   updatePayCardForFrequency();
   hide('screen-confirm');
