@@ -215,6 +215,31 @@
     /* paneer + extras render as one continuous list */
     #qty-cards .qty-row:last-child { border-bottom: 1px solid var(--border); }
 
+    /* inline delivery-day chips on the paneer row */
+    .qty-row--paneer { flex-wrap: wrap; }
+    .qty-days {
+      flex-basis: 100%; display: none; align-items: center; gap: 8px;
+      margin-top: 10px;
+    }
+    .qty-days.v { display: flex; }
+    .qty-days-lbl {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--text-soft); margin-right: 2px;
+    }
+    .day-chip {
+      position: relative; display: inline-flex; align-items: center;
+      border: 1.5px solid var(--border); border-radius: 20px;
+      padding: 6px 13px; font-size: 12.5px; font-weight: 600;
+      color: var(--text); cursor: pointer; background: var(--cream-card);
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .day-chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .day-chip.chosen {
+      border-color: var(--green); background: var(--green-light);
+      color: var(--green); font-weight: 700;
+    }
+
     /* delivery-day reactions to cart contents */
     .day-card.dc-disabled { opacity: 0.45; pointer-events: none; }
     .day-note {
@@ -499,7 +524,7 @@ const APT = {
     </div>
 
     <div class="qty-rows" id="qty-cards">
-      <div class="qty-row">
+      <div class="qty-row qty-row--paneer">
         <div class="qty-info">
           <span class="qty-label">Paneer</span>
           <span class="qty-price">₹145/250g · ₹550/kg</span>
@@ -512,12 +537,24 @@ const APT = {
           </div>
           <span class="qty-line zero" id="qline-paneer">—</span>
         </div>
+        <!-- Paneer picks its own delivery day (next Wed / next Sat) -->
+        <div class="qty-days" id="paneer-days">
+          <span class="qty-days-lbl">Delivery</span>
+          <label class="day-chip" id="dch-wed">
+            <input type="radio" name="delivery_day" value="Wednesday" id="r-wed">
+            Wed, <span id="ds-wed">—</span>
+          </label>
+          <label class="day-chip" id="dch-sat">
+            <input type="radio" name="delivery_day" value="Saturday" id="r-sat">
+            Sat, <span id="ds-sat">—</span>
+          </label>
+        </div>
       </div>
     </div>
 
     <div class="qty-rows" id="extra-cards">
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price">₹150 · 500g <span class="qty-tag">Sat only</span></span></div>
+        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price">₹150 · 500g <span class="qty-tag extra-day">Sat</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('chaap',-1)">−</button>
@@ -528,7 +565,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price">₹475 · 500ml <span class="qty-tag">Sat only</span></span></div>
+        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price">₹475 · 500ml <span class="qty-tag extra-day">Sat</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('ghee',-1)">−</button>
@@ -539,7 +576,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">White Butter</span><span class="qty-price">₹180 · 250g <span class="qty-tag">Sat only</span></span></div>
+        <div class="qty-info"><span class="qty-label">White Butter</span><span class="qty-price">₹180 · 250g <span class="qty-tag extra-day">Sat</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('butter',-1)">−</button>
@@ -550,7 +587,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price">₹175 · 250g <span class="qty-tag">Sat only</span></span></div>
+        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price">₹175 · 250g <span class="qty-tag extra-day">Sat</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('khoya',-1)">−</button>
@@ -567,35 +604,9 @@ const APT = {
       <span class="amt-lbl">Total amount</span>
       <span class="amt-val" id="amount-val">₹0</span>
     </div>
+    <p class="day-note" id="day-note"></p>
   </div>
 
-  <!-- ── STEP 4: DELIVERY DAY (reacts to cart: extras force Saturday) ── -->
-  <div class="fc">
-    <div class="step-hd">
-      <span class="step-n">4</span>
-      <span class="step-title">When do you need it?</span>
-    </div>
-
-    <div class="day-cards" id="day-cards">
-      <label class="day-card" id="dc-wed">
-        <input type="radio" name="delivery_day" value="Wednesday" id="r-wed">
-        <div class="day-card-body">
-          <div class="day-name">Wednesday</div>
-          <div class="day-sub" id="ds-wed">—</div>
-        </div>
-      </label>
-      <label class="day-card" id="dc-sat">
-        <input type="radio" name="delivery_day" value="Saturday" id="r-sat">
-        <div class="day-card-body">
-          <div class="day-name">Saturday</div>
-          <div class="day-sub" id="ds-sat">—</div>
-        </div>
-      </label>
-    </div>
-    <p class="day-note" id="day-note">Your extras are delivered on Saturdays, so we've set your delivery day to Saturday.</p>
-    <p class="field-err" id="e-day" style="margin-top:6px;">Please choose a delivery date.</p>
-
-  </div>
 
   <!-- Subscriptions are paused for the multi-product launch. The full
        subscription step (UI + cart-driven visibility) lives in commit
@@ -604,7 +615,7 @@ const APT = {
   <!-- ── STEP 6: PAYMENT ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">5</span>
+      <span class="step-n">4</span>
       <span class="step-title">How would you like to pay?</span>
     </div>
 
@@ -728,16 +739,29 @@ function populateDates() {
   document.getElementById('r-sat').dataset.fullDate   = fmtDate(sd);
   document.getElementById('r-sat').dataset.isoDate    = toISO(sd);
   document.getElementById('r-sat').dataset.shortLabel = fmtLabel(sd);
+  // Extras rows show their actual arrival date (always the next Saturday).
+  document.querySelectorAll('.extra-day').forEach(el =>
+    el.textContent = 'Sat, ' + fmtDayOnly(sd));
 }
 
+// Soonest date first inside the paneer row's chip pair.
 function reorderCards() {
   const wd = nextDeliveryDate(3);
   const sd = nextDeliveryDate(6);
-  const container = document.getElementById('day-cards');
-  const wedCard   = document.getElementById('dc-wed');
-  const satCard   = document.getElementById('dc-sat');
-  if (sd < wd) container.insertBefore(satCard, wedCard);
-  else         container.insertBefore(wedCard, satCard);
+  const container = document.getElementById('paneer-days');
+  const wedChip   = document.getElementById('dch-wed');
+  const satChip   = document.getElementById('dch-sat');
+  if (sd < wd) container.insertBefore(satChip, wedChip);
+  else         container.insertBefore(wedChip, satChip);
+}
+
+// Default the paneer day to the soonest delivery (cutoff-aware).
+function applyDefaultDay() {
+  const wd = nextDeliveryDate(3);
+  const sd = nextDeliveryDate(6);
+  const r  = document.getElementById(wd <= sd ? 'r-wed' : 'r-sat');
+  r.checked = true;
+  r.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 populateDates();
@@ -778,7 +802,7 @@ function wireCards(name) {
       document.querySelectorAll(`input[name="${name}"]`).forEach(x =>
         x.closest('label')?.classList.remove('chosen'));
       r.closest('label')?.classList.add('chosen');
-      const errIds = { delivery_day: ['day-cards','e-day'], quantity: ['qty-cards','e-qty'], payment: ['pay-cards','e-pay'] };
+      const errIds = { quantity: ['qty-cards','e-qty'], payment: ['pay-cards','e-pay'] };
       if (errIds[name]) { setCardsErr(errIds[name][0], errIds[name][1], false); }
     });
   });
@@ -786,8 +810,12 @@ function wireCards(name) {
 wireCards('delivery_day');
 wireCards('payment');
 wireCards('frequency');
-// Initial cart is empty: hides the subscription step, numbers payment as 5.
-document.addEventListener('DOMContentLoaded', () => syncProductUI());
+// Initial state: default the paneer day to the soonest delivery, then let
+// the cart drive chip visibility and the delivery summary.
+document.addEventListener('DOMContentLoaded', () => {
+  applyDefaultDay();
+  syncProductUI();
+});
 
 // Update submit button label when payment method or frequency changes
 function updateSubmitLabel() {
@@ -873,42 +901,32 @@ function extrasTotal() {
   return Object.values(EXTRA_STATE).reduce((s, v) => s + v, 0);
 }
 
-// Cart-driven UI. Extras deliver Saturdays only, but they never move the
-// paneer: the day picker chooses the PANEER day. Mixed cart + Wednesday
-// simply becomes two deliveries (both runs happen anyway). Wednesday is
-// only locked when the cart is extras-only (nothing to deliver that day).
+// Cart-driven UI. Each product carries its own delivery date: paneer's
+// day chips (Wed/Sat) appear on its row while it's in the cart; extras
+// rows always show the next Saturday. The note under the total sums up
+// what arrives when, so a split order is never a surprise.
 function syncProductUI() {
   const hasExtras = extrasTotal() > 0;
   const hasPaneer = qtyTotal() > 0;
-  const extrasOnly = hasExtras && !hasPaneer;
 
-  const rWed = document.getElementById('r-wed');
-  const rSat = document.getElementById('r-sat');
-  document.getElementById('dc-wed').classList.toggle('dc-disabled', extrasOnly);
-  rWed.disabled = extrasOnly;
-  if (extrasOnly && !rSat.checked) {
-    rSat.checked = true;
-    rSat.dispatchEvent(new Event('change', { bubbles: true }));
-  }
+  document.getElementById('paneer-days').classList.toggle('v', hasPaneer);
 
-  // Explain what arrives when, per the current cart + chosen day.
   const note   = document.getElementById('day-note');
+  const rWed   = document.getElementById('r-wed');
+  const rSat   = document.getElementById('r-sat');
   const satLbl = rSat.dataset.shortLabel || 'Saturday';
-  const wedChosen = rWed.checked;
-  if (!hasExtras) {
-    note.classList.remove('v');
-  } else {
+  if (hasPaneer && hasExtras && rWed.checked) {
+    const wedLbl = rWed.dataset.shortLabel || 'Wednesday';
+    note.textContent = `Two deliveries: paneer arrives ${wedLbl} · extras arrive ${satLbl}.`;
     note.classList.add('v');
-    if (extrasOnly) {
-      note.textContent = `Extras are delivered on Saturdays — arriving ${satLbl}.`;
-    } else if (wedChosen) {
-      const wedLbl = rWed.dataset.shortLabel || 'Wednesday';
-      note.textContent = `Two deliveries: paneer arrives ${wedLbl}, your extras arrive ${satLbl}.`;
-    } else if (rSat.checked) {
-      note.textContent = `Everything arrives together on ${satLbl}.`;
-    } else {
-      note.textContent = `Your extras arrive ${satLbl} — pick a delivery day for your paneer.`;
-    }
+  } else if (hasPaneer && hasExtras) {
+    note.textContent = `Everything arrives together on ${satLbl}.`;
+    note.classList.add('v');
+  } else if (hasExtras) {
+    note.textContent = `Your order arrives ${satLbl}.`;
+    note.classList.add('v');
+  } else {
+    note.classList.remove('v');
   }
 }
 // The note depends on the chosen day too, not just the cart.
@@ -972,9 +990,6 @@ function validateAll() {
 
   const flat  = document.getElementById('f-flat').value.trim();
   setErr('f-flat','e-flat', !flat); if (!flat) ok = false;
-
-  const day = document.querySelector('input[name="delivery_day"]:checked');
-  setCardsErr('day-cards','e-day', !day); if (!day) ok = false;
 
   const hasQty = qtyTotal() + extrasTotal() > 0;
   setCardsErr('qty-cards','e-qty', !hasQty); if (!hasQty) ok = false;
@@ -1283,7 +1298,7 @@ function showConfirmation(d, payStatus, subResult) {
 // ── reset ─────────────────────────────────────────────────────
 function resetForm() {
   document.getElementById('orderForm').reset();
-  document.querySelectorAll('.day-card, .pay-card').forEach(c => c.classList.remove('chosen'));
+  document.querySelectorAll('.day-card, .pay-card, .day-chip').forEach(c => c.classList.remove('chosen'));
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));
   document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
   document.querySelectorAll('.cards-error').forEach(e => e.classList.remove('cards-error'));
@@ -1296,6 +1311,7 @@ function resetForm() {
     updateLine(k, 0);
   });
   document.getElementById('amount-pill').classList.remove('v');
+  applyDefaultDay();
   syncProductUI();
   document.getElementById('manage-block').style.display = 'none';
   updatePayCardForFrequency();
