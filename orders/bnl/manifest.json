@@ -1,7 +1,7 @@
 {
   "name": "Dairy Bliss · BNL",
   "short_name": "DairyBliss",
-  "description": "Order fresh paneer — Bren Northern Lights. Delivered every Wednesday and Saturday.",
+  "description": "Order fresh paneer, desi ghee, chaap & more — Bren Northern Lights. Delivered every Wednesday and Saturday.",
   "start_url": "/orders/bnl/",
   "scope": "/orders/bnl/",
   "display": "standalone",

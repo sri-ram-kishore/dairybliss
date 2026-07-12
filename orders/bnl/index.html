@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#faf8f4">
-  <meta name="description" content="Order fresh paneer — Bren Northern Lights.">
+  <meta name="description" content="Order fresh paneer, desi ghee, chaap &amp; more — Bren Northern Lights.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DairyBliss · BNL">
@@ -176,7 +176,7 @@
     .qty-row:last-child { border-bottom: none; }
     .qty-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
     .qty-label { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; }
-    .qty-price { font-size: 12.5px; font-weight: 500; color: var(--green); white-space: nowrap; }
+    .qty-price { font-size: 12.5px; font-weight: 500; color: var(--green); }
     .qty-stepper { display: flex; align-items: center; gap: 16px; }
     .qty-btn {
       width: 36px; height: 36px; border-radius: 50%;
@@ -205,17 +205,14 @@
     .qty-line.zero { color: var(--text-soft); font-weight: 500; }
     .sub-note { font-size: 12px; color: var(--text-soft); margin: 0 2px 12px; line-height: 1.4; }
 
-    /* product group subheaders inside the single cart box */
-    .prod-sub {
-      display: flex; align-items: center; gap: 8px;
-      margin: 14px 2px 4px; font-size: 12px; font-weight: 800;
-      letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-soft);
+    /* per-product availability chip ("Sat only") */
+    .qty-tag {
+      font-size: 10px; font-weight: 700; color: var(--green);
+      background: var(--green-light); border-radius: 20px; padding: 1.5px 7px;
+      vertical-align: 2px; margin-left: 2px; white-space: nowrap;
     }
-    .prod-sub-tag {
-      font-size: 10.5px; font-weight: 700; color: var(--green);
-      background: var(--green-light); border-radius: 20px; padding: 2px 9px;
-      letter-spacing: 0.02em; text-transform: none;
-    }
+    /* paneer + extras render as one continuous list */
+    #qty-cards .qty-row:last-child { border-bottom: 1px solid var(--border); }
 
     /* delivery-day reactions to cart contents */
     .day-card.dc-disabled { opacity: 0.45; pointer-events: none; }
@@ -450,7 +447,7 @@ const APT = {
 <div id="screen-form">
 <div class="page">
 <div class="page-title-row">
-  <p class="page-title">Order fresh paneer</p>
+  <p class="page-title">Order fresh goodness</p>
   <a class="apt-back" href="../">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -500,10 +497,9 @@ const APT = {
       <span class="step-title">What would you like?</span>
     </div>
 
-    <div class="prod-sub">Fresh paneer <span class="prod-sub-tag">Wed &amp; Sat</span></div>
     <div class="qty-rows" id="qty-cards">
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price">₹145</span></div>
+        <div class="qty-info"><span class="qty-label">Paneer · 250g</span><span class="qty-price">₹145</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
@@ -514,7 +510,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">500g</span><span class="qty-price">₹280</span></div>
+        <div class="qty-info"><span class="qty-label">Paneer · 500g</span><span class="qty-price">₹280</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('500g',-1)">−</button>
@@ -525,7 +521,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">750g</span><span class="qty-price">₹420</span></div>
+        <div class="qty-info"><span class="qty-label">Paneer · 750g</span><span class="qty-price">₹420</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('750g',-1)">−</button>
@@ -536,7 +532,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">1 kg</span><span class="qty-price">₹550</span></div>
+        <div class="qty-info"><span class="qty-label">Paneer · 1 kg</span><span class="qty-price">₹550</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('1kg',-1)">−</button>
@@ -548,10 +544,9 @@ const APT = {
       </div>
     </div>
 
-    <div class="prod-sub">Fresh extras <span class="prod-sub-tag">Saturdays only</span></div>
     <div class="qty-rows" id="extra-cards">
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price">₹150 · 500g</span></div>
+        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price">₹150 · 500g <span class="qty-tag">Sat only</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('chaap',-1)">−</button>
@@ -562,7 +557,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price">₹475 · 500ml</span></div>
+        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price">₹475 · 500ml <span class="qty-tag">Sat only</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('ghee',-1)">−</button>
@@ -573,7 +568,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">White Butter</span><span class="qty-price">₹180 · 250g</span></div>
+        <div class="qty-info"><span class="qty-label">White Butter</span><span class="qty-price">₹180 · 250g <span class="qty-tag">Sat only</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('butter',-1)">−</button>
@@ -584,7 +579,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price">₹175 · 250g</span></div>
+        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price">₹175 · 250g <span class="qty-tag">Sat only</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('khoya',-1)">−</button>
@@ -631,49 +626,14 @@ const APT = {
 
   </div>
 
-  <!-- ── STEP 5: REPEAT PANEER (only shown when paneer is in the cart) ── -->
-  <div class="fc" id="freq-box" style="display:none">
-    <div class="step-hd">
-      <span class="step-n">5</span>
-      <span class="step-title">Repeat your paneer?</span>
-    </div>
-    <p class="sub-note">Subscriptions cover paneer only — extras are delivered once, with your first order.</p>
-
-    <div class="day-cards" id="freq-cards">
-      <label class="day-card chosen" id="fc-once">
-        <input type="radio" name="frequency" value="once" checked>
-        <div class="day-card-body">
-          <div class="day-name">Just this once</div>
-        </div>
-      </label>
-      <label class="day-card" id="fc-weekly">
-        <input type="radio" name="frequency" value="weekly">
-        <div class="day-card-body">
-          <div class="day-name">Every week</div>
-          <div class="day-sub">Same day, every week</div>
-        </div>
-      </label>
-      <label class="day-card" id="fc-both">
-        <input type="radio" name="frequency" value="both_days">
-        <div class="day-card-body">
-          <div class="day-name">Every Wed &amp; Sat</div>
-          <div class="day-sub">Twice a week</div>
-        </div>
-      </label>
-      <label class="day-card" id="fc-biweekly">
-        <input type="radio" name="frequency" value="biweekly">
-        <div class="day-card-body">
-          <div class="day-name">Every other week</div>
-          <div class="day-sub">Once a fortnight</div>
-        </div>
-      </label>
-    </div>
-  </div>
+  <!-- Subscriptions are paused for the multi-product launch. The full
+       subscription step (UI + cart-driven visibility) lives in commit
+       87949c3 — reintroduce from there when ready. -->
 
   <!-- ── STEP 6: PAYMENT ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n" id="pay-step-n">6</span>
+      <span class="step-n">5</span>
       <span class="step-title">How would you like to pay?</span>
     </div>
 
@@ -698,7 +658,7 @@ const APT = {
   </div>
 
   <button type="submit" class="btn-submit" id="btn-submit">Proceed to Pay →</button>
-  <p class="foot">Pure paneer. Delivered twice a week.</p>
+  <p class="foot">Pure goodness. Delivered fresh to your door.</p>
 
 </form>
 </div>
@@ -923,14 +883,11 @@ function extrasTotal() {
   return Object.values(EXTRA_STATE).reduce((s, v) => s + v, 0);
 }
 
-// Cart-driven UI: extras deliver Saturdays only, so they lock the day to
-// Saturday; the paneer-subscription step only exists while paneer is in
-// the cart (an extras-only order is always one-time).
+// Cart-driven UI: extras deliver Saturdays only, so any extra in the cart
+// locks the delivery day to Saturday (Wednesday greys out with a note).
 function syncProductUI() {
   const hasExtras = extrasTotal() > 0;
-  const hasPaneer = qtyTotal() > 0;
 
-  // Delivery day: grey out Wednesday and auto-pick Saturday while extras present.
   const rWed = document.getElementById('r-wed');
   const rSat = document.getElementById('r-sat');
   document.getElementById('dc-wed').classList.toggle('dc-disabled', hasExtras);
@@ -940,17 +897,6 @@ function syncProductUI() {
     rSat.checked = true;
     rSat.dispatchEvent(new Event('change', { bubbles: true }));
   }
-
-  // Subscription step: paneer-only. Hidden (and reset to "once") without paneer.
-  document.getElementById('freq-box').style.display = hasPaneer ? '' : 'none';
-  if (!hasPaneer) {
-    const once = document.querySelector('input[name="frequency"][value="once"]');
-    if (!once.checked) {
-      once.checked = true;
-      once.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-  }
-  document.getElementById('pay-step-n').textContent = hasPaneer ? '6' : '5';
 }
 // Show/hide a row's line total (₹ subtotal) as its quantity changes.
 function updateLine(key, amt) {
@@ -1027,7 +973,7 @@ function validateAll() {
 function collectData() {
   const pay    = document.querySelector('input[name="payment"]:checked').value;
   const dayRad = document.querySelector('input[name="delivery_day"]:checked');
-  const freq   = document.querySelector('input[name="frequency"]:checked').value;
+  const freq   = 'once'; // subscriptions paused — every order is one-time
   // Paneer and extras tracked separately: subscriptions repeat (and prepay ×4)
   // paneer only — extras are one-time and charged/delivered once.
   const paneerAmt = qtyAmount();
@@ -1164,6 +1110,9 @@ async function openRazorpay(d) {
 // No offline queue here (unlike sendToSheet) — a subscription signup
 // tied to a Razorpay charge isn't safe to silently replay later, so a
 // network failure just surfaces an error and the customer retries.
+// NOTE: Subscriptions are paused for the multi-product launch — the UI step
+// was removed (frequency is hardcoded 'once'), so the functions below are
+// currently unreachable. Kept intact for reintroduction; full UI in 87949c3.
 async function createSubscription(d, rzpPaymentId) {
   const payload = {
     action:        'create_subscription',
