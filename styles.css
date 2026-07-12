@@ -620,12 +620,13 @@ h1 {
   grid-template-columns: 1fr 1fr;
   gap: clamp(18px, 1.8vw, 28px);
   align-content: start;
-  align-items: start;
+  align-items: stretch;
 }
 
 .product-secondary-grid article {
   display: flex;
   flex-direction: column;
+  height: 100%;
   border: 1px solid rgba(28,47,92,0.14);
   border-radius: var(--radius);
   overflow: hidden;
@@ -742,7 +743,9 @@ h1 {
 }
 
 .product-secondary-grid h3 {
-  font-size: clamp(21px, 1.45vw, 25px);
+  font-size: clamp(19px, 1.3vw, 23px);
+  text-wrap: initial;
+  white-space: nowrap;
 }
 
 .product-lineup p {
@@ -755,6 +758,24 @@ h1 {
 .product-secondary-grid p {
   font-size: clamp(13px, 0.96vw, 15px);
   line-height: 1.4;
+}
+
+/* Section-level Order CTA — one order covers paneer + Specials */
+.products-cta {
+  max-width: 1320px;
+  margin: clamp(26px, 2.6vw, 40px) auto 0;
+  text-align: center;
+}
+.products-cta .button {
+  min-height: 54px;
+  padding: 0 44px;
+  font-size: 16px;
+  border-radius: 10px;
+}
+.products-cta-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted);
 }
 
 /* Paneer card — larger type to fill the space */
