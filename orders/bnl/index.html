@@ -150,17 +150,19 @@
     .day-cards { display: flex; flex-direction: column; gap: 8px; }
 
     .day-card {
-      display: flex; align-items: center; gap: 14px;
-      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px;
       border: 1.5px solid var(--border); border-radius: 11px;
       cursor: pointer; background: var(--cream-card);
       transition: border-color 0.15s, background 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
+    /* fixed-date card (Saturday Specials): ticked, not changeable */
+    .day-card--fixed { pointer-events: none; }
     .day-card:hover { border-color: rgba(28,47,92,0.3); }
     .day-card.chosen { border-color: var(--green); box-shadow: 0 0 0 2px rgba(61,122,26,0.12); }
     .day-card input[type="radio"], .day-card input[type="checkbox"] {
-      width: 20px; height: 20px; accent-color: var(--green);
+      width: 18px; height: 18px; accent-color: var(--green);
       flex-shrink: 0; cursor: pointer;
     }
     .day-card-body { flex: 1; }
@@ -714,9 +716,16 @@ const APT = {
           </label>
         </div>
       </div>
-      <div class="when-row" id="when-specials">
-        <span class="when-name">Saturday Specials</span>
-        <span class="when-fixed">Sat, <span id="sat-when">—</span></span>
+      <div class="when-group" id="when-specials">
+        <p class="when-lbl">Saturday Specials</p>
+        <div class="day-cards">
+          <label class="day-card day-card--fixed chosen">
+            <input type="checkbox" checked tabindex="-1">
+            <div class="day-card-body">
+              <div class="day-name">Saturday, <span id="sat-when">—</span></div>
+            </div>
+          </label>
+        </div>
       </div>
       <p class="when-empty" id="when-empty">Add items above to choose delivery days.</p>
     </div>
@@ -1454,7 +1463,7 @@ function showConfirmation(d, payStatus, subResult) {
 // ── reset ─────────────────────────────────────────────────────
 function resetForm() {
   document.getElementById('orderForm').reset();
-  document.querySelectorAll('.day-card, .pay-card, .day-chip').forEach(c => c.classList.remove('chosen'));
+  document.querySelectorAll('.day-card:not(.day-card--fixed), .pay-card, .day-chip').forEach(c => c.classList.remove('chosen'));
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));
   document.querySelectorAll('.is-error').forEach(e => e.classList.remove('is-error'));
   document.querySelectorAll('.cards-error').forEach(e => e.classList.remove('cards-error'));
