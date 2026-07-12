@@ -274,6 +274,30 @@ function nextSubscriptionId() {
 // written to the sheet and charged.)
 const PRICING = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
 
+// Saturday Specials — one-off add-ons delivered on the Saturday run only.
+// Quantities live in sheet columns 22-25 (appended AFTER the original 21
+// so every existing column index keeps working).
+const EXTRAS_PRICING = { chaap: 150, ghee: 475, butter: 180, khoya: 175 };
+const EXTRAS_LABELS  = {
+  chaap:  'Soya Chaap (500g)',
+  ghee:   'Desi Ghee (500ml)',
+  butter: 'White Butter (250g)',
+  khoya:  'Khoya (250g)',
+};
+
+function parseExtras(data) {
+  return {
+    chaap:  parseInt(data.qChaap)  || 0,
+    ghee:   parseInt(data.qGhee)   || 0,
+    butter: parseInt(data.qButter) || 0,
+    khoya:  parseInt(data.qKhoya)  || 0,
+  };
+}
+function extrasRs(x) {
+  return x.chaap  * EXTRAS_PRICING.chaap  + x.ghee  * EXTRAS_PRICING.ghee +
+         x.butter * EXTRAS_PRICING.butter + x.khoya * EXTRAS_PRICING.khoya;
+}
+
 // ── ORDER HANDLING ───────────────────────────────────────────
 
 function handleOrder(data) {
@@ -317,9 +341,13 @@ function insertOrderRow(data, opts) {
   const q500 = parseInt(data.q500) || 0;
   const q750 = parseInt(data.q750) || 0;
   const q1kg = parseInt(data.q1kg) || 0;
+  const x    = parseExtras(data);
 
+  // Total (g) stays PANEER grams only — it drives the vendor block maths,
+  // running totals, and stock alerts. Money includes the extras.
   const totalGrams = q250*250 + q500*500 + q750*750 + q1kg*1000;
-  const totalRs    = q250*PRICING.q250 + q500*PRICING.q500 + q750*PRICING.q750 + q1kg*PRICING.q1kg;
+  const totalRs    = q250*PRICING.q250 + q500*PRICING.q500 + q750*PRICING.q750 + q1kg*PRICING.q1kg
+                   + extrasRs(x);
 
   // Running total BEFORE this order (for this apartment's sheet)
   const prevGrams = getRunningTotalGrams(sheet, data.deliveryDate);
@@ -343,11 +371,12 @@ function insertOrderRow(data, opts) {
     '',   // Delivered
     '',   // Payment Collected
     (opts && opts.subscriptionId) || '',  // Subscription ID
+    x.chaap, x.ghee, x.butter, x.khoya,   // Saturday Specials (cols 22-25)
   ]);
 
   const newGrams = prevGrams + totalGrams;
 
-  return { orderId, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams };
+  return { orderId, aptKey, q250, q500, q750, q1kg, extras: x, totalGrams, totalRs, prevGrams, newGrams };
 }
 
 // ── RAZORPAY ORDER CREATION ───────────────────────────────────
@@ -384,18 +413,31 @@ function handleCreateRzpOrder(data) {
   return jsonOk({ rzp_order_id: rzp.id, key_id: keyId });
 }
 
+const ORDER_HEADERS = ['Timestamp','Order ID','Name','Phone','Address','Map URL',
+  'Delivery Date','Delivery Label','250g','500g','750g','1kg',
+  'Total (g)','Total (₹)','Status',
+  'Payment Method','Payment Status','RZP Payment ID',
+  'Delivered','Payment Collected','Subscription ID',
+  'Chaap','Ghee','Butter','Khoya'];
+
 function ensureOrderHeaders(sheet) {
-  if (sheet.getLastRow() > 0) return;
-  const headers = ['Timestamp','Order ID','Name','Phone','Address','Map URL',
-    'Delivery Date','Delivery Label','250g','500g','750g','1kg',
-    'Total (g)','Total (₹)','Status',
-    'Payment Method','Payment Status','RZP Payment ID',
-    'Delivered','Payment Collected','Subscription ID'];
-  sheet.appendRow(headers);
-  const r = sheet.getRange(1, 1, 1, headers.length);
-  r.setFontWeight('bold');
-  r.setBackground('#2d5a1b');
-  r.setFontColor('#ffffff');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(ORDER_HEADERS);
+    const r = sheet.getRange(1, 1, 1, ORDER_HEADERS.length);
+    r.setFontWeight('bold');
+    r.setBackground('#2d5a1b');
+    r.setFontColor('#ffffff');
+    return;
+  }
+  // Self-heal older sheets created with the 21-column layout: stamp the
+  // four Saturday Specials headers into cols 22-25 if they're missing.
+  if (!sheet.getRange(1, 22).getValue()) {
+    const extra = sheet.getRange(1, 22, 1, 4);
+    extra.setValues([ORDER_HEADERS.slice(21)]);
+    extra.setFontWeight('bold');
+    extra.setBackground('#2d5a1b');
+    extra.setFontColor('#ffffff');
+  }
 }
 
 // ── SUBSCRIPTIONS ────────────────────────────────────────────
@@ -759,10 +801,14 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const meta   = aptMeta(aptKey);
 
   const items = [];
-  if (q250) items.push(`250g × ${q250}  —  ₹${q250*145}`);
-  if (q500) items.push(`500g × ${q500}  —  ₹${q500*280}`);
-  if (q750) items.push(`750g × ${q750}  —  ₹${q750*420}`);
-  if (q1kg) items.push(`1kg × ${q1kg}  —  ₹${q1kg*550}`);
+  if (q250) items.push(`Paneer 250g × ${q250}  —  ₹${q250*PRICING.q250}`);
+  if (q500) items.push(`Paneer 500g × ${q500}  —  ₹${q500*PRICING.q500}`);
+  if (q750) items.push(`Paneer 750g × ${q750}  —  ₹${q750*PRICING.q750}`);
+  if (q1kg) items.push(`Paneer 1kg × ${q1kg}  —  ₹${q1kg*PRICING.q1kg}`);
+  const x = parseExtras(data);
+  Object.keys(x).forEach(k => {
+    if (x[k]) items.push(`${EXTRAS_LABELS[k]} × ${x[k]}  —  ₹${x[k]*EXTRAS_PRICING[k]}`);
+  });
 
   const { unit } = parseApt(data.address);
   const title = subscriptionId
@@ -781,7 +827,9 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
     `${esc(data.deliveryLabel)}`,
     ``,
     items.map(esc).join('\n'),
-    `<b>Total: ${(totalGrams/1000).toFixed(2)} kg  ·  ₹${totalRs}</b>`,
+    totalGrams > 0
+      ? `<b>Total: ${(totalGrams/1000).toFixed(2)} kg paneer  ·  ₹${totalRs}</b>`
+      : `<b>Total: ₹${totalRs}</b>`,
     payLine,
     ``,
     `${esc(meta.key)} running total: <b>${newKg} kg</b>`
@@ -838,7 +886,7 @@ function buildDashboardData() {
   for (const apt of APARTMENTS.map(a => a.key)) {
     const sheet = ss.getSheetByName(apt);
     if (!sheet || sheet.getLastRow() < 2) continue;
-    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 21).getValues();
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 25).getValues();
     rows.forEach(r => {
       if (!r[1]) return;
       const deliveryDate = r[6] instanceof Date ? fmt(r[6], 'yyyy-MM-dd') : String(r[6]);
@@ -869,6 +917,10 @@ function buildDashboardData() {
         rzpPaymentId:     r[17] || '',
         delivered:        r[18] === 'Y',
         paymentCollected: paymentCollected,
+        qChaap:           parseInt(r[21]) || 0,
+        qGhee:            parseInt(r[22]) || 0,
+        qButter:          parseInt(r[23]) || 0,
+        qKhoya:           parseInt(r[24]) || 0,
         apt:              apt,
       });
     });
@@ -1194,6 +1246,10 @@ function sendCutoffSummary(aptFilter) {
         if (o.q500) items.push(`500g×${o.q500}`);
         if (o.q750) items.push(`750g×${o.q750}`);
         if (o.q1kg) items.push(`1kg×${o.q1kg}`);
+        if (o.chaap)  items.push(`Chaap×${o.chaap}`);
+        if (o.ghee)   items.push(`Ghee×${o.ghee}`);
+        if (o.butter) items.push(`Butter×${o.butter}`);
+        if (o.khoya)  items.push(`Khoya×${o.khoya}`);
         lines.push(`${i+1}. ${esc(o.name)}${unit ? ', ' + esc(unit) : ''}  —  ${items.join(', ')}`);
       });
       tg(lines.join('\n'));
@@ -1201,7 +1257,8 @@ function sendCutoffSummary(aptFilter) {
 
   } else {
     // ── Scheduled trigger — combined order-to-place summary ──
-    const combined = { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 };
+    const combined = { q250:0, q500:0, q750:0, q1kg:0,
+                       chaap:0, ghee:0, butter:0, khoya:0, grams:0, rs:0 };
     const aptLines = [];
 
     APARTMENTS.forEach(({ key, emoji }) => {
@@ -1210,13 +1267,15 @@ function sendCutoffSummary(aptFilter) {
       const s      = sumOrders(orders);
       combined.q250  += s.q250;  combined.q500  += s.q500;
       combined.q750  += s.q750;  combined.q1kg  += s.q1kg;
+      combined.chaap  += s.chaap;  combined.ghee  += s.ghee;
+      combined.butter += s.butter; combined.khoya += s.khoya;
       combined.grams += s.grams; combined.rs    += s.rs;
       if (orders.length === 0) return;
       const kg = (s.grams / 1000).toFixed(2);
       aptLines.push(`${emoji} ${key}: ${orders.length} order${orders.length !== 1 ? 's' : ''} · ${kg} kg · ₹${s.rs}`);
     });
 
-    if (combined.grams === 0) {
+    if (combined.grams === 0 && combined.rs === 0) {
       tg(`No orders for <b>${esc(deliveryLabel)}</b>.`);
       return;
     }
@@ -1232,10 +1291,14 @@ function sendCutoffSummary(aptFilter) {
     if (combined.q500) lines.push(`500g × ${combined.q500}`);
     if (combined.q750) lines.push(`750g × ${combined.q750}`);
     if (combined.q1kg) lines.push(`1kg  × ${combined.q1kg}`);
+    if (combined.chaap)  lines.push(`Soya Chaap × ${combined.chaap}`);
+    if (combined.ghee)   lines.push(`Desi Ghee × ${combined.ghee}`);
+    if (combined.butter) lines.push(`White Butter × ${combined.butter}`);
+    if (combined.khoya)  lines.push(`Khoya × ${combined.khoya}`);
     lines.push(
       ``,
-      `<b>${totalKg.toFixed(2)} kg total</b>`,
-      `Cost ₹${buyCost}  ·  Collect ₹${combined.rs}`,
+      `<b>${totalKg.toFixed(2)} kg paneer</b>`,
+      `Paneer cost ₹${buyCost}  ·  Collect ₹${combined.rs}`,
       ``
     );
     aptLines.forEach(l => lines.push(l));
@@ -1253,10 +1316,15 @@ function sumOrders(orders) {
   return orders.reduce((acc, o) => {
     acc.q250  += o.q250;  acc.q500  += o.q500;
     acc.q750  += o.q750;  acc.q1kg  += o.q1kg;
+    acc.chaap  += o.chaap  || 0;  acc.ghee  += o.ghee  || 0;
+    acc.butter += o.butter || 0;  acc.khoya += o.khoya || 0;
     acc.grams += o.q250*250 + o.q500*500 + o.q750*750 + o.q1kg*1000;
-    acc.rs    += o.q250*145 + o.q500*280 + o.q750*420 + o.q1kg*550;
+    acc.rs    += o.q250*PRICING.q250 + o.q500*PRICING.q500
+               + o.q750*PRICING.q750 + o.q1kg*PRICING.q1kg
+               + (o.chaap||0)*EXTRAS_PRICING.chaap + (o.ghee||0)*EXTRAS_PRICING.ghee
+               + (o.butter||0)*EXTRAS_PRICING.butter + (o.khoya||0)*EXTRAS_PRICING.khoya;
     return acc;
-  }, { q250:0, q500:0, q750:0, q1kg:0, grams:0, rs:0 });
+  }, { q250:0, q500:0, q750:0, q1kg:0, chaap:0, ghee:0, butter:0, khoya:0, grams:0, rs:0 });
 }
 
 // ── TELEGRAM COMMAND HANDLING ─────────────────────────────────
@@ -1538,11 +1606,13 @@ function statsForDate(sheet, dateStr) {
 
 function ordersForDate(sheet, dateStr) {
   if (sheet.getLastRow() < 2) return [];
-  return sheet.getRange(2, 1, sheet.getLastRow()-1, 21).getValues()
+  return sheet.getRange(2, 1, sheet.getLastRow()-1, 25).getValues()
     .filter(r => matchDate(r[6], dateStr))
     .map(r => ({ name:r[2], phone:r[3], address:r[4],
       q250:parseInt(r[8])||0, q500:parseInt(r[9])||0,
-      q750:parseInt(r[10])||0, q1kg:parseInt(r[11])||0 }));
+      q750:parseInt(r[10])||0, q1kg:parseInt(r[11])||0,
+      chaap:parseInt(r[21])||0, ghee:parseInt(r[22])||0,
+      butter:parseInt(r[23])||0, khoya:parseInt(r[24])||0 }));
 }
 
 function matchDate(cell, dateStr) {
@@ -1683,13 +1753,7 @@ function cleanupTable() {
 // Rewrites the full header row for SPC and BNR sheets so all 20 columns are labelled.
 function fixSheetHeaders() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
-  const headers = [
-    'Timestamp', 'Order ID', 'Name', 'Phone', 'Address', 'Map URL',
-    'Delivery Date', 'Delivery Label', '250g', '500g', '750g', '1kg',
-    'Total (g)', 'Total (₹)', 'Status',
-    'Payment Method', 'Payment Status', 'RZP Payment ID',
-    'Delivered', 'Payment Collected', 'Subscription ID'
-  ];
+  const headers = ORDER_HEADERS;
   for (const aptName of APARTMENTS.map(a => a.key)) {
     const sheet = ss.getSheetByName(aptName);
     if (!sheet) continue;

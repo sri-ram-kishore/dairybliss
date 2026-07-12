@@ -218,6 +218,12 @@
     }
     .vendor-stat-val.green { color: var(--green); }
     .vendor-stat-label { font-size: 11px; color: var(--text-soft); margin-top: 3px; }
+    .vendor-specials {
+      font-size: 12.5px; color: var(--text-mid);
+      background: var(--green-light); border-radius: 8px;
+      padding: 8px 11px; margin-bottom: 12px; line-height: 1.5;
+    }
+    .vendor-specials b { color: var(--green); }
     .vendor-detail { font-size: 12px; color: var(--text-soft); margin-bottom: 2px; }
 
     /* ── TODAY: REFERENCE ORDER LIST ── */
@@ -1324,6 +1330,22 @@ function qtyLabel(o) {
   if (o.q500) parts.push(`500g×${o.q500}`);
   if (o.q750) parts.push(`750g×${o.q750}`);
   if (o.q1kg) parts.push(`1kg×${o.q1kg}`);
+  if (o.qChaap)  parts.push(`Chaap×${o.qChaap}`);
+  if (o.qGhee)   parts.push(`Ghee×${o.qGhee}`);
+  if (o.qButter) parts.push(`Butter×${o.qButter}`);
+  if (o.qKhoya)  parts.push(`Khoya×${o.qKhoya}`);
+  return parts.join(' · ');
+}
+// Saturday Specials totals for a list of orders (procured per-item,
+// outside the paneer block maths).
+function specialsSummary(list) {
+  const t = { c:0, g:0, b:0, k:0 };
+  list.forEach(o => { t.c+=o.qChaap||0; t.g+=o.qGhee||0; t.b+=o.qButter||0; t.k+=o.qKhoya||0; });
+  const parts = [];
+  if (t.c) parts.push(`Soya Chaap × ${t.c}`);
+  if (t.g) parts.push(`Desi Ghee × ${t.g}`);
+  if (t.b) parts.push(`White Butter × ${t.b}`);
+  if (t.k) parts.push(`Khoya × ${t.k}`);
   return parts.join(' · ');
 }
 function aptQtyBreakdown(list) {
@@ -1479,9 +1501,12 @@ function renderToday() {
         </div>
         <div class="vendor-stat">
           <div class="vendor-stat-val green">${fmt(buy.cost)}</div>
-          <div class="vendor-stat-label">cost</div>
+          <div class="vendor-stat-label">paneer cost</div>
         </div>
       </div>
+      ${specialsSummary(upcoming)
+        ? `<div class="vendor-specials">Saturday Specials: <b>${specialsSummary(upcoming)}</b></div>`
+        : ''}
       <div class="vendor-actions">
         <div class="vendor-actions-row">
           ${vOrdered
