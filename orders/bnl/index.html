@@ -79,6 +79,11 @@
       -webkit-tap-highlight-color: transparent;
     }
     .apt-back:hover { opacity: 0.9; color: var(--green); }
+    .page-eyebrow {
+      font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--green);
+      margin: 0 0 3px; padding: 0;
+    }
     .page-title {
       font-size: 24px; font-weight: 760; color: var(--text);
       letter-spacing: -0.5px; line-height: 1.1;
@@ -526,7 +531,10 @@ const APT = {
 <div id="screen-form">
 <div class="page">
 <div class="page-title-row">
-  <p class="page-title">Order fresh goodness</p>
+  <div>
+    <p class="page-eyebrow">Bren Northern Lights</p>
+    <p class="page-title">Order fresh goodness</p>
+  </div>
   <a class="apt-back" href="../">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -540,7 +548,7 @@ const APT = {
   <div class="fc">
     <div class="step-hd">
       <span class="step-n">1</span>
-      <span class="step-title">Who's ordering?</span>
+      <span class="step-title">Your details</span>
     </div>
 
     <div class="field">
@@ -554,14 +562,6 @@ const APT = {
              maxlength="10" inputmode="numeric" autocomplete="tel" required>
       <p class="field-err" id="e-phone">Enter a valid 10-digit number.</p>
     </div>
-  </div>
-
-  <!-- ── STEP 2: DELIVERY ADDRESS ── -->
-  <div class="fc">
-    <div class="step-hd">
-      <span class="step-n">2</span>
-      <span class="step-title">Where in Bren Northern Lights?</span>
-    </div>
 
     <div class="field">
       <input type="text" id="f-flat" required placeholder="Enter your flat number (e.g. A-801)">
@@ -569,10 +569,10 @@ const APT = {
     </div>
   </div>
 
-  <!-- ── STEP 3: FRESH PANEER (Wed & Sat) ── -->
+  <!-- ── STEP 2: FRESH PANEER (Wed & Sat) ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">3</span>
+      <span class="step-n">2</span>
       <span class="step-title">Fresh Paneer</span>
     </div>
     <p class="sub-note">Delivered every Wednesday &amp; Saturday · next delivery <b id="paneer-next">—</b></p>
@@ -630,10 +630,10 @@ const APT = {
     </div>
   </div>
 
-  <!-- ── STEP 4: SATURDAY SPECIALS (delivered Saturdays only) ── -->
+  <!-- ── STEP 3: SATURDAY SPECIALS (delivered Saturdays only) ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">4</span>
+      <span class="step-n">3</span>
       <span class="step-title">Saturday Specials</span>
     </div>
     <p class="sub-note">Delivered on Saturdays · next delivery <b id="sat-next">—</b></p>
@@ -705,7 +705,7 @@ const APT = {
   <!-- ── STEP 6: PAYMENT ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">5</span>
+      <span class="step-n">4</span>
       <span class="step-title">How would you like to pay?</span>
     </div>
 
