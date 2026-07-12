@@ -278,7 +278,9 @@
     .inv-row { display: none; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13.5px; color: var(--text-mid); }
     .inv-row.v { display: flex; }
     .inv-row .inv-v { font-weight: 600; color: var(--text); white-space: nowrap; }
-    .inv-total { border-top: 1px dashed rgba(28,47,92,0.18); margin-top: 6px; padding-top: 8px; }
+    .inv-total { border-top: none; margin-top: 0; padding-top: 3px; }
+    /* separator only once there are item lines above the total */
+    .inv-row.v ~ .inv-total { border-top: 1px dashed rgba(28,47,92,0.18); margin-top: 6px; padding-top: 8px; }
     .inv-total .inv-k { font-weight: 700; color: var(--text); font-size: 14px; }
     .inv-total .inv-v { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; color: var(--green); }
 
