@@ -1333,11 +1333,11 @@ function showConfirmation(d, payStatus, subResult) {
   // One "arriving <day>" row per delivery, so multi-day orders are explicit.
   if (groups.length > 1) {
     groups.forEach(g => {
-      rows += `<div class="cr"><span class="ck">${esc(g.label)}</span><span class="cv">${esc(groupItemsLabel(g))}</span></div>`;
+      rows += `<div class="cr"><span class="ck">Arriving ${esc(g.label)}</span><span class="cv">${esc(groupItemsLabel(g))}</span></div>`;
     });
   } else {
     rows += `<div class="cr"><span class="ck">Items</span><span class="cv">${esc(d.qtyLabel)}</span></div>`;
-    rows += `<div class="cr"><span class="ck">Delivery</span><span class="cv">${esc(groups[0] ? groups[0].label : d.fullDate)}</span></div>`;
+    rows += `<div class="cr"><span class="ck">Arriving</span><span class="cv">${esc(groups[0] ? groups[0].label : d.fullDate)}</span></div>`;
   }
   rows += `<div class="cr"><span class="ck">Total</span><span class="cv">${esc(d.amtDisp)}</span></div>`;
   if (isSub) {
