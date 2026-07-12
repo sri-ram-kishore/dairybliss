@@ -1,7 +1,7 @@
 {
   "name": "Dairy Bliss",
   "short_name": "Dairy Bliss",
-  "description": "Order fresh paneer from Dairy Bliss — Pure Paneer Delight. Delivering every Wednesday and Saturday.",
+  "description": "Order fresh paneer, desi ghee, chaap & more from Dairy Bliss. Delivering every Wednesday and Saturday.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -39,9 +39,9 @@
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Order Paneer",
+      "name": "Place Order",
       "short_name": "Order",
-      "description": "Place a new paneer order",
+      "description": "Place a new order",
       "url": "./index.html",
       "icons": [{ "src": "icons/icon-any-192.png", "sizes": "192x192" }]
     }
