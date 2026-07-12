@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fa">
-  <meta name="description" content="Dairy Bliss makes fresh buffalo milk paneer. Pure & Fresh.">
+  <meta name="description" content="Dairy Bliss makes fresh paneer, desi ghee, soya chaap, white butter & khoya. Pure & Fresh.">
   <title>Dairy Bliss | Pure & Fresh</title>
   <link rel="icon" href="assets/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -93,7 +93,7 @@
     <section class="products snap-section" id="products">
       <div class="section-head reveal">
         <p class="eyebrow reveal">Products</p>
-        <h2>Paneer, first.<br>More soon.</h2>
+        <h2>Paneer, first.<br>And now, more.</h2>
       </div>
       <div class="product-lineup">
 
@@ -131,9 +131,9 @@
               <img src="assets/ghee.webp" loading="lazy" decoding="async" alt="Ghee">
             </div>
             <div class="product-text">
-              <span class="badge badge-soon">Coming soon</span>
-              <h3>Ghee</h3>
-              <p>Slow-made. Deep aroma. Rich finish.</p>
+              <span class="badge badge-available">Available now</span>
+              <h3>Desi Ghee</h3>
+              <p>Slow-made. Deep aroma.<br><strong>₹475 · 500ml</strong> · Saturdays</p>
             </div>
           </article>
           <article class="reveal reveal-delay-1">
@@ -151,9 +151,9 @@
               <img src="assets/khoya.webp" loading="lazy" decoding="async" alt="Khoya">
             </div>
             <div class="product-text">
-              <span class="badge badge-soon">Coming soon</span>
+              <span class="badge badge-available">Available now</span>
               <h3>Khoya</h3>
-              <p>The base of<br>every great mithai.</p>
+              <p>The base of every mithai.<br><strong>₹175 · 250g</strong> · Saturdays</p>
             </div>
           </article>
           <article class="reveal reveal-delay-2">
@@ -161,9 +161,9 @@
               <img src="assets/butter.webp" loading="lazy" decoding="async" alt="Butter">
             </div>
             <div class="product-text">
-              <span class="badge badge-soon">Coming soon</span>
-              <h3>Butter</h3>
-              <p>Churned fresh from pure buffalo cream.</p>
+              <span class="badge badge-available">Available now</span>
+              <h3>White Butter</h3>
+              <p>Churned fresh from cream.<br><strong>₹180 · 250g</strong> · Saturdays</p>
             </div>
           </article>
         </div>
@@ -263,7 +263,7 @@
       <button class="order-modal-close" onclick="closeOrderModal()" aria-label="Close">✕</button>
       <div class="order-modal-header">
         <p class="eyebrow" style="justify-content:flex-start;margin-bottom:12px;">Place your order</p>
-        <h3 id="order-modal-title">Fresh Paneer,<br>delivered to you.</h3>
+        <h3 id="order-modal-title">Fresh goodness,<br>delivered to you.</h3>
         <p class="order-modal-sub">Wed &amp; Sat delivery. Select what you need and we'll confirm on WhatsApp.</p>
       </div>
       <div class="order-modal-inner">
@@ -310,6 +310,23 @@
               <div class="order-item-info"><span>1 kg</span><span class="order-price">₹550</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q1kg',-1)">−</button><span id="q1kg">0</span><button type="button" onclick="adjustQty('q1kg',1)">+</button></div>
             </label>
+            <p class="order-section-label" style="margin-top:18px">Saturday Specials <span style="font-weight:500;text-transform:none;letter-spacing:0">· delivered Saturdays only</span></p>
+            <label class="order-item">
+              <div class="order-item-info"><span>Soya Chaap · 500g</span><span class="order-price">₹150</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('qChaap',-1)">−</button><span id="qChaap">0</span><button type="button" onclick="adjustQty('qChaap',1)">+</button></div>
+            </label>
+            <label class="order-item">
+              <div class="order-item-info"><span>Desi Ghee · 500ml</span><span class="order-price">₹475</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('qGhee',-1)">−</button><span id="qGhee">0</span><button type="button" onclick="adjustQty('qGhee',1)">+</button></div>
+            </label>
+            <label class="order-item">
+              <div class="order-item-info"><span>White Butter · 250g</span><span class="order-price">₹180</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('qButter',-1)">−</button><span id="qButter">0</span><button type="button" onclick="adjustQty('qButter',1)">+</button></div>
+            </label>
+            <label class="order-item">
+              <div class="order-item-info"><span>Khoya · 250g</span><span class="order-price">₹175</span></div>
+              <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('qKhoya',-1)">−</button><span id="qKhoya">0</span><button type="button" onclick="adjustQty('qKhoya',1)">+</button></div>
+            </label>
             <div class="order-total" id="order-total" style="display:none">
               Total: <strong id="order-total-val"></strong>
             </div>
@@ -345,8 +362,10 @@
   <script src="script.js?v=5"></script>
   <script>
     /* ── ORDER MODAL ── */
-    const PRICES = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
-    const LABELS = { q250: '250g', q500: '500g', q750: '750g', q1kg: '1kg' };
+    const PRICES = { q250: 145, q500: 280, q750: 420, q1kg: 550,
+                     qChaap: 150, qGhee: 475, qButter: 180, qKhoya: 175 };
+    const LABELS = { q250: 'Paneer 250g', q500: 'Paneer 500g', q750: 'Paneer 750g', q1kg: 'Paneer 1kg',
+                     qChaap: 'Soya Chaap 500g', qGhee: 'Desi Ghee 500ml', qButter: 'White Butter 250g', qKhoya: 'Khoya 250g' };
     let _placeUrl = null; // Google Maps URL from Places autocomplete
 
     function populateDeliveryDates() {
@@ -469,6 +488,8 @@
       msg += items.join('\n');
       msg += '\n\nTotal: ₹' + total;
       msg += '\n\nDelivery Date: ' + dateLabel;
+      const hasSpecials = ['qChaap','qGhee','qButter','qKhoya'].some(k => parseInt(document.getElementById(k).textContent) > 0);
+      if (hasSpecials) msg += '\n(Saturday Specials arrive on the Saturday run)';
       msg += '\nName: ' + name;
       msg += '\nPhone: ' + phone;
       msg += '\nAddress: ' + address;
