@@ -1494,6 +1494,27 @@ function dismissInstall() {
 }
 window.addEventListener('appinstalled', () =>
   document.getElementById('install-banner').classList.remove('show'));
+
+// iOS Safari never fires beforeinstallprompt — there's no programmatic
+// install API at all there, just the manual Share > Add to Home Screen
+// flow. Without this branch, iPhone/iPad visitors (the majority of the
+// install-banner's likely audience) never saw any prompt.
+(function () {
+  const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS 13+
+  const isStandalone = window.navigator.standalone === true
+    || window.matchMedia('(display-mode: standalone)').matches;
+  if (!isIOS || isStandalone || localStorage.getItem('pwa_dismissed')) return;
+
+  document.querySelector('#install-banner .inst-text strong').textContent = 'Add to Home Screen';
+  document.querySelector('#install-banner .inst-text span').textContent =
+    'Tap the Share icon below, then "Add to Home Screen"';
+  const btn = document.getElementById('btn-install');
+  btn.textContent = 'Got it';
+  btn.onclick = dismissInstall;
+
+  setTimeout(() => document.getElementById('install-banner').classList.add('show'), 5000);
+})();
 </script>
 </body>
 </html>
