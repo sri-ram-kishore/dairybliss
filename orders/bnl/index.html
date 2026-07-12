@@ -242,6 +242,45 @@
       margin-top: 4px;
     }
 
+    /* per-block subtotal line */
+    .blk-sub {
+      display: none; justify-content: space-between; align-items: center;
+      margin-top: 10px; padding: 10px 12px 0;
+      border-top: 1px solid var(--border); font-size: 13.5px;
+    }
+    .blk-sub.v { display: flex; }
+    .blk-sub .k  { color: var(--text-soft); }
+    .blk-sub .v2 { font-weight: 700; color: var(--text); }
+
+    /* "When do you need it?" rows */
+    .when-rows { display: flex; flex-direction: column; gap: 14px; }
+    .when-row {
+      display: none; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap;
+    }
+    .when-row.v { display: flex; }
+    .when-name { font-size: 14.5px; font-weight: 600; color: var(--text); }
+    .when-chips { display: flex; gap: 8px; }
+    .when-fixed {
+      font-size: 12.5px; font-weight: 700; color: var(--green);
+      background: var(--green-light); border-radius: 20px; padding: 6px 13px;
+      white-space: nowrap;
+    }
+    .when-empty { font-size: 13px; color: var(--text-soft); display: none; margin: 0; }
+    .when-empty.v { display: block; }
+
+    /* mini-bill inside the payment step */
+    .invoice {
+      background: var(--cream); border: 1.5px solid rgba(61,122,26,0.2);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+    }
+    .inv-row { display: none; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13.5px; color: var(--text-mid); }
+    .inv-row.v { display: flex; }
+    .inv-row .inv-v { font-weight: 600; color: var(--text); white-space: nowrap; }
+    .inv-total { border-top: 1px dashed rgba(28,47,92,0.18); margin-top: 6px; padding-top: 8px; }
+    .inv-total .inv-k { font-weight: 700; color: var(--text); font-size: 14px; }
+    .inv-total .inv-v { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; color: var(--green); }
+
     /* delivery-day reactions to cart contents */
     .day-card.dc-disabled { opacity: 0.45; pointer-events: none; }
     .day-note {
@@ -573,20 +612,10 @@ const APT = {
       </div>
     </div>
 
-    <!-- Deliver on one day or both — checkboxes, not either/or -->
-    <div class="qty-days" id="paneer-days">
-      <span class="qty-days-lbl">Deliver on</span>
-      <label class="day-chip" id="dch-wed">
-        <input type="checkbox" id="r-wed">
-        Wed, <span id="ds-wed">—</span>
-      </label>
-      <label class="day-chip" id="dch-sat">
-        <input type="checkbox" id="r-sat">
-        Sat, <span id="ds-sat">—</span>
-      </label>
-      <span class="days-hint" id="days-hint">Tick one day — or both</span>
+    <div class="blk-sub" id="blk-sub-paneer">
+      <span class="k" id="sub-paneer-k">Subtotal</span>
+      <span class="v2" id="sub-paneer-v">₹0</span>
     </div>
-    <p class="field-err" id="e-days" style="margin-top:6px;">Please pick a delivery day for your paneer.</p>
   </div>
 
   <!-- ── STEP 4: SATURDAY SPECIALS (delivered Saturdays only) ── -->
@@ -644,11 +673,42 @@ const APT = {
       </div>
     </div>
 
-    <p class="field-err" id="e-qty" style="margin-top:6px;">Please add at least one item.</p>
-    <div class="amt-row" id="amount-pill">
-      <span class="amt-lbl">Total amount</span>
-      <span class="amt-val" id="amount-val">₹0</span>
+    <div class="blk-sub" id="blk-sub-specials">
+      <span class="k">Subtotal</span>
+      <span class="v2" id="sub-specials-v">₹0</span>
     </div>
+    <p class="field-err" id="e-qty" style="margin-top:6px;">Please add at least one item.</p>
+  </div>
+
+  <!-- ── STEP 5: WHEN DO YOU NEED IT? (one row per item group) ── -->
+  <div class="fc">
+    <div class="step-hd">
+      <span class="step-n">5</span>
+      <span class="step-title">When do you need it?</span>
+    </div>
+
+    <div class="when-rows">
+      <div class="when-row" id="when-paneer">
+        <span class="when-name">Paneer</span>
+        <div class="when-chips" id="paneer-days">
+          <label class="day-chip" id="dch-wed">
+            <input type="checkbox" id="r-wed">
+            Wed, <span id="ds-wed">—</span>
+          </label>
+          <label class="day-chip" id="dch-sat">
+            <input type="checkbox" id="r-sat">
+            Sat, <span id="ds-sat">—</span>
+          </label>
+        </div>
+        <span class="days-hint">Tick one day — or both</span>
+      </div>
+      <div class="when-row" id="when-specials">
+        <span class="when-name">Saturday Specials</span>
+        <span class="when-fixed">Sat, <span id="sat-when">—</span></span>
+      </div>
+      <p class="when-empty" id="when-empty">Add items above to choose delivery days.</p>
+    </div>
+    <p class="field-err" id="e-days" style="margin-top:6px;">Please pick a delivery day for your paneer.</p>
   </div>
 
 
@@ -659,8 +719,24 @@ const APT = {
   <!-- ── STEP 6: PAYMENT ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">5</span>
+      <span class="step-n">6</span>
       <span class="step-title">How would you like to pay?</span>
+    </div>
+
+    <!-- Mini-bill: exactly what they're paying, right above the pay buttons -->
+    <div class="invoice">
+      <div class="inv-row" id="inv-paneer">
+        <span class="inv-k" id="inv-paneer-k">Paneer</span>
+        <span class="inv-v" id="inv-paneer-v">₹0</span>
+      </div>
+      <div class="inv-row" id="inv-specials">
+        <span class="inv-k">Saturday Specials</span>
+        <span class="inv-v" id="inv-specials-v">₹0</span>
+      </div>
+      <div class="inv-row inv-total v">
+        <span class="inv-k">Total payable</span>
+        <span class="inv-v" id="inv-total-v">₹0</span>
+      </div>
     </div>
 
     <div class="pay-cards" id="pay-cards">
@@ -783,9 +859,12 @@ function populateDates() {
   document.getElementById('r-sat').dataset.fullDate   = fmtDate(sd);
   document.getElementById('r-sat').dataset.isoDate    = toISO(sd);
   document.getElementById('r-sat').dataset.shortLabel = fmtLabel(sd);
-  // The Saturday Specials header shows the next Saturday run.
+  // The Saturday Specials header and "When do you need it?" row both show
+  // the next Saturday run.
   const satNext = document.getElementById('sat-next');
   if (satNext) satNext.textContent = fmtLabel(sd);
+  const satWhen = document.getElementById('sat-when');
+  if (satWhen) satWhen.textContent = fmtDayOnly(sd);
 }
 
 // Soonest date first inside the paneer row's chip pair.
@@ -928,19 +1007,15 @@ function extrasTotal() {
   return Object.values(EXTRA_STATE).reduce((s, v) => s + v, 0);
 }
 
-// The day checkboxes appear once paneer is in the basket. Ticking both
-// days doubles the paneer (same basket delivered twice) and the hint
-// spells out the maths so the total is never a surprise.
+// The "When do you need it?" rows mirror the basket: the paneer row (with
+// its Wed/Sat tick-chips) appears when paneer is in it, the Saturday
+// Specials row when specials are.
 function syncProductUI() {
-  const hasPaneer = qtyTotal() > 0;
-  document.getElementById('paneer-days').classList.toggle('v', hasPaneer);
-  const hint = document.getElementById('days-hint');
-  if (hasPaneer && selectedDays().length === 2) {
-    const amt = qtyAmount();
-    hint.textContent = `₹${amt.toLocaleString('en-IN')} × 2 deliveries = ₹${(amt * 2).toLocaleString('en-IN')}`;
-  } else {
-    hint.textContent = 'Tick one day — or both';
-  }
+  const hasPaneer   = qtyTotal() > 0;
+  const hasSpecials = extrasTotal() > 0;
+  document.getElementById('when-paneer').classList.toggle('v', hasPaneer);
+  document.getElementById('when-specials').classList.toggle('v', hasSpecials);
+  document.getElementById('when-empty').classList.toggle('v', !hasPaneer && !hasSpecials);
 }
 // Day checkbox behaviour: highlight the chip, clear errors, refresh totals.
 ['r-wed', 'r-sat'].forEach(id => {
@@ -979,14 +1054,31 @@ function grandTotal() {
   const days = qtyTotal() > 0 ? Math.max(1, selectedDays().length) : 0;
   return qtyAmount() * days + extrasAmount();
 }
+// Money summary: per-block subtotals plus the payment step's mini-bill
+// (Paneer — ₹830 × 2 days / Saturday Specials ₹150 / Total payable ₹1,810).
 function updateTotalPill() {
-  const total = grandTotal();
-  if (total > 0) {
-    document.getElementById('amount-val').textContent = '₹' + total.toLocaleString('en-IN');
-    document.getElementById('amount-pill').classList.add('v');
-  } else {
-    document.getElementById('amount-pill').classList.remove('v');
-  }
+  const inr  = n => '₹' + n.toLocaleString('en-IN');
+  const pAmt = qtyAmount(), xAmt = extrasAmount();
+  const days = qtyTotal() > 0 ? Math.max(1, selectedDays().length) : 0;
+  const pTotal = pAmt * days;
+
+  document.getElementById('blk-sub-paneer').classList.toggle('v', pAmt > 0);
+  document.getElementById('sub-paneer-k').textContent =
+    selectedDays().length === 2 ? 'Subtotal · per delivery' : 'Subtotal';
+  document.getElementById('sub-paneer-v').textContent = inr(pAmt);
+
+  document.getElementById('blk-sub-specials').classList.toggle('v', xAmt > 0);
+  document.getElementById('sub-specials-v').textContent = inr(xAmt);
+
+  document.getElementById('inv-paneer').classList.toggle('v', pTotal > 0);
+  document.getElementById('inv-paneer-k').textContent =
+    days === 2 ? `Paneer — ${inr(pAmt)} × 2 days` : 'Paneer';
+  document.getElementById('inv-paneer-v').textContent = inr(pTotal);
+
+  document.getElementById('inv-specials').classList.toggle('v', xAmt > 0);
+  document.getElementById('inv-specials-v').textContent = inr(xAmt);
+
+  document.getElementById('inv-total-v').textContent = inr(grandTotal());
 }
 
 // phone: digits only + clear error
@@ -1364,7 +1456,7 @@ function resetForm() {
     document.getElementById('qcount-' + k).textContent = '0';
     updateLine(k, 0);
   });
-  document.getElementById('amount-pill').classList.remove('v');
+  updateTotalPill();
   applyDefaultDay();
   syncProductUI();
   document.getElementById('manage-block').style.display = 'none';
