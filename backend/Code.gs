@@ -835,7 +835,12 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
     `${esc(data.deliveryLabel)}`,
     ``,
     items.map(esc).join('\n'),
-    totalGrams > 0
+    // totalGrams only ever tracks paneer weight (it drives the vendor
+    // block maths), so pairing it with the full order price only makes
+    // sense for a paneer-only order — for a mixed cart it understates
+    // the weight next to the combined price, which reads as a mismatch.
+    // The itemised lines above already say exactly what's in the order.
+    (totalGrams > 0 && !x.chaap && !x.ghee && !x.butter && !x.khoya)
       ? `<b>Total: ${(totalGrams/1000).toFixed(2)} kg paneer  ·  ₹${totalRs}</b>`
       : `<b>Total: ₹${totalRs}</b>`,
     ``,
