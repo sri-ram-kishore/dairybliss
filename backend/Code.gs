@@ -791,7 +791,8 @@ function materializeSubscriptions() {
         sheet.getRange(rowIndex, SUB_COL.PREPAID_REMAINING).setValue(remaining);
         if (remaining === 0) {
           const { unit } = parseApt(current.address);
-          tg(`⚠️ <b>Subscription needs renewal</b>\n${esc(current.id)} — ${esc(current.name)}${unit ? ', Flat ' + esc(unit) : ''}\nJust used their last prepaid delivery. Check the Subscriptions sheet tab and nudge them when convenient.`);
+          const subNum = String(current.id).replace(/^DBS?/, '').replace(/^0+(?=\d)/, '');
+          tg(`⚠️ <b>Subscription needs renewal</b>\nSub #${subNum} — ${esc(current.name)}${unit ? ', ' + esc(unit) : ''}\nJust used their last prepaid delivery. Check the Subscriptions sheet tab and nudge them when convenient.`);
         }
       }
     });
@@ -815,9 +816,13 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   });
 
   const { unit } = parseApt(data.address);
+  // Display as "#17", not the raw "DB017" — that letter+digits shape reads
+  // too much like a flat code (G301, B309) at a skim. The real ID (DB017)
+  // is unchanged in the sheet; this reformats only what's shown here.
+  const orderNum = String(orderId).replace(/^DBS?/, '').replace(/^0+(?=\d)/, '');
   const title = subscriptionId
-    ? `🔁 Subscription Delivery — ${esc(orderId)}`
-    : `New Order — ${esc(orderId)}`;
+    ? `🔁 Subscription Delivery #${orderNum}`
+    : `New Order #${orderNum}`;
 
   const isPaidOnline = String(data.paymentStatus || '').toLowerCase().includes('paid');
   const payLine = isPaidOnline
@@ -827,7 +832,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const msg = [
     `<b>${meta.emoji} ${title}</b>`,
     ``,
-    `${esc(data.name)}${unit ? ', Flat ' + esc(unit) : ''}, ${esc(data.phone)}`,
+    `${esc(data.name)}${unit ? ', ' + esc(unit) : ''}, ${esc(data.phone)}`,
     `${esc(data.deliveryLabel)}`,
     ``,
     items.map(esc).join('\n'),
@@ -1264,7 +1269,7 @@ function sendCutoffSummary(aptFilter) {
         if (o.ghee)   items.push(`Ghee×${o.ghee}`);
         if (o.butter) items.push(`Butter×${o.butter}`);
         if (o.khoya)  items.push(`Khoya×${o.khoya}`);
-        lines.push(`${i+1}. ${esc(o.name)}${unit ? ', Flat ' + esc(unit) : ''}  —  ${items.join(', ')}`);
+        lines.push(`${i+1}. ${esc(o.name)}${unit ? ', ' + esc(unit) : ''}  —  ${items.join(', ')}`);
       });
       tg(lines.join('\n'));
     });
