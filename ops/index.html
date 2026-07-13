@@ -26,6 +26,8 @@
       --shadow:      0 1px 3px rgba(0,0,0,0.07), 0 2px 10px rgba(0,0,0,0.04);
       --err:         #c0392b;
       --orange:      #e67e22;
+      --purple:      #534ab7;
+      --purple-light: #eeedfe;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -244,6 +246,17 @@
     }
     .ref-cod  { background: #fef3e2; color: var(--orange); }
     .ref-paid { background: var(--green-light); color: var(--green); }
+
+    /* Product-type tags — green for paneer, purple for Saturday Specials.
+       One order can carry both (a mixed cart), so these are additive
+       chips rather than a single either/or label. */
+    .type-tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 20px; white-space: nowrap;
+      margin: 2px 3px 2px 0;
+    }
+    .type-tag--paneer   { background: var(--green-light);  color: var(--green); }
+    .type-tag--specials { background: var(--purple-light); color: var(--purple); }
 
     /* ── TODAY: VENDOR ACTIONS ── */
     .vendor-actions {
@@ -1240,17 +1253,32 @@ function fetchWithTimeout(url, options = {}) {
   return fetch(url, { ...options, signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
 
-function qtyLabel(o) {
+// Paneer and Saturday Specials as SEPARATE labels (not one joined
+// string) so each order row can carry a distinct colored tag per type —
+// the ladies read the tag before they read the item text. An order can
+// have both (a mixed cart), so these are additive, not either/or.
+function paneerLabel(o) {
   const parts = [];
-  if (o.q250) parts.push(`250g×${o.q250}`);
-  if (o.q500) parts.push(`500g×${o.q500}`);
-  if (o.q750) parts.push(`750g×${o.q750}`);
-  if (o.q1kg) parts.push(`1kg×${o.q1kg}`);
+  if (o.q250) parts.push(`Paneer 250g×${o.q250}`);
+  if (o.q500) parts.push(`Paneer 500g×${o.q500}`);
+  if (o.q750) parts.push(`Paneer 750g×${o.q750}`);
+  if (o.q1kg) parts.push(`Paneer 1kg×${o.q1kg}`);
+  return parts.join(', ');
+}
+function specialsLabel(o) {
+  const parts = [];
   if (o.qChaap)  parts.push(`Chaap×${o.qChaap}`);
   if (o.qGhee)   parts.push(`Ghee×${o.qGhee}`);
   if (o.qButter) parts.push(`Butter×${o.qButter}`);
   if (o.qKhoya)  parts.push(`Khoya×${o.qKhoya}`);
-  return parts.join(' · ');
+  return parts.join(', ');
+}
+function typeTagsHTML(o) {
+  const p = paneerLabel(o), s = specialsLabel(o);
+  let html = '';
+  if (p) html += `<span class="type-tag type-tag--paneer">${esc(p)}</span>`;
+  if (s) html += `<span class="type-tag type-tag--specials">${esc(s)}</span>`;
+  return html;
 }
 // Saturday Specials totals for a list of orders (procured per-item,
 // outside the paneer block maths).
@@ -1505,7 +1533,7 @@ function refRow(o) {
       <div class="ref-name">${esc(o.name)}</div>
       <div class="ref-flat">${esc(flat)}</div>
     </div>
-    <div class="ref-qty">${qtyLabel(o)}</div>
+    <div class="ref-qty">${typeTagsHTML(o)}</div>
     <div class="ref-right"><span class="ref-price">${fmt(o.totalRs)}</span>${badge}</div>
   </div>`;
 }
@@ -1593,7 +1621,7 @@ function orderCardHTML(o, editable) {
     <div class="order-card${allDone ? ' completed' : ''}">
       <div class="order-info">
         <div class="order-name">${esc(o.name)}</div>
-        <div class="order-meta">${esc(flat)} · ${qtyLabel(o)} · ${fmt(o.totalRs)}</div>
+        <div class="order-meta">${esc(flat)} · ${fmt(o.totalRs)} ${typeTagsHTML(o)}</div>
       </div>
       <div class="order-btns">
         ${delChip}
@@ -1619,7 +1647,7 @@ function orderCardHTML(o, editable) {
   <div class="order-card${allDone ? ' completed' : ''}">
     <div class="order-info">
       <div class="order-name">${esc(o.name)}</div>
-      <div class="order-meta">${esc(flat)} · ${qtyLabel(o)} · ${fmt(o.totalRs)}</div>
+      <div class="order-meta">${esc(flat)} · ${fmt(o.totalRs)} ${typeTagsHTML(o)}</div>
     </div>
     <div class="order-btns">
       <button class="btn-del${delDone ? ' done' : ''}" onclick="toggleDelivered('${rid}','${o.apt}')">${delLabel}</button>
