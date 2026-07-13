@@ -791,7 +791,7 @@ function materializeSubscriptions() {
         sheet.getRange(rowIndex, SUB_COL.PREPAID_REMAINING).setValue(remaining);
         if (remaining === 0) {
           const { unit } = parseApt(current.address);
-          tg(`⚠️ <b>Subscription needs renewal</b>\n${esc(current.id)} — ${esc(current.name)}${unit ? ', ' + esc(unit) : ''}\nJust used their last prepaid delivery. Nudge them from the ops Subs tab when convenient.`);
+          tg(`⚠️ <b>Subscription needs renewal</b>\n${esc(current.id)} — ${esc(current.name)}${unit ? ', Flat ' + esc(unit) : ''}\nJust used their last prepaid delivery. Check the Subscriptions sheet tab and nudge them when convenient.`);
         }
       }
     });
@@ -827,7 +827,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   const msg = [
     `<b>${meta.emoji} ${title}</b>`,
     ``,
-    `${esc(data.name)}${unit ? ', ' + esc(unit) : ''}, ${esc(data.phone)}`,
+    `${esc(data.name)}${unit ? ', Flat ' + esc(unit) : ''}, ${esc(data.phone)}`,
     `${esc(data.deliveryLabel)}`,
     ``,
     items.map(esc).join('\n'),
@@ -1161,9 +1161,9 @@ const APARTMENTS = [
 ];
 
 // Which PIN identity (login) owns each apartment's orders. Must match the
-// APTS `owner` map in ops/index.html. Rekha (SPC) handles SPC + BNL;
-// Deepa (BNR) handles BNR + ADG.
-const APT_OWNER = { SPC: 'SPC', BNL: 'SPC', BNR: 'BNR', ADG: 'BNR' };
+// APTS `owner` map in ops/index.html. Rekha (SPC) handles SPC;
+// Deepa (BNR) handles BNR + ADG + BNL.
+const APT_OWNER = { SPC: 'SPC', BNL: 'BNR', BNR: 'BNR', ADG: 'BNR' };
 
 const APT_PATTERNS = {
   SPC: ['sobha palm court'],
@@ -1264,7 +1264,7 @@ function sendCutoffSummary(aptFilter) {
         if (o.ghee)   items.push(`Ghee×${o.ghee}`);
         if (o.butter) items.push(`Butter×${o.butter}`);
         if (o.khoya)  items.push(`Khoya×${o.khoya}`);
-        lines.push(`${i+1}. ${esc(o.name)}${unit ? ', ' + esc(unit) : ''}  —  ${items.join(', ')}`);
+        lines.push(`${i+1}. ${esc(o.name)}${unit ? ', Flat ' + esc(unit) : ''}  —  ${items.join(', ')}`);
       });
       tg(lines.join('\n'));
     });
@@ -1324,6 +1324,45 @@ function sendCutoffSummary(aptFilter) {
 
     tg(lines.join('\n'));
   }
+}
+
+// ── DAILY TOTALS DIGEST (9pm every day) ─────────────────────────
+// Unlike sendCutoffSummary (which only fires content on Tue/Fri, for the
+// single date about to close), this runs every day and shows a running
+// snapshot — paneer AND Saturday Specials — for both upcoming delivery
+// dates, broken out per apartment. Paneer and Specials orders can target
+// different dates (a customer can order paneer for Wed and Specials for
+// the following Sat in the same checkout), so both dates are shown per
+// apartment rather than picking just one.
+function sendDailyTotals() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const upcoming = nextDeliveryDates(2); // [{date, label, open}, ...]
+  if (upcoming.length === 0) return;
+
+  const lines = [`<b>📊 Daily Totals — ${fmt(new Date(), 'EEE d MMM, h:mm a')}</b>`];
+
+  APARTMENTS.forEach(({ key, label, emoji }) => {
+    const sheet = getOrCreate(ss, key);
+    const aptLines = [];
+    upcoming.forEach(({ date, label: dLabel }) => {
+      const orders = ordersForDate(sheet, date);
+      if (orders.length === 0) { aptLines.push(`${dLabel}: no orders yet`); return; }
+      const s = sumOrders(orders);
+      const parts = [`${orders.length} order${orders.length !== 1 ? 's' : ''}`];
+      if (s.grams) parts.push(`${(s.grams/1000).toFixed(2)} kg paneer`);
+      const specials = [];
+      if (s.chaap)  specials.push(`Chaap×${s.chaap}`);
+      if (s.ghee)   specials.push(`Ghee×${s.ghee}`);
+      if (s.butter) specials.push(`Butter×${s.butter}`);
+      if (s.khoya)  specials.push(`Khoya×${s.khoya}`);
+      if (specials.length) parts.push(specials.join(', '));
+      parts.push(`₹${s.rs}`);
+      aptLines.push(`${dLabel}: ${parts.join(' · ')}`);
+    });
+    lines.push(``, `${emoji} <b>${esc(label)}</b>`, ...aptLines.map(esc));
+  });
+
+  tg(lines.join('\n'));
 }
 
 function sumOrders(orders) {
@@ -1484,6 +1523,12 @@ function setupTriggers() {
   // rows by the time that summary runs its procurement math.
   ScriptApp.newTrigger('materializeSubscriptions')
     .timeBased().atHour(6).everyDays(1).create();
+
+  // Daily totals digest: 9pm every day (an hour after the cutoff summary,
+  // which only fires content on Tue/Fri) — a running snapshot across all
+  // apartments and both upcoming delivery dates, every single day.
+  ScriptApp.newTrigger('sendDailyTotals')
+    .timeBased().atHour(21).everyDays(1).create();
 
   Logger.log('Triggers set up successfully.');
 }

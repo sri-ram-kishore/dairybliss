@@ -743,13 +743,6 @@
       </div>
     </div>
 
-    <!-- ── SUBS ── -->
-    <div class="tab-pane" id="tab-subs">
-      <div class="page">
-        <div id="subs-content"><div class="loading"><div class="spin"></div><br>Loading…</div></div>
-      </div>
-    </div>
-
   </div>
 
   <nav class="tab-bar">
@@ -770,15 +763,6 @@
         <line x1="9" y1="16" x2="13" y2="16"/>
       </svg>
       <span class="tab-label">Orders</span>
-    </button>
-    <button class="tab-item" id="tb-subs" onclick="setTab('subs')">
-      <!-- Subs: repeat/cycle arrows -->
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-        <path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-      </svg>
-      <span class="tab-label">Subs</span>
     </button>
     <button class="tab-item" id="tb-accounts" onclick="setTab('accounts')">
       <!-- Summary: bar chart -->
@@ -806,12 +790,12 @@ const VENDOR_DELIVER_PH  = '9620099600';
 
 // Apartments in display order. `owner` is the PIN identity (activeUser) that
 // manages this apartment's orders as "mine" — Deepa's BNR login also owns
-// ADG, so both apartments group under her in the Orders tab.
+// ADG and BNL, so all three group under her in the Orders tab.
 const APTS = [
   { key: 'SPC', name: 'Sobha Palm Court',   owner: 'SPC' },
   { key: 'BNR', name: 'Brigade North Ridge', owner: 'BNR' },
   { key: 'ADG', name: 'Adarsh Greens',       owner: 'BNR' },
-  { key: 'BNL', name: 'Bren Northern Lights', owner: 'SPC' },
+  { key: 'BNL', name: 'Bren Northern Lights', owner: 'BNR' },
 ];
 const APT_NAMES = Object.fromEntries(APTS.map(a => [a.key, a.name]));
 function myApts(user)    { return APTS.filter(a => a.owner === user).map(a => a.key); }
@@ -1186,73 +1170,6 @@ async function fetchSummary() {
   }
 }
 
-// ── SUBSCRIPTIONS ─────────────────────────────────────────────
-const SUB_FREQ_LABELS = { weekly: 'Every week', both_days: 'Every Wed & Sat', biweekly: 'Every other week' };
-
-async function fetchSubscriptions() {
-  const el = document.getElementById('subs-content');
-  try {
-    const resp = await fetchWithTimeout(WEBHOOK_URL + '?action=list_subscriptions&token=' + (activeToken || ''));
-    const data = await resp.json();
-    if (data.ok === false) throw new Error('bad response');
-    renderSubs(data.subscriptions || []);
-  } catch {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🔁</div>Could not load subscriptions.<br>Tap Subs again to retry.</div>`;
-  }
-}
-
-function subRowHTML(s) {
-  const freqLabel = SUB_FREQ_LABELS[s.frequency] || s.frequency;
-  const flat = (s.address.split(',').pop() || '').trim();
-  const qtyParts = [];
-  if (s.q250) qtyParts.push(`250g×${s.q250}`);
-  if (s.q500) qtyParts.push(`500g×${s.q500}`);
-  if (s.q750) qtyParts.push(`750g×${s.q750}`);
-  if (s.q1kg) qtyParts.push(`1kg×${s.q1kg}`);
-  const payInfo = s.paymentMode === 'Prepay4' ? `Prepaid · ${s.prepaidRemaining ?? 0} left` : 'COD';
-  const statusTag = s.status !== 'Active' ? ` · ${s.status}` : '';
-
-  let nudge = '';
-  if (s.paymentMode === 'Prepay4' && (s.prepaidRemaining ?? 0) <= 1 && s.status === 'Active') {
-    const msg = encodeURIComponent(`Hi ${s.name}! 🙏 Your DairyBliss paneer subscription is down to its last prepaid delivery. Reply here whenever you'd like to renew for 4 more. Thank you! 😊`);
-    const href = `https://wa.me/91${String(s.phone || '').replace(/\D/g,'')}?text=${msg}`;
-    nudge = `<a href="${href}" target="_blank" rel="noopener" class="collect-wa">💬 Renewal nudge</a>`;
-  }
-
-  return `
-  <div class="collect-row">
-    <div class="collect-body">
-      <div class="collect-name">${esc(s.name)}</div>
-      <div class="collect-meta">${esc(flat)} · ${esc(freqLabel)} · ${esc(qtyParts.join(', '))}${esc(statusTag)}</div>
-    </div>
-    <div class="collect-right">
-      <div class="collect-amt" style="font-size:13px">${esc(payInfo)}</div>
-      ${nudge}
-    </div>
-  </div>`;
-}
-
-// Read-only visibility + a renewal-nudge link — pause/skip/cancel stay
-// customer self-service only via their manage link, so there's only ever
-// one place mutating the Subscriptions sheet.
-function renderSubs(subs) {
-  const el = document.getElementById('subs-content');
-  if (!subs.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🔁</div>No active subscriptions yet.</div>`;
-    return;
-  }
-
-  const grouped = APTS.map(a => ({ ...a, list: subs.filter(s => s.apt === a.key) }));
-  const mine   = grouped.filter(a => a.owner === activeUser && a.list.length);
-  const theirs = grouped.filter(a => a.owner !== activeUser && a.list.length);
-
-  let html = '';
-  mine.concat(theirs).forEach(a => {
-    html += `<div class="sec-hd">${esc(a.name)}</div><div class="card">${a.list.map(subRowHTML).join('')}</div>`;
-  });
-  el.innerHTML = html;
-}
-
 // ── NAVIGATION ────────────────────────────────────────────────
 function getDeliveryDates() {
   const wed = nextDeliveryDate(3), sat = nextDeliveryDate(6);
@@ -1267,12 +1184,11 @@ function setDayIdx(idx) {
 }
 function setTab(tab) {
   activeTab = tab;
-  ['today','orders','accounts','subs'].forEach(t => {
+  ['today','orders','accounts'].forEach(t => {
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
     document.getElementById('tb-'  + t).classList.toggle('active', t === tab);
   });
   if (tab === 'accounts') loadExpensesFromBackend();
-  if (tab === 'subs') fetchSubscriptions();
 }
 function setPeriod(p) {
   activePeriod = p;
@@ -1616,7 +1532,7 @@ function renderOrders() {
   const filtered = orders.filter(o => o.deliveryDate === iso);
 
   // My apartments (editable) first, other apartments (view-only) below —
-  // Deepa owns both BNR and ADG, so this can be more than one apt per group.
+  // Deepa owns BNR, ADG and BNL, so this can be more than one apt per group.
   const mine  = myApts(activeUser);
   const theirs = otherApts(activeUser);
 
