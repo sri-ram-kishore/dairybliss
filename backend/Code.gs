@@ -802,7 +802,6 @@ function materializeSubscriptions() {
 // ── ORDER NOTIFICATION ────────────────────────────────────────
 
 function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams, subscriptionId) {
-  const newKg  = (newGrams / 1000).toFixed(2);
   const meta   = aptMeta(aptKey);
 
   const items = [];
@@ -841,8 +840,6 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
       : `<b>Total: ₹${totalRs}</b>`,
     ``,
     payLine,
-    ``,
-    `${esc(meta.key)} running total: <b>${newKg} kg</b>`
   ].join('\n');
 
   tg(msg);
