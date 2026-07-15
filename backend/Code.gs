@@ -11,6 +11,17 @@ const TELEGRAM_TOKEN   = props.getProperty('TG_TOKEN')   || '';
 const TELEGRAM_CHAT_ID = props.getProperty('TG_CHAT_ID') || '';
 const SHEET_ID         = '1JqZ6YhCldPSaS9S-RPm4vpJM9CHlr67OLY5HEajZHvQ';
 
+// Bump on every redeploy. Shown in /debug so we can tell exactly which
+// deployed version answered a given Telegram message (used to diagnose
+// stale/duplicate responses coming from an old deployment).
+const CODE_VERSION = '2026-07-13-c';
+
+// This project's deployed web app URL (the single active deployment —
+// same URL all the frontends post to). Hardcoded because
+// ScriptApp.getService().getUrl() returns the /dev URL when run from
+// the editor, which Telegram cannot deliver webhooks to.
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzL8rGFWH3d6R4n8Ct69mWnOki_KOnv6In8hlZO_hsj-D_v0qp9q0lvBDnds8uTy_k3nw/exec';
+
 const BLOCK_KG        = 3;     // stock bought in 3 kg blocks
 const ALERT_BEFORE_KG = 0.5;  // alert this many kg before each block boundary
 const COST_PER_KG     = 335;  // buying price per kg from supplier
@@ -44,10 +55,14 @@ function doPost(e) {
 
     const payload = JSON.parse(raw);
 
-    // Telegram webhook — no auth needed
+    // Telegram webhook — no auth needed. Deliberately return nothing:
+    // returning content makes Apps Script reply with its usual 302
+    // redirect, which Telegram's webhook delivery treats as a failure —
+    // it then retries the same update forever and never delivers the
+    // ones queued behind it. An empty return is served as a plain 200.
     if (payload.message || payload.callback_query) {
       handleTelegramUpdate(payload);
-      return jsonOk({});
+      return;
     }
 
     // Customer order — no auth needed (public ordering page)
@@ -1162,7 +1177,7 @@ function markOrderColumn(orderId, apt, col, value) {
 // semantics (✅ paid, ⚠️ warnings, 🔴 alerts) — never use them here.
 const APARTMENTS = [
   { key: 'SPC', label: 'Sobha Palm Court',   emoji: '🟠' },
-  { key: 'BNR', label: 'Brigade North Ridge', emoji: '🔵' },
+  { key: 'BNR', label: 'Brigade Northridge', emoji: '🔵' },
   { key: 'ADG', label: 'Adarsh Greens',       emoji: '🟤' },
   { key: 'BNL', label: 'Bren Northern Lights', emoji: '🟣' }
 ];
@@ -1209,11 +1224,16 @@ function aptMeta(key) {
 // ── CUTOFF SUMMARY (Tue 8pm → Wed orders, Fri 8pm → Sat orders) ──
 
 /**
- * Triggered at 8pm every day; only fires on Tuesday and Friday.
- * Scheduled trigger (no aptFilter): sends ONE combined order-to-place message.
- * Manual /summary SPC|BNR: sends per-apartment detail (names + flats).
+ * Scheduled trigger (Tue/Fri 8pm, no manual flag): sends ONE combined
+ * order-to-place message for tomorrow's delivery, and does nothing on
+ * other days.
+ * Manual /summary or /summary SPC|BNR (manual=true): sends a summary for
+ * the next upcoming delivery date, regardless of the day.
+ * Manual /summary [APT] YYYY-MM-DD (dateArg set): sends a summary for
+ * that specific date — past or future — so a recap can be pulled up
+ * on demand (e.g. after clearing the Telegram group's message history).
  */
-function sendCutoffSummary(aptFilter) {
+function sendCutoffSummary(aptFilter, manual, dateArg) {
   // When called from a time-based trigger, Apps Script passes the event object
   // as the first argument. Discard it so we always send the full summary.
   if (aptFilter && typeof aptFilter !== 'string') aptFilter = null;
@@ -1221,18 +1241,18 @@ function sendCutoffSummary(aptFilter) {
   const day = now.getDay();
 
   let deliveryDate, deliveryLabel;
-  if (day === 2) {
+  if (dateArg) {
+    const [y, m, dd] = dateArg.split('-').map(Number);
+    deliveryDate  = dateArg;
+    deliveryLabel = fmt(new Date(y, m - 1, dd), 'EEE, d MMM');
+  } else if (!manual && (day === 2 || day === 5)) {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     deliveryDate  = fmt(d, 'yyyy-MM-dd');
     deliveryLabel = fmt(d, 'EEE, d MMM');
-  } else if (day === 5) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    deliveryDate  = fmt(d, 'yyyy-MM-dd');
-    deliveryLabel = fmt(d, 'EEE, d MMM');
-  } else if (!aptFilter) {
+  } else if (!manual) {
     return; // scheduled trigger on non-Tue/Fri — do nothing
   } else {
-    // Manual /summary SPC|BNR on any day — use next delivery date
+    // Manual /summary [SPC|BNR|ADG|BNL] on any day, no date given — use next delivery date
     const next = nextDeliveryDates(1)[0];
     if (!next) { tg('No upcoming delivery dates.'); return; }
     deliveryDate  = next.date;
@@ -1303,9 +1323,10 @@ function sendCutoffSummary(aptFilter) {
 
     const totalKg   = combined.grams / 1000;
     const buyCost   = Math.round(totalKg * COST_PER_KG);
+    const isPast    = deliveryDate < fmt(now, 'yyyy-MM-dd');
 
     const lines = [
-      `<b>Place order — ${esc(deliveryLabel)}</b>`,
+      `<b>${isPast ? 'Order recap' : 'Place order'} — ${esc(deliveryLabel)}</b>`,
       ``,
     ];
     if (combined.q250) lines.push(`250g × ${combined.q250}`);
@@ -1391,12 +1412,24 @@ function sumOrders(orders) {
 
 function handleTelegramUpdate(update) {
   // Deduplicate: Telegram retries the webhook if we don't respond in time (GAS cold start).
-  // Track the last processed update_id so retries are ignored.
+  // Track the last processed update_id so retries are ignored. Locked so two
+  // near-simultaneous retries can't both read the property before either writes it.
   const updateId = String(update.update_id || '');
   if (updateId) {
-    const lastId = PropertiesService.getScriptProperties().getProperty('TG_LAST_UPDATE_ID');
-    if (lastId && Number(updateId) <= Number(lastId)) return; // already processed
-    PropertiesService.getScriptProperties().setProperty('TG_LAST_UPDATE_ID', updateId);
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      const lastId = PropertiesService.getScriptProperties().getProperty('TG_LAST_UPDATE_ID');
+      if (lastId && Number(updateId) <= Number(lastId)) return; // already processed
+      PropertiesService.getScriptProperties().setProperty('TG_LAST_UPDATE_ID', updateId);
+    } finally {
+      lock.releaseLock();
+    }
+  }
+
+  if (update.callback_query) {
+    handleTelegramCallback(update.callback_query);
+    return;
   }
 
   const msg = update.message;
@@ -1424,17 +1457,27 @@ function handleTelegramUpdate(update) {
       sendStatus(aptArg);
       break;
 
-    case '/summary':
-      sendCutoffSummary(aptArg);
+    case '/summary': {
+      let apt = null, dateArg = null;
+      parts.slice(1).forEach(p => {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(p)) dateArg = p;
+        else if (APARTMENTS.some(a => a.key === p.toUpperCase())) apt = p.toUpperCase();
+      });
+      if (dateArg) {
+        sendCutoffSummary(apt, true, dateArg);
+      } else {
+        askSummaryDate(apt); // no date typed — show tappable date buttons
+      }
       break;
+    }
 
     case '/help':
       tg([
         `<b>DairyBliss Bot — Commands</b>`,
         `/status — All apartments running totals`,
         `/status SPC, BNR, ADG, or BNL — one apartment`,
-        `/summary — Full order list (all apartments)`,
-        `/summary SPC, BNR, ADG, or BNL — one apartment`,
+        `/summary — Pick a delivery date from buttons (all apartments)`,
+        `/summary SPC, BNR, ADG, or BNL — same, filtered to one apartment`,
         `/pause — Stop accepting orders`,
         `/resume — Resume accepting orders`,
         `/debug — Confirm bot is alive`
@@ -1444,12 +1487,44 @@ function handleTelegramUpdate(update) {
     case '/debug':
       tg([
         `✅ <b>Bot is alive</b>`,
+        `Code version: <code>${CODE_VERSION}</code>`,
         `Chat ID: <code>${chatId}</code>`,
         `Expected: <code>${TELEGRAM_CHAT_ID}</code>`,
         `Match: ${chatId === TELEGRAM_CHAT_ID ? '✅ yes' : '❌ no — update TELEGRAM_CHAT_ID in Code.gs'}`
       ].join('\n'));
       break;
   }
+}
+
+/**
+ * Sends a "Which delivery date?" message with tappable inline buttons —
+ * the last 2 delivery dates plus the next 2 — so /summary never requires
+ * typing a date string. apt (optional) narrows the eventual summary to
+ * one apartment; it's carried through in each button's callback_data.
+ */
+function askSummaryDate(apt) {
+  const dates = pastDeliveryDates(2).concat(nextDeliveryDates(2));
+  const aptToken = apt || 'ALL';
+  const buttons = dates.map(d => ([{
+    text: d.label,
+    callback_data: `summary|${d.date}|${aptToken}`
+  }]));
+  tg(`Which delivery date?${apt ? ' (' + esc(apt) + ')' : ''}`, { inline_keyboard: buttons });
+}
+
+/**
+ * Handles a tap on one of the /summary date buttons.
+ */
+function handleTelegramCallback(cb) {
+  const chatId = String((cb.message && cb.message.chat && cb.message.chat.id) || '');
+  if (chatId === TELEGRAM_CHAT_ID) {
+    const data = String(cb.data || '');
+    const [kind, date, aptToken] = data.split('|');
+    if (kind === 'summary' && date) {
+      sendCutoffSummary(aptToken && aptToken !== 'ALL' ? aptToken : null, true, date);
+    }
+  }
+  tgAnswerCallback(cb.id);
 }
 
 /**
@@ -1517,9 +1592,9 @@ function setOrdersEnabled(val) {
 function setupTriggers() {
   ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
 
-  // Poll Telegram for commands every minute
-  ScriptApp.newTrigger('pollTelegram')
-    .timeBased().everyMinutes(1).create();
+  // NOTE: Telegram commands now arrive via webhook (doPost), not polling.
+  // Run resetTelegramWebhook() once after redeploying to register it.
+  // The old per-minute pollTelegram trigger is intentionally NOT recreated.
 
   // Cutoff summary: 8pm every day — function checks if it's Tue or Fri inside
   ScriptApp.newTrigger('sendCutoffSummary')
@@ -1540,7 +1615,11 @@ function setupTriggers() {
   Logger.log('Triggers set up successfully.');
 }
 
-// ── TELEGRAM POLLING ──────────────────────────────────────────
+// ── TELEGRAM POLLING (LEGACY — no longer scheduled) ───────────
+// Replaced by the webhook (doPost + resetTelegramWebhook). Kept only as
+// a manual fallback: if the webhook is ever deleted, this can be
+// re-scheduled from setupTriggers. While a webhook is registered,
+// Telegram rejects getUpdates calls, so this must not run alongside it.
 
 function pollTelegram() {
   const props  = PropertiesService.getScriptProperties();
@@ -1561,17 +1640,59 @@ function pollTelegram() {
 
 // ── HELPERS ───────────────────────────────────────────────────
 
-function tg(text) {
+function tg(text, replyMarkup) {
+  const body = {
+    chat_id: TELEGRAM_CHAT_ID,
+    text: text,
+    parse_mode: 'HTML',
+    disable_web_page_preview: true
+  };
+  if (replyMarkup) body.reply_markup = replyMarkup;
   UrlFetchApp.fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
     method: 'post',
     contentType: 'application/json',
-    payload: JSON.stringify({
-      chat_id: TELEGRAM_CHAT_ID,
-      text: text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true
-    })
+    payload: JSON.stringify(body)
   });
+}
+
+function tgAnswerCallback(callbackQueryId) {
+  UrlFetchApp.fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({ callback_query_id: callbackQueryId })
+  });
+}
+
+/**
+ * Run manually from the Apps Script editor (View → Logs after running).
+ * Shows which URL Telegram is actually delivering updates to, how many
+ * updates are queued for retry, and this deployment's own URL — the two
+ * URLs must match. A mismatch means an old deployment is still receiving
+ * (and answering) bot commands with outdated code.
+ */
+function checkTelegramWebhook() {
+  const info = UrlFetchApp.fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getWebhookInfo`);
+  Logger.log('Webhook info: ' + info.getContentText());
+  Logger.log('Expected URL: ' + WEBAPP_URL);
+}
+
+/**
+ * Run manually from the Apps Script editor ONCE after redeploying.
+ * Registers this web app as the bot's webhook so commands arrive
+ * instantly via doPost instead of the old 1-minute polling — and,
+ * as a side effect, permanently locks out any stray old project still
+ * polling getUpdates with this bot token (Telegram rejects getUpdates
+ * while a webhook is registered).
+ * drop_pending_updates discards any queued stale updates so switching
+ * over doesn't trigger a burst of late duplicate replies.
+ */
+function resetTelegramWebhook() {
+  const res = UrlFetchApp.fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook`, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({ url: WEBAPP_URL, drop_pending_updates: true })
+  });
+  Logger.log('setWebhook → ' + WEBAPP_URL + ' : ' + res.getContentText());
 }
 
 function getOrCreate(ss, name) {
@@ -1689,8 +1810,7 @@ function matchDate(cell, dateStr) {
 
 /**
  * Returns the next n delivery dates (Wed=3, Sat=6) with an open/closed flag.
- * Wed cutoff: the Monday before at 8pm IST.
- * Sat cutoff: the Friday before at 8pm IST.
+ * Cutoff: the day before at 8pm IST (Tue for Wed, Fri for Sat).
  * A date is "open" if now is before its cutoff.
  */
 function nextDeliveryDates(n) {
@@ -1702,8 +1822,8 @@ function nextDeliveryDates(n) {
     const wd = d.getDay();
     if (wd !== 3 && wd !== 6) continue;
 
-    // Cutoff = 2 days before (Mon for Wed, Fri for Sat) at 20:00 IST
-    const cutoffDay = wd === 3 ? d.getDate() - 2 : d.getDate() - 1;
+    // Cutoff = 1 day before, at 20:00 IST
+    const cutoffDay = d.getDate() - 1;
     const cutoff    = new Date(d.getFullYear(), d.getMonth(), cutoffDay, 20, 0, 0);
 
     result.push({
@@ -1720,6 +1840,23 @@ function nextDeliveryDates(n) {
 // ordering window has effectively passed.
 function isDateOrderable(dateStr) {
   return nextDeliveryDates(2).some(d => d.date === dateStr);
+}
+
+/**
+ * Returns the previous n delivery dates (Wed/Sat), oldest first.
+ * Used to offer recent-past dates as /summary button choices.
+ */
+function pastDeliveryDates(n) {
+  const result = [];
+  const now    = new Date();
+
+  for (let offset = 1; result.length < n && offset < 15; offset++) {
+    const d  = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
+    const wd = d.getDay();
+    if (wd !== 3 && wd !== 6) continue;
+    result.push({ date: fmt(d, 'yyyy-MM-dd'), label: fmt(d, 'EEE, d MMM') });
+  }
+  return result.reverse();
 }
 
 function esc(s) {
