@@ -1229,7 +1229,8 @@ async function openRazorpay(d) {
     rzp.open();
   } catch(err) {
     setBusy(false);
-    showToast('Payment setup failed — please try Cash on Delivery.');
+    console.error('Razorpay setup failed:', err);
+    showToast('Payment setup failed: ' + (err.message || 'unknown error') + ' — please try Cash on Delivery.');
   }
 }
 
@@ -1307,7 +1308,8 @@ async function openRazorpaySubscription(d) {
     rzp.open();
   } catch(err) {
     setBusy(false);
-    showToast('Payment setup failed — please try Cash on Delivery.');
+    console.error('Razorpay setup failed:', err);
+    showToast('Payment setup failed: ' + (err.message || 'unknown error') + ' — please try Cash on Delivery.');
   }
 }
 
@@ -1365,6 +1367,7 @@ function showConfirmation(d, payStatus, subResult) {
 
 // ── reset ─────────────────────────────────────────────────────
 function resetForm() {
+  setBusy(false);
   document.getElementById('orderForm').reset();
   document.querySelectorAll('.day-card:not(.day-card--fixed), .pay-card, .day-chip').forEach(c => c.classList.remove('chosen'));
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('v'));

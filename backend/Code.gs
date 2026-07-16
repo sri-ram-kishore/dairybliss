@@ -46,6 +46,33 @@ function getRzpSecret() {
   return PropertiesService.getScriptProperties().getProperty('RZP_SECRET');
 }
 
+/**
+ * Run manually from the Apps Script editor (select from the function
+ * dropdown → Run) whenever "Pay Online" fails at checkout. Logs whether
+ * RZP_KEY_ID/RZP_SECRET are set and, if so, Razorpay's exact response
+ * to a real test order-creation call — check the Execution log after.
+ */
+function testRazorpayConfig() {
+  const keyId  = getRzpKeyId();
+  const secret = getRzpSecret();
+  Logger.log('RZP_KEY_ID set: ' + !!keyId + (keyId ? ' (' + keyId.slice(0, 8) + '...)' : ''));
+  Logger.log('RZP_SECRET set: ' + !!secret);
+  if (!keyId || !secret) {
+    Logger.log('Missing credential(s) in Script Properties — that alone explains "Payment setup failed".');
+    return;
+  }
+
+  const creds    = Utilities.base64Encode(keyId + ':' + secret);
+  const response = UrlFetchApp.fetch('https://api.razorpay.com/v1/orders', {
+    method: 'post',
+    muteHttpExceptions: true,
+    headers: { 'Authorization': 'Basic ' + creds, 'Content-Type': 'application/json' },
+    payload: JSON.stringify({ amount: 14500, currency: 'INR', receipt: 'diag_' + Date.now() }),
+  });
+  Logger.log('HTTP status: ' + response.getResponseCode());
+  Logger.log('Razorpay response: ' + response.getContentText());
+}
+
 // ── ENTRY POINTS ────────────────────────────────────────────
 
 function doPost(e) {
