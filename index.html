@@ -145,7 +145,7 @@
               <img src="assets/chaap.webp" loading="lazy" decoding="async" alt="Soya chaap">
             </div>
             <div class="product-text">
-              <span class="badge badge-price">₹150 · 500g</span>
+              <span class="badge badge-price">₹170 · 4 pcs (~300g)</span>
               <h3>Soya Chaap</h3>
               <p>For grills, gravies<br>and rolls.</p>
             </div>
@@ -321,7 +321,7 @@
           <div class="order-items">
             <p class="order-section-label">Saturday Specials · Saturdays only</p>
             <label class="order-item">
-              <div class="order-item-info"><span>Soya Chaap · 500g</span><span class="order-price">₹150</span></div>
+              <div class="order-item-info"><span>Soya Chaap · 4 pcs (~300g)</span><span class="order-price">₹170</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('qChaap',-1)">−</button><span id="qChaap">0</span><button type="button" onclick="adjustQty('qChaap',1)">+</button></div>
             </label>
             <label class="order-item">
@@ -432,9 +432,9 @@
 
     /* ── ORDER MODAL ── */
     const PRICES = { q250: 145, q500: 280, q750: 420, q1kg: 550,
-                     qChaap: 150, qGhee: 475, qButter: 180, qKhoya: 175 };
+                     qChaap: 170, qGhee: 475, qButter: 180, qKhoya: 175 };
     const LABELS = { q250: 'Paneer 250g', q500: 'Paneer 500g', q750: 'Paneer 750g', q1kg: 'Paneer 1kg',
-                     qChaap: 'Soya Chaap 500g', qGhee: 'Desi Ghee 500ml', qButter: 'White Butter 250g', qKhoya: 'Khoya 250g' };
+                     qChaap: 'Soya Chaap 4 pcs (~300g)', qGhee: 'Desi Ghee 500ml', qButter: 'White Butter 250g', qKhoya: 'Khoya 250g' };
     let _placeUrl = null; // Google Maps URL from Places autocomplete
 
     // Next delivery runs, cutoff-aware (order by 8 PM the evening before).

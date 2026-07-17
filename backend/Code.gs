@@ -319,13 +319,13 @@ const PRICING = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
 // Saturday Specials — one-off add-ons delivered on the Saturday run only.
 // Quantities live in sheet columns 22-25 (appended AFTER the original 21
 // so every existing column index keeps working).
-const EXTRAS_PRICING = { chaap: 150, ghee: 475, butter: 180, khoya: 175 };
+const EXTRAS_PRICING = { chaap: 170, ghee: 475, butter: 180, khoya: 175 };
 // Procurement cost per SELLING unit, incl. 5% GST. Derived from cost/kg:
-// chaap ₹150/kg → 500g ₹78.75 · ghee ₹700/L → 500ml ₹367.50
+// chaap ₹150/kg → 300g ₹47.25 · ghee ₹700/L → 500ml ₹367.50
 // butter ₹520/kg → 250g ₹136.50 · khoya ₹320/kg → 250g ₹84
-const EXTRAS_COST = { chaap: 78.75, ghee: 367.5, butter: 136.5, khoya: 84 };
+const EXTRAS_COST = { chaap: 47.25, ghee: 367.5, butter: 136.5, khoya: 84 };
 const EXTRAS_LABELS  = {
-  chaap:  'Soya Chaap (500g)',
+  chaap:  'Soya Chaap (4 pcs, ~300g)',
   ghee:   'Desi Ghee (500ml)',
   butter: 'White Butter (250g)',
   khoya:  'Khoya (250g)',
