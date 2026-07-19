@@ -35,9 +35,9 @@
       <div class="hero-copy">
         <div class="hero-headline-group">
           <p class="eyebrow reveal">The DairyBliss Standard</p>
-          <h1 id="hero-title" class="reveal reveal-delay-1">Paneer so soft, the gravy is just an afterthought.</h1>
+          <h1 id="hero-title" class="reveal reveal-delay-1">Paneer so soft,<br>the gravy is just<br>an afterthought.</h1>
         </div>
-        <p id="hero-sub" class="reveal reveal-delay-1">Soft, clean-tasting, and made from pure buffalo milk.</p>
+        <p id="hero-sub" class="reveal reveal-delay-1">Crafted from pure buffalo milk — set by hand.</p>
         <figure class="hero-photo" id="hero-carousel">
           <img src="assets/hero.webp" fetchpriority="high" alt="Dairy Bliss paneer pack, fresh paneer, and ghee on a kitchen counter" class="is-active">
           <img data-src="assets/hero-chaap-butter.webp" alt="Soya chaap and white butter on a kitchen counter" aria-hidden="true">
@@ -376,13 +376,17 @@
     // the photo. Slide 1 (paneer) is the eager LCP image; slides 2-3
     // late-load on window.load so they never compete for first paint.
     (function () {
+      // Headlines are exactly 3 lines (explicit <br>, each line ≤17 chars so
+      // it never rewraps at the 580px h1 width) and subs are one line
+      // (≤52 chars at the 480px/21px sub width) so every frame holds the
+      // same visual shape as the carousel rotates.
       const COPY = [
-        { h1: 'Paneer so soft, the gravy is just an afterthought.',
-          sub: 'Soft, clean-tasting, and made from pure buffalo milk.' },
-        { h1: 'Chaap that grills like it means it.',
-          sub: 'High-protein soya chaap and creamy white butter — fresh every Saturday.' },
-        { h1: 'Khoya rich enough to skip the mithai shop.',
-          sub: 'Traditional, slow-made khoya — the base of every great sweet.' },
+        { h1: 'Paneer so soft,<br>the gravy is just<br>an afterthought.',
+          sub: 'Crafted from pure buffalo milk — set by hand.' },
+        { h1: 'Chaap that grills<br>like it means it.<br>Butter that melts.',
+          sub: 'High-protein chaap, creamy butter — every Saturday.' },
+        { h1: 'Khoya rich<br>enough to skip<br>the mithai shop.',
+          sub: 'Slow-made the old way, for every great sweet.' },
       ];
       const slides = Array.from(document.querySelectorAll('#hero-carousel img'));
       const dots   = Array.from(document.querySelectorAll('.hero-dot'));
@@ -409,7 +413,7 @@
         // Swap text with a quick crossfade, synced to the photo transition.
         h1El.style.opacity = 0; subEl.style.opacity = 0;
         setTimeout(function () {
-          h1El.textContent  = COPY[i].h1;
+          h1El.innerHTML    = COPY[i].h1; // static strings above, <br> only
           subEl.textContent = COPY[i].sub;
           h1El.style.opacity = 1; subEl.style.opacity = 1;
         }, 260);
