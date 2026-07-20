@@ -1835,6 +1835,11 @@ function matchDate(cell, dateStr) {
   return String(cell).includes(dateStr);
 }
 
+// Delivery dates fully paused across all apartments (e.g. a one-off week
+// where we're not delivering) — format 'yyyy-MM-dd'. Remove the entry once
+// that week has passed; this is not a recurring schedule change.
+const SUSPENDED_DATES = ['2026-07-22'];
+
 /**
  * Returns the next n delivery dates (Wed=3, Sat=6) with an open/closed flag.
  * Cutoff: the day before at 8pm IST (Tue for Wed, Fri for Sat).
@@ -1848,6 +1853,7 @@ function nextDeliveryDates(n) {
     const d  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
     const wd = d.getDay();
     if (wd !== 3 && wd !== 6) continue;
+    if (SUSPENDED_DATES.includes(fmt(d, 'yyyy-MM-dd'))) continue;
 
     // Cutoff = 1 day before, at 20:00 IST
     const cutoffDay = d.getDate() - 1;

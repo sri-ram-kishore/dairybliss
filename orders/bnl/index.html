@@ -809,14 +809,23 @@ const APT = {
 // ── delivery dates ────────────────────────────────────────────
 const CUTOFF_HOUR = 21;
 
+// Dates fully paused for this apartment (e.g. a one-off week where we're
+// not delivering) — format 'yyyy-MM-dd'. Remove the entry once that week
+// has passed; this is not a recurring schedule change.
+const SUSPENDED_DATES = ['2026-07-22'];
+
 function nextDeliveryDate(targetWeekday) {
   const now = new Date();
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
   let daysAhead = (targetWeekday - today.getDay() + 7) % 7;
   if (daysAhead === 0 || (daysAhead === 1 && now.getHours() >= CUTOFF_HOUR)) daysAhead += 7;
-  const d = new Date(today);
+  let d = new Date(today);
   d.setDate(d.getDate() + daysAhead);
+  while (SUSPENDED_DATES.includes(toISO(d))) {
+    d = new Date(d);
+    d.setDate(d.getDate() + 7);
+  }
   return d;
 }
 
