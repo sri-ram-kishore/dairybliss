@@ -871,7 +871,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
     : `💰 COD — ₹${totalRs} to collect`;
 
   const msg = [
-    `<b>${meta.emoji} ${title}</b>`,
+    `<b>${meta.emoji} ${meta.key} · ${title}</b>`,
     ``,
     `${esc(data.name)}${unit ? ', ' + esc(unit) : ''}, ${esc(data.phone)}`,
     `${esc(data.deliveryLabel)}`,
