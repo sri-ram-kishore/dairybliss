@@ -612,70 +612,15 @@ let APT = null;
 <div class="page">
 <div class="page-title-row">
   <div>
-    <p class="page-eyebrow">Yelahanka, Bangalore</p>
     <p class="page-title">Order Fresh Goodness</p>
   </div>
 </div>
 <form id="orderForm" novalidate autocomplete="on">
 
-  <!-- ── STEP 1: WHERE ARE YOU? ── -->
-  <div class="fc" id="addr-card">
-    <div class="step-hd">
-      <span class="step-n">1</span>
-      <span class="step-title">Where should we deliver?</span>
-    </div>
-
-    <div class="field" id="addr-field">
-      <input type="text" id="f-addr" placeholder="Search your apartment / building…"
-             autocomplete="off">
-      <p class="field-err" id="e-addr">Please pick your building from the suggestions.</p>
-    </div>
-
-    <div class="apt-ok" id="apt-ok" style="display:none">
-      <span class="apt-ok-badge">✓ We deliver here</span>
-      <span class="apt-ok-name" id="apt-ok-name"></span>
-      <button type="button" class="apt-change" onclick="changeApt()">Change</button>
-    </div>
-
-    <div class="apt-no" id="apt-no" style="display:none">
-      <p class="apt-no-title">We might still reach you!</p>
-      <p class="apt-no-sub">We're a small team and deliver building-by-building. Send us your
-        address on WhatsApp and we'll confirm right away.</p>
-      <a class="apt-no-btn" id="apt-no-wa" href="#" target="_blank" rel="noopener">Send on WhatsApp →</a>
-    </div>
-  </div>
-
-  <div id="gated" style="display:none">
-
-  <!-- ── STEP 2: YOUR DETAILS ── -->
-  <div class="fc">
-    <div class="step-hd">
-      <span class="step-n">2</span>
-      <span class="step-title">Your details</span>
-    </div>
-
-    <div class="field">
-      <input type="text" id="f-name" placeholder="Enter your name"
-             autocomplete="name" required>
-      <p class="field-err" id="e-name">Please enter your full name.</p>
-    </div>
-
-    <div class="field">
-      <input type="tel" id="f-phone" placeholder="Enter your mobile number"
-             maxlength="10" inputmode="numeric" autocomplete="tel" required>
-      <p class="field-err" id="e-phone">Enter a valid 10-digit number.</p>
-    </div>
-
-    <div class="field">
-      <input type="text" id="f-flat" required placeholder="Enter your flat number (e.g. 3162)">
-      <p class="field-err" id="e-flat">Please enter your flat number.</p>
-    </div>
-  </div>
-
   <!-- ── STEP 2: FRESH PANEER (Wed & Sat) ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">3</span>
+      <span class="step-n">1</span>
       <span class="step-title">Fresh Paneer</span>
     </div>
     <p class="sub-note">Delivered every Wednesday &amp; Saturday · next delivery <b id="paneer-next">—</b></p>
@@ -728,7 +673,7 @@ let APT = null;
   <!-- ── STEP 3: SATURDAY SPECIALS (delivered Saturdays only) ── -->
   <div class="fc">
     <div class="step-hd">
-      <span class="step-n">4</span>
+      <span class="step-n">2</span>
       <span class="step-title">Saturday Specials</span>
     </div>
     <p class="sub-note">Delivered on Saturdays · next delivery <b id="sat-next">—</b></p>
@@ -800,6 +745,60 @@ let APT = null;
   <!-- Subscriptions are paused for the multi-product launch. The full
        subscription step (UI + cart-driven visibility) lives in commit
        87949c3 — reintroduce from there when ready. -->
+
+  <!-- ── STEP 1: WHERE ARE YOU? ── -->
+  <div class="fc" id="addr-card">
+    <div class="step-hd">
+      <span class="step-n">3</span>
+      <span class="step-title">Where should we deliver?</span>
+    </div>
+
+    <div class="field" id="addr-field">
+      <input type="text" id="f-addr" placeholder="Search your apartment / building…"
+             autocomplete="off">
+      <p class="field-err" id="e-addr">Please pick your building from the suggestions.</p>
+    </div>
+
+    <div class="apt-ok" id="apt-ok" style="display:none">
+      <span class="apt-ok-badge">✓ We deliver here</span>
+      <span class="apt-ok-name" id="apt-ok-name"></span>
+      <button type="button" class="apt-change" onclick="changeApt()">Change</button>
+    </div>
+
+    <div class="apt-no" id="apt-no" style="display:none">
+      <p class="apt-no-title">We might still reach you!</p>
+      <p class="apt-no-sub">We're a small team and deliver building-by-building. Send us your
+        address on WhatsApp and we'll confirm right away.</p>
+      <a class="apt-no-btn" id="apt-no-wa" href="#" target="_blank" rel="noopener">Send on WhatsApp →</a>
+    </div>
+  </div>
+
+  <div id="gated" style="display:none">
+
+  <!-- ── STEP 2: YOUR DETAILS ── -->
+  <div class="fc">
+    <div class="step-hd">
+      <span class="step-n">4</span>
+      <span class="step-title">Your details</span>
+    </div>
+
+    <div class="field">
+      <input type="text" id="f-name" placeholder="Enter your name"
+             autocomplete="name" required>
+      <p class="field-err" id="e-name">Please enter your full name.</p>
+    </div>
+
+    <div class="field">
+      <input type="tel" id="f-phone" placeholder="Enter your mobile number"
+             maxlength="10" inputmode="numeric" autocomplete="tel" required>
+      <p class="field-err" id="e-phone">Enter a valid 10-digit number.</p>
+    </div>
+
+    <div class="field">
+      <input type="text" id="f-flat" required placeholder="Enter your flat number (e.g. 3162)">
+      <p class="field-err" id="e-flat">Please enter your flat number.</p>
+    </div>
+  </div>
 
   <!-- ── STEP 6: PAYMENT ── -->
   <div class="fc">
@@ -921,7 +920,7 @@ const CUTOFF_HOUR = 21;
 // Dates fully paused for this apartment (e.g. a one-off week where we're
 // not delivering) — format 'yyyy-MM-dd'. Remove the entry once that week
 // has passed; this is not a recurring schedule change.
-const SUSPENDED_DATES = ['2026-07-22'];
+const SUSPENDED_DATES = [];
 
 function nextDeliveryDate(targetWeekday) {
   const now = new Date();
@@ -1187,16 +1186,33 @@ function setApt(apt, displayName) {
   try { localStorage.setItem('db_apt', apt.key); } catch {}
 }
 
+let _noMatchAddr = '';
+function basketLabel() {
+  const parts = [];
+  Object.entries(QTY_STATE).forEach(([k, v])  => { if (v) parts.push(`Paneer ${k} × ${v}`); });
+  Object.entries(EXTRA_STATE).forEach(([k, v]) => { if (v) parts.push(`${CONFIG.EXTRAS[k].label} × ${v}`); });
+  return parts.join(', ');
+}
+function noMatchWaHref() {
+  const basket = basketLabel();
+  const msg = 'Hi Dairy Bliss! I\u2019d like to place an order'
+    + (basket ? ': ' + basket : '')
+    + '. My address: ' + _noMatchAddr;
+  return 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
+}
 function showAptNo(addressText) {
   APT = null;
+  _noMatchAddr = addressText || '';
   document.getElementById('apt-ok').style.display = 'none';
   document.getElementById('gated').style.display = 'none';
   const card = document.getElementById('apt-no');
   card.style.display = 'block';
-  const msg = 'Hi Dairy Bliss! I\u2019d like to place an order. My address: ' + (addressText || '');
-  document.getElementById('apt-no-wa').href =
-    'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
+  document.getElementById('apt-no-wa').href = noMatchWaHref();
 }
+// Rebuild at tap-time so the message reflects the basket as it stands.
+document.getElementById('apt-no-wa').addEventListener('click', function () {
+  this.href = noMatchWaHref();
+});
 
 function changeApt() {
   APT = null;
