@@ -316,12 +316,12 @@ function nextSubscriptionId() {
 // written to the sheet and charged.)
 // 2026-07-30 price revision. 750g was dropped from every order form —
 // the q750 rate stays only so a stale cached client can't produce a ₹0 row.
-const PRICING = { q250: 150, q500: 290, q750: 420, q1kg: 570 };
+const PRICING = { q250: 149, q500: 289, q750: 420, q1kg: 569 };
 
 // Saturday Specials — one-off add-ons delivered on the Saturday run only.
 // Quantities live in sheet columns 22-25 (appended AFTER the original 21
 // so every existing column index keeps working).
-const EXTRAS_PRICING = { chaap: 204, ghee: 570, butter: 216, khoya: 210 };
+const EXTRAS_PRICING = { chaap: 204, ghee: 569, butter: 216, khoya: 208 };
 // Procurement cost per SELLING unit, from Ratirams challans (rates are
 // all-in — the vendor's per-kg rate already embeds 5% GST where it
 // applies, and no tax is added on the bill):
@@ -1244,10 +1244,11 @@ const APT_PATTERNS = {
   HA:  ['hoysala ace', 'hoysala-ace']
 };
 
-// Apartments with no delivery fee (our home bases). Everyone else pays a
-// flat ₹50 unless the basket crosses the free-delivery threshold — the
-// client computes/waives it, the server bounds and records it.
-const NO_FEE_APTS  = ['SPC', 'BNR'];
+// Apartments with no delivery fee — the original four are grandfathered
+// (they always had free delivery). Every NEWLY added apartment charges
+// the flat ₹50 fee by default, waived when the basket crosses ₹449 —
+// the client computes/waives it, the server bounds and records it.
+const NO_FEE_APTS  = ['SPC', 'BNR', 'ADG', 'BNL'];
 const DELIVERY_FEE = 50;
 
 /**

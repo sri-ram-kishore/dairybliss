@@ -563,16 +563,16 @@
 const CONFIG = {
   WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbzL8rGFWH3d6R4n8Ct69mWnOki_KOnv6In8hlZO_hsj-D_v0qp9q0lvBDnds8uTy_k3nw/exec",
   PRICES: {
-    "250g": { label: "250g",  display: "₹150", amount: 150, mrp: 175, desc: "Great for 1–2 people" },
-    "500g": { label: "500g",  display: "₹290", amount: 290, mrp: 340, desc: "Perfect for a family" },
-    "1kg":  { label: "1 Kg", display: "₹570", amount: 570, mrp: 670, desc: "Best value" },
+    "250g": { label: "250g",  display: "₹149", amount: 149, mrp: 175, desc: "Great for 1–2 people" },
+    "500g": { label: "500g",  display: "₹289", amount: 289, mrp: 340, desc: "Perfect for a family" },
+    "1kg":  { label: "1 Kg", display: "₹569", amount: 569, mrp: 670, desc: "Best value" },
   },
   // New products — one-time add-ons, Saturday delivery only.
   EXTRAS: {
     chaap:  { label: "Soya Chaap",   unit: "4 pcs (~300g)",  amount: 204, mrp: 240 },
-    ghee:   { label: "Desi Ghee",    unit: "500ml", amount: 570, mrp: 670 },
+    ghee:   { label: "Desi Ghee",    unit: "500ml", amount: 569, mrp: 670 },
     butter: { label: "White Butter", unit: "250g",  amount: 216, mrp: 255 },
-    khoya:  { label: "Khoya",        unit: "250g",  amount: 210, mrp: 245 },
+    khoya:  { label: "Khoya",        unit: "250g",  amount: 208, mrp: 245 },
   },
 };
 
@@ -584,13 +584,13 @@ const CONFIG = {
 const SERVICE_APTS = [
   { key: 'SPC', name: 'Sobha Palm Court',      match: ['sobha palm court'], fee: false },
   { key: 'BNR', name: 'Brigade Northridge',    match: ['brigade north'], fee: false },
-  { key: 'ADG', name: 'Adarsh Greens',         match: ['adarsh green'], fee: true },
-  { key: 'BNL', name: 'Bren Northern Lights',  match: ['bren northern light'], fee: true },
+  { key: 'ADG', name: 'Adarsh Greens',         match: ['adarsh green'], fee: false },
+  { key: 'BNL', name: 'Bren Northern Lights',  match: ['bren northern light'], fee: false },
   { key: 'GG',  name: 'Hiranandani Glen Gate', match: ['glen gate', 'glengate'], fee: true },
   { key: 'HA',  name: 'Hoysala Ace',           match: ['hoysala ace', 'hoysala-ace'], fee: true },
 ];
 const DELIVERY_FEE     = 50;
-const FREE_DELIVERY_MIN = 599;
+const FREE_DELIVERY_MIN = 449;
 const WA_NUMBER        = '919620099600';
 
 // Set once the customer's address matches a serviceable apartment.
@@ -628,7 +628,7 @@ let APT = null;
     <div class="qty-rows" id="qty-cards">
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/paneer.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price"><b class="p-now">₹150</b> <s class="p-mrp">₹175</s> <em class="save-chip">14% off</em></span></div>
+        <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price"><b class="p-now">₹149</b> <s class="p-mrp">₹175</s> <em class="save-chip">14% off</em></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
@@ -640,7 +640,7 @@ let APT = null;
       </div>
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/paneer.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">500g</span><span class="qty-price"><b class="p-now">₹290</b> <s class="p-mrp">₹340</s> <em class="save-chip">15% off</em></span></div>
+        <div class="qty-info"><span class="qty-label">500g</span><span class="qty-price"><b class="p-now">₹289</b> <s class="p-mrp">₹340</s> <em class="save-chip">15% off</em></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('500g',-1)">−</button>
@@ -652,7 +652,7 @@ let APT = null;
       </div>
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/paneer.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">1 kg</span><span class="qty-price"><b class="p-now">₹570</b> <s class="p-mrp">₹670</s> <em class="save-chip">15% off</em></span></div>
+        <div class="qty-info"><span class="qty-label">1 kg</span><span class="qty-price"><b class="p-now">₹569</b> <s class="p-mrp">₹670</s> <em class="save-chip">15% off</em></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('1kg',-1)">−</button>
@@ -693,7 +693,7 @@ let APT = null;
       </div>
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/ghee.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price"><b class="p-now">₹570</b> <s class="p-mrp">₹670</s> <em class="save-chip">15% off</em><span class="p-unit">500ml</span></span></div>
+        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price"><b class="p-now">₹569</b> <s class="p-mrp">₹670</s> <em class="save-chip">15% off</em><span class="p-unit">500ml</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('ghee',-1)">−</button>
@@ -717,7 +717,7 @@ let APT = null;
       </div>
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/khoya.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price"><b class="p-now">₹210</b> <s class="p-mrp">₹245</s> <em class="save-chip">14% off</em><span class="p-unit">250g</span></span></div>
+        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price"><b class="p-now">₹208</b> <s class="p-mrp">₹245</s> <em class="save-chip">15% off</em><span class="p-unit">250g</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('khoya',-1)">−</button>
@@ -809,7 +809,7 @@ let APT = null;
 
     <!-- Free-delivery nudge: only for fee apartments, tracks the basket -->
     <div class="ship-nudge" id="ship-nudge" style="display:none">
-      <div class="ship-nudge-hd">🎁 <b>Free delivery</b> on orders above ₹599</div>
+      <div class="ship-nudge-hd">🎁 <b>Free delivery</b> on orders above ₹449</div>
       <div class="ship-bar"><div class="ship-bar-fill" id="ship-bar-fill"></div></div>
       <div class="ship-nudge-sub" id="ship-nudge-sub">Start your basket to unlock free delivery.</div>
     </div>
