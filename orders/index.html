@@ -551,6 +551,22 @@
     #inv-delivery.v { display: flex; }
     .fee-free { color: var(--green); font-weight: 700; }
     .fee-strike { text-decoration: line-through; color: var(--text-soft, #7a8fa8); margin-right: 5px; }
+
+    /* phones: drop the per-row ₹ column (the bill repeats it), stack the
+       name over one flowing price line, tighten the stepper */
+    @media (max-width: 520px) {
+      .qty-line { display: none; }
+      .qty-row { gap: 6px; padding-left: 4px; padding-right: 4px; }
+      .qty-thumb { width: 44px; height: 44px; margin-right: 8px; }
+      #qty-cards .qty-info { flex-direction: column; align-items: flex-start; gap: 3px; }
+      .qty-info { padding-right: 6px; }
+      .qty-price { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 7px; }
+      .save-chip { margin-left: 0; }
+      .p-unit { display: inline; margin-top: 0; flex-basis: 100%; }
+      .qty-stepper { gap: 8px; flex-shrink: 0; }
+      .qty-btn { width: 34px; height: 34px; }
+      .qty-count { min-width: 18px; text-align: center; }
+    }
   </style>
 </head>
 <body>
