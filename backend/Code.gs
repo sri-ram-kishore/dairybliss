@@ -14,7 +14,7 @@ const SHEET_ID         = '1JqZ6YhCldPSaS9S-RPm4vpJM9CHlr67OLY5HEajZHvQ';
 // Bump on every redeploy. Shown in /debug so we can tell exactly which
 // deployed version answered a given Telegram message (used to diagnose
 // stale/duplicate responses coming from an old deployment).
-const CODE_VERSION = '2026-07-30-a';
+const CODE_VERSION = '2026-07-30-b';
 
 // This project's deployed web app URL (the single active deployment —
 // same URL all the frontends post to). Hardcoded because
@@ -94,6 +94,7 @@ function doPost(e) {
 
     // Customer order — no auth needed (public ordering page)
     if (payload.action === 'order')             return handleOrder(payload);
+    if (payload.action === 'check_coupon')      return handleCheckCoupon(payload);
     if (payload.action === 'create_rzp_order')  return handleCreateRzpOrder(payload);
     if (payload.action === 'create_subscription') return handleCreateSubscription(payload);
 
@@ -316,7 +317,7 @@ function nextSubscriptionId() {
 // written to the sheet and charged.)
 // 2026-07-30 price revision. 750g was dropped from every order form —
 // the q750 rate stays only so a stale cached client can't produce a ₹0 row.
-const PRICING = { q250: 149, q500: 289, q750: 420, q1kg: 569 };
+const PRICING = { q250: 148, q500: 289, q750: 420, q1kg: 569 };
 
 // Saturday Specials — one-off add-ons delivered on the Saturday run only.
 // Quantities live in sheet columns 22-25 (appended AFTER the original 21
@@ -365,7 +366,7 @@ function handleOrder(data) {
   const r = insertOrderRow(data, {});
 
   notifyNewOrder(r.orderId, data, r.aptKey, r.q250, r.q500, r.q750, r.q1kg,
-    r.totalGrams, r.totalRs, r.prevGrams, r.newGrams, '', r.deliveryFee);
+    r.totalGrams, r.totalRs, r.prevGrams, r.newGrams, '', r.deliveryFee, r.coupon);
 
   return jsonOk({ orderId: r.orderId });
 }
@@ -403,8 +404,17 @@ function insertOrderRow(data, opts) {
   // must not double). Server only bounds it: ₹0 or ₹50, and never for the
   // no-fee home apartments. The ≥₹599 waiver is applied client-side where
   // the whole basket is visible.
-  const rawFee      = parseInt(data.deliveryFee) || 0;
-  const deliveryFee = (rawFee === DELIVERY_FEE && !NO_FEE_APTS.includes(aptKey) && !(opts && opts.subscriptionId))
+  const rawFee = parseInt(data.deliveryFee) || 0;
+  // Coupon: server re-validates independently; a valid free-delivery code
+  // zeroes the fee regardless of what the client computed.
+  let couponUsed = '';
+  const rawCoupon = String(data.coupon || '').trim().toUpperCase();
+  if (rawCoupon && !(opts && opts.subscriptionId)) {
+    const cv = validateCoupon(ss, rawCoupon, aptKey, data.phone, parseApt(data.address).unit);
+    if (cv.ok) couponUsed = rawCoupon;
+  }
+  const deliveryFee = (!couponUsed && rawFee === DELIVERY_FEE
+      && !NO_FEE_APTS.includes(aptKey) && !(opts && opts.subscriptionId))
     ? DELIVERY_FEE : 0;
 
   const totalRs    = q250*PRICING.q250 + q500*PRICING.q500 + q750*PRICING.q750 + q1kg*PRICING.q1kg
@@ -434,11 +444,12 @@ function insertOrderRow(data, opts) {
     (opts && opts.subscriptionId) || '',  // Subscription ID
     x.chaap, x.ghee, x.butter, x.khoya,   // Saturday Specials (cols 22-25)
     deliveryFee || '',                    // Delivery Fee (col 26; already in Total ₹)
+    couponUsed,                           // Coupon (col 27)
   ]);
 
   const newGrams = prevGrams + totalGrams;
 
-  return { orderId, aptKey, q250, q500, q750, q1kg, extras: x, totalGrams, totalRs, prevGrams, newGrams, deliveryFee };
+  return { orderId, aptKey, q250, q500, q750, q1kg, extras: x, totalGrams, totalRs, prevGrams, newGrams, deliveryFee, coupon: couponUsed };
 }
 
 // ── RAZORPAY ORDER CREATION ───────────────────────────────────
@@ -480,7 +491,7 @@ const ORDER_HEADERS = ['Timestamp','Order ID','Name','Phone','Address','Map URL'
   'Total (g)','Total (₹)','Status',
   'Payment Method','Payment Status','RZP Payment ID',
   'Delivered','Payment Collected','Subscription ID',
-  'Chaap','Ghee','Butter','Khoya','Delivery Fee'];
+  'Chaap','Ghee','Butter','Khoya','Delivery Fee','Coupon'];
 
 function ensureOrderHeaders(sheet) {
   if (sheet.getLastRow() === 0) {
@@ -861,7 +872,7 @@ function materializeSubscriptions() {
 
 // ── ORDER NOTIFICATION ────────────────────────────────────────
 
-function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams, subscriptionId, deliveryFee) {
+function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams, subscriptionId, deliveryFee, coupon) {
   const meta   = aptMeta(aptKey);
 
   const items = [];
@@ -874,6 +885,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
     if (x[k]) items.push(`${EXTRAS_LABELS[k]} × ${x[k]}  —  ₹${x[k]*EXTRAS_PRICING[k]}`);
   });
   if (deliveryFee) items.push(`Delivery  —  ₹${deliveryFee}`);
+  if (coupon)      items.push(`🎟 ${coupon} — free delivery`);
 
   const { unit } = parseApt(data.address);
   // Display as "#17", not the raw "DB017" — that letter+digits shape reads
@@ -1227,13 +1239,14 @@ const APARTMENTS = [
   { key: 'ADG', label: 'Adarsh Greens',       emoji: '🟤' },
   { key: 'BNL', label: 'Bren Northern Lights', emoji: '🟣' },
   { key: 'GG',  label: 'Hiranandani Glen Gate', emoji: '⚫' },
-  { key: 'HA',  label: 'Hoysala Ace',           emoji: '⚪' }
+  { key: 'HA',  label: 'Hoysala Ace',           emoji: '⚪' },
+  { key: 'SDG', label: 'Sobha Dream Gardens',   emoji: '🔶' }
 ];
 
 // Which PIN identity (login) owns each apartment's orders. Must match the
 // APTS `owner` map in ops/index.html. Rekha (SPC) handles SPC;
 // Deepa (BNR) handles BNR + ADG + BNL + GG + HA.
-const APT_OWNER = { SPC: 'SPC', BNL: 'BNR', BNR: 'BNR', ADG: 'BNR', GG: 'BNR', HA: 'BNR' };
+const APT_OWNER = { SPC: 'SPC', BNL: 'BNR', BNR: 'BNR', ADG: 'BNR', GG: 'BNR', HA: 'BNR', SDG: 'BNR' };
 
 const APT_PATTERNS = {
   SPC: ['sobha palm court'],
@@ -1241,7 +1254,8 @@ const APT_PATTERNS = {
   ADG: ['adarsh greens', 'adarsh green'],
   BNL: ['bren northern lights', 'bren northern light', 'bren northernlights'],
   GG:  ['glen gate', 'glengate'],
-  HA:  ['hoysala ace', 'hoysala-ace']
+  HA:  ['hoysala ace', 'hoysala-ace'],
+  SDG: ['sobha dream', 'dream garden']
 };
 
 // Apartments with no delivery fee — the original four are grandfathered
@@ -1250,6 +1264,56 @@ const APT_PATTERNS = {
 // the client computes/waives it, the server bounds and records it.
 const NO_FEE_APTS  = ['SPC', 'BNR', 'ADG', 'BNL'];
 const DELIVERY_FEE = 50;
+
+// ── COUPONS ──────────────────────────────────────────────────
+// Launch codes. 'free_delivery' waives the ₹50 fee only — forgone fee
+// revenue, never a product-margin discount. firstOrderOnly is enforced
+// against BOTH the phone number and the flat: reusing a code needs a
+// fresh phone AND a fresh flat, and a fake flat breaks the cheater's
+// own delivery, so exposure is bounded at ₹50 per real household.
+const COUPONS = {
+  HELLO50: { type: 'free_delivery', firstOrderOnly: true },
+};
+
+function normPhone10(p) { return String(p || '').replace(/\D/g, '').slice(-10); }
+function normUnitKey(u) { return String(u || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+// First order = this apartment's sheet has no row with the same phone OR
+// the same flat/unit.
+function isFirstOrder(ss, aptKey, phone, unit) {
+  const sheet = ss.getSheetByName(aptKey);
+  if (!sheet || sheet.getLastRow() < 2) return true;
+  const ph = normPhone10(phone), un = normUnitKey(unit);
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 5).getValues();
+  for (const r of rows) {
+    if (ph && normPhone10(r[3]) === ph) return false;
+    if (un && normUnitKey(parseApt(r[4]).unit) === un) return false;
+  }
+  return true;
+}
+
+function validateCoupon(ss, code, aptKey, phone, unit) {
+  const c = COUPONS[String(code || '').trim().toUpperCase()];
+  if (!c) return { ok: false, reason: 'Invalid code.' };
+  if (c.type === 'free_delivery' && NO_FEE_APTS.includes(aptKey)) {
+    return { ok: false, reason: 'Delivery is already free for your apartment!' };
+  }
+  if (c.firstOrderOnly && !isFirstOrder(ss, aptKey, phone, unit)) {
+    return { ok: false, reason: 'This code is valid on first orders only.' };
+  }
+  return { ok: true, type: c.type };
+}
+
+// Public endpoint the order page calls when the customer taps Apply.
+function handleCheckCoupon(data) {
+  const aptKey = String(data.apt || '');
+  if (!APARTMENTS.some(a => a.key === aptKey)) {
+    return jsonOk({ ok: false, reason: 'Invalid apartment.' });
+  }
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const v  = validateCoupon(ss, data.code, aptKey, data.phone, data.flat);
+  return jsonOk({ ok: v.ok, type: v.type || '', reason: v.reason || '' });
+}
 
 /**
  * Returns { apt: 'SPC'|'BNR'|'Other', unit: 'A-301' } from a raw address string.

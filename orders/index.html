@@ -483,9 +483,9 @@
     .p-now  { font-size: 14px; font-weight: 700; color: var(--text); font-style: normal; }
     .p-mrp  { font-size: 12px; color: var(--text-soft, #7a8fa8); margin-left: 2px; }
     .save-chip {
-      font-style: normal; font-size: 10.5px; font-weight: 700;
-      background: var(--green-light, #e6f3de); color: var(--green);
-      padding: 1.5px 7px; border-radius: 9px; margin-left: 4px; white-space: nowrap;
+      font-style: normal; font-size: 11px; font-weight: 800;
+      background: var(--green); color: #fff;
+      padding: 2px 8px; border-radius: 6px; margin-left: 5px; white-space: nowrap;
     }
     .p-unit { display: block; font-size: 11.5px; color: var(--text-soft, #7a8fa8); margin-top: 1px; }
 
@@ -530,6 +530,22 @@
     .ship-nudge-sub { font-size: 12px; color: var(--text-mid, #4a5f7a); margin-top: 7px; }
     .ship-nudge-sub.unlocked { color: var(--green); font-weight: 700; }
 
+    /* coupon */
+    .coupon-row { display: flex; gap: 8px; margin-bottom: 4px; }
+    .coupon-row input {
+      flex: 1; min-width: 0; text-transform: uppercase;
+      font-size: 13.5px; padding: 10px 12px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+    }
+    .coupon-row input:disabled { background: var(--green-light, #e6f3de); border-color: rgba(61,122,26,0.3); }
+    .coupon-apply {
+      background: none; border: 1.5px solid var(--green); color: var(--green);
+      font-weight: 700; font-size: 13px; padding: 0 16px; border-radius: 10px; cursor: pointer;
+    }
+    .coupon-msg { display: none; font-size: 12px; margin: 2px 2px 10px; }
+    .coupon-msg.ok  { display: block; color: var(--green); font-weight: 650; }
+    .coupon-msg.bad { display: block; color: #c0392b; }
+
     /* delivery row in the mini-bill */
     #inv-delivery { display: none; }
     #inv-delivery.v { display: flex; }
@@ -563,7 +579,7 @@
 const CONFIG = {
   WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbzL8rGFWH3d6R4n8Ct69mWnOki_KOnv6In8hlZO_hsj-D_v0qp9q0lvBDnds8uTy_k3nw/exec",
   PRICES: {
-    "250g": { label: "250g",  display: "₹149", amount: 149, mrp: 175, desc: "Great for 1–2 people" },
+    "250g": { label: "250g",  display: "₹148", amount: 148, mrp: 175, desc: "Great for 1–2 people" },
     "500g": { label: "500g",  display: "₹289", amount: 289, mrp: 340, desc: "Perfect for a family" },
     "1kg":  { label: "1 Kg", display: "₹569", amount: 569, mrp: 670, desc: "Best value" },
   },
@@ -588,6 +604,7 @@ const SERVICE_APTS = [
   { key: 'BNL', name: 'Bren Northern Lights',  match: ['bren northern light'], fee: false },
   { key: 'GG',  name: 'Hiranandani Glen Gate', match: ['glen gate', 'glengate'], fee: true },
   { key: 'HA',  name: 'Hoysala Ace',           match: ['hoysala ace', 'hoysala-ace'], fee: true },
+  { key: 'SDG', name: 'Sobha Dream Gardens',   match: ['sobha dream', 'dream garden'], fee: true },
 ];
 const DELIVERY_FEE     = 50;
 const FREE_DELIVERY_MIN = 449;
@@ -628,7 +645,7 @@ let APT = null;
     <div class="qty-rows" id="qty-cards">
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/paneer.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price"><b class="p-now">₹149</b> <s class="p-mrp">₹175</s> <em class="save-chip">14% off</em></span></div>
+        <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price"><b class="p-now">₹148</b> <s class="p-mrp">₹175</s> <em class="save-chip">Save 15%</em></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
@@ -640,7 +657,7 @@ let APT = null;
       </div>
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/paneer.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">500g</span><span class="qty-price"><b class="p-now">₹289</b> <s class="p-mrp">₹340</s> <em class="save-chip">15% off</em></span></div>
+        <div class="qty-info"><span class="qty-label">500g</span><span class="qty-price"><b class="p-now">₹289</b> <s class="p-mrp">₹340</s> <em class="save-chip">Save 15%</em></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('500g',-1)">−</button>
@@ -652,7 +669,7 @@ let APT = null;
       </div>
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/paneer.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">1 kg</span><span class="qty-price"><b class="p-now">₹569</b> <s class="p-mrp">₹670</s> <em class="save-chip">15% off</em></span></div>
+        <div class="qty-info"><span class="qty-label">1 kg</span><span class="qty-price"><b class="p-now">₹569</b> <s class="p-mrp">₹670</s> <em class="save-chip">Save 15%</em></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('1kg',-1)">−</button>
@@ -681,7 +698,7 @@ let APT = null;
     <div class="qty-rows" id="extra-cards">
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/chaap.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price"><b class="p-now">₹204</b> <s class="p-mrp">₹240</s> <em class="save-chip">15% off</em><span class="p-unit">4 pcs (~300g)</span></span></div>
+        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price"><b class="p-now">₹204</b> <s class="p-mrp">₹240</s> <em class="save-chip">Save 15%</em><span class="p-unit">4 pcs (~300g)</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('chaap',-1)">−</button>
@@ -693,7 +710,7 @@ let APT = null;
       </div>
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/ghee.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price"><b class="p-now">₹569</b> <s class="p-mrp">₹670</s> <em class="save-chip">15% off</em><span class="p-unit">500ml</span></span></div>
+        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price"><b class="p-now">₹569</b> <s class="p-mrp">₹670</s> <em class="save-chip">Save 15%</em><span class="p-unit">500ml</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('ghee',-1)">−</button>
@@ -705,7 +722,7 @@ let APT = null;
       </div>
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/butter.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">White Butter</span><span class="qty-price"><b class="p-now">₹216</b> <s class="p-mrp">₹255</s> <em class="save-chip">15% off</em><span class="p-unit">250g</span></span></div>
+        <div class="qty-info"><span class="qty-label">White Butter</span><span class="qty-price"><b class="p-now">₹216</b> <s class="p-mrp">₹255</s> <em class="save-chip">Save 15%</em><span class="p-unit">250g</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('butter',-1)">−</button>
@@ -717,7 +734,7 @@ let APT = null;
       </div>
       <div class="qty-row">
         <img class="qty-thumb" src="../assets/khoya.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price"><b class="p-now">₹208</b> <s class="p-mrp">₹245</s> <em class="save-chip">15% off</em><span class="p-unit">250g</span></span></div>
+        <div class="qty-info"><span class="qty-label">Khoya</span><span class="qty-price"><b class="p-now">₹208</b> <s class="p-mrp">₹245</s> <em class="save-chip">Save 15%</em><span class="p-unit">250g</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('khoya',-1)">−</button>
@@ -813,6 +830,13 @@ let APT = null;
       <div class="ship-bar"><div class="ship-bar-fill" id="ship-bar-fill"></div></div>
       <div class="ship-nudge-sub" id="ship-nudge-sub">Start your basket to unlock free delivery.</div>
     </div>
+
+    <!-- Coupon code -->
+    <div class="coupon-row">
+      <input type="text" id="f-coupon" placeholder="Coupon code" autocomplete="off">
+      <button type="button" class="coupon-apply" id="btn-coupon" onclick="applyCoupon()">Apply</button>
+    </div>
+    <p class="coupon-msg" id="coupon-msg"></p>
 
     <!-- Mini-bill: exactly what they're paying, right above the pay buttons -->
     <div class="invoice">
@@ -1103,11 +1127,53 @@ function extrasAmount() {
 function grandTotal() {
   return qtyAmount() + extrasAmount();
 }
-// ₹50 outside the two home apartments, waived at ₹599+ (and on empty carts).
+// ₹50 at fee apartments, waived at ₹449+, by a valid coupon, or on empty carts.
+let COUPON = null; // { code, type } once the server validates it
 function deliveryFee() {
   if (!APT || !APT.fee) return 0;
+  if (COUPON && COUPON.type === 'free_delivery') return 0;
   const t = grandTotal();
   return (t > 0 && t < FREE_DELIVERY_MIN) ? DELIVERY_FEE : 0;
+}
+
+async function applyCoupon() {
+  const inp  = document.getElementById('f-coupon');
+  const msg  = document.getElementById('coupon-msg');
+  const btn  = document.getElementById('btn-coupon');
+  const code = inp.value.trim().toUpperCase();
+  if (!code) return;
+  if (!APT) { msg.textContent = 'Pick your building in step 3 first.'; msg.className = 'coupon-msg bad'; return; }
+  const phone = document.getElementById('f-phone').value.trim();
+  const flat  = document.getElementById('f-flat').value.trim();
+  if (!/^[6-9]\d{9}$/.test(phone) || !flat) {
+    msg.textContent = 'Fill in your phone and flat first — the code is tied to your address.';
+    msg.className = 'coupon-msg bad'; return;
+  }
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const resp = await fetch(CONFIG.WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'check_coupon', code, apt: APT.key, phone, flat }),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      COUPON = { code, type: data.type };
+      msg.textContent = '✓ ' + code + ' applied — free delivery on this order!';
+      msg.className = 'coupon-msg ok';
+      inp.disabled = true; btn.style.display = 'none';
+    } else {
+      COUPON = null;
+      msg.textContent = data.reason || 'Invalid code.';
+      msg.className = 'coupon-msg bad';
+    }
+  } catch {
+    msg.textContent = 'Could not check the code — please try again.';
+    msg.className = 'coupon-msg bad';
+  }
+  btn.disabled = false;
+  if (btn.style.display !== 'none') btn.textContent = 'Apply';
+  updateTotalPill();
 }
 function payableTotal() { return grandTotal() + deliveryFee(); }
 
@@ -1119,6 +1185,12 @@ function updateShipNudge() {
   const sub = document.getElementById('ship-nudge-sub');
   document.getElementById('ship-bar-fill').style.width =
     Math.min(100, Math.round(t / FREE_DELIVERY_MIN * 100)) + '%';
+  if (COUPON && COUPON.type === 'free_delivery') {
+    document.getElementById('ship-bar-fill').style.width = '100%';
+    sub.textContent = '🎟 ' + COUPON.code + ' applied — free delivery on this order!';
+    sub.classList.add('unlocked');
+    return;
+  }
   if (t === 0) {
     sub.textContent = 'Start your basket to unlock free delivery.';
     sub.classList.remove('unlocked');
@@ -1216,6 +1288,12 @@ document.getElementById('apt-no-wa').addEventListener('click', function () {
 
 function changeApt() {
   APT = null;
+  COUPON = null;
+  const ci = document.getElementById('f-coupon');
+  ci.disabled = false; ci.value = '';
+  const cb = document.getElementById('btn-coupon');
+  cb.style.display = ''; cb.textContent = 'Apply';
+  document.getElementById('coupon-msg').className = 'coupon-msg';
   document.getElementById('apt-ok').style.display = 'none';
   document.getElementById('apt-no').style.display = 'none';
   document.getElementById('gated').style.display = 'none';
@@ -1338,6 +1416,7 @@ function collectData() {
     apartment:  APT.name,
     aptKey:     APT.key,
     deliveryFee: fee,
+    coupon:     COUPON ? COUPON.code : '',
     flat:       document.getElementById('f-flat').value.trim(),
     paneerDays: qtyTotal() > 0 ? [PANEER_NEXT] : [],
     weekday:    PANEER_NEXT && PANEER_NEXT.label.startsWith('Wed') ? 'Wed' : 'Sat',
@@ -1415,6 +1494,7 @@ async function sendToSheet(d, payStatus, rzpPaymentId) {
       deliveryDate:  g.isoDate,
       deliveryLabel: g.label,
       deliveryFee:   gi === 0 ? (d.deliveryFee || 0) : 0,
+      coupon:        d.coupon || '',
       q250:  g.q250,
       q500:  g.q500,
       q750:  g.q750 || 0,
@@ -1612,6 +1692,9 @@ function showConfirmation(d, payStatus, subResult) {
     rows += `<div class="cr"><span class="ck">Delivery</span><span class="cv">₹${d.deliveryFee}</span></div>`;
   } else if (APT && APT.fee) {
     rows += `<div class="cr"><span class="ck">Delivery</span><span class="cv">FREE 🎉</span></div>`;
+  }
+  if (d.coupon) {
+    rows += `<div class="cr"><span class="ck">Coupon</span><span class="cv">🎟 ${esc(d.coupon)}</span></div>`;
   }
   rows += `<div class="cr"><span class="ck">Total</span><span class="cv">${esc(d.amtDisp)}</span></div>`;
   try {
