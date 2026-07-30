@@ -6,7 +6,7 @@
 //  retried via Background Sync.
 // ============================================================
 
-const CACHE_NAME = 'dairy-bliss-v10';
+const CACHE_NAME = 'dairy-bliss-v11';
 
 // Assets to precache on install (all order apps + shared shell)
 const PRECACHE_ASSETS = [

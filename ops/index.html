@@ -803,12 +803,14 @@ const VENDOR_DELIVER_PH  = '9620099600';
 
 // Apartments in display order. `owner` is the PIN identity (activeUser) that
 // manages this apartment's orders as "mine" — Deepa's BNR login also owns
-// ADG and BNL, so all three group under her in the Orders tab.
+// ADG, BNL, GG and HA, so all five group under her in the Orders tab.
 const APTS = [
   { key: 'SPC', name: 'Sobha Palm Court',   owner: 'SPC' },
   { key: 'BNR', name: 'Brigade Northridge', owner: 'BNR' },
   { key: 'ADG', name: 'Adarsh Greens',       owner: 'BNR' },
   { key: 'BNL', name: 'Bren Northern Lights', owner: 'BNR' },
+  { key: 'GG',  name: 'Hiranandani Glen Gate', owner: 'BNR' },
+  { key: 'HA',  name: 'Hoysala Ace',           owner: 'BNR' },
 ];
 const APT_NAMES = Object.fromEntries(APTS.map(a => [a.key, a.name]));
 function myApts(user)    { return APTS.filter(a => a.owner === user).map(a => a.key); }

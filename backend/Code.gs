@@ -14,7 +14,7 @@ const SHEET_ID         = '1JqZ6YhCldPSaS9S-RPm4vpJM9CHlr67OLY5HEajZHvQ';
 // Bump on every redeploy. Shown in /debug so we can tell exactly which
 // deployed version answered a given Telegram message (used to diagnose
 // stale/duplicate responses coming from an old deployment).
-const CODE_VERSION = '2026-07-13-c';
+const CODE_VERSION = '2026-07-30-a';
 
 // This project's deployed web app URL (the single active deployment —
 // same URL all the frontends post to). Hardcoded because
@@ -314,16 +314,21 @@ function nextSubscriptionId() {
 // (Each frontend order form keeps its own copy for instant UI feedback
 // with no round-trip; this is the copy that governs what actually gets
 // written to the sheet and charged.)
-const PRICING = { q250: 145, q500: 280, q750: 420, q1kg: 550 };
+// 2026-07-30 price revision. 750g was dropped from every order form —
+// the q750 rate stays only so a stale cached client can't produce a ₹0 row.
+const PRICING = { q250: 150, q500: 290, q750: 420, q1kg: 570 };
 
 // Saturday Specials — one-off add-ons delivered on the Saturday run only.
 // Quantities live in sheet columns 22-25 (appended AFTER the original 21
 // so every existing column index keeps working).
-const EXTRAS_PRICING = { chaap: 170, ghee: 475, butter: 180, khoya: 175 };
-// Procurement cost per SELLING unit, incl. 5% GST. Derived from cost/kg:
-// chaap ₹150/kg → 300g ₹47.25 · ghee ₹700/L → 500ml ₹367.50
-// butter ₹520/kg → 250g ₹136.50 · khoya ₹320/kg → 250g ₹84
-const EXTRAS_COST = { chaap: 47.25, ghee: 367.5, butter: 136.5, khoya: 84 };
+const EXTRAS_PRICING = { chaap: 204, ghee: 570, butter: 216, khoya: 210 };
+// Procurement cost per SELLING unit, from Ratirams challans (rates are
+// all-in — the vendor's per-kg rate already embeds 5% GST where it
+// applies, and no tax is added on the bill):
+// chaap ₹175/kg (hiked from 157.50, 29-Jul challan) → 300g ₹52.50
+// ghee ₹735/kg → 500ml jar ≈455g ₹334 (kept conservative at 500g ₹367.50)
+// butter ₹546/kg → 250g ₹136.50 · khoya ₹336/kg → 250g ₹84
+const EXTRAS_COST = { chaap: 52.5, ghee: 367.5, butter: 136.5, khoya: 84 };
 const EXTRAS_LABELS  = {
   chaap:  'Soya Chaap (4 pcs, ~300g)',
   ghee:   'Desi Ghee (500ml)',
@@ -360,7 +365,7 @@ function handleOrder(data) {
   const r = insertOrderRow(data, {});
 
   notifyNewOrder(r.orderId, data, r.aptKey, r.q250, r.q500, r.q750, r.q1kg,
-    r.totalGrams, r.totalRs, r.prevGrams, r.newGrams);
+    r.totalGrams, r.totalRs, r.prevGrams, r.newGrams, '', r.deliveryFee);
 
   return jsonOk({ orderId: r.orderId });
 }
@@ -392,8 +397,18 @@ function insertOrderRow(data, opts) {
   // Total (g) stays PANEER grams only — it drives the vendor block maths,
   // running totals, and stock alerts. Money includes the extras.
   const totalGrams = q250*250 + q500*500 + q750*750 + q1kg*1000;
+
+  // Delivery fee: client sends it on exactly one delivery group per order
+  // (a basket can split into a Wed paneer row + Sat specials row — the fee
+  // must not double). Server only bounds it: ₹0 or ₹50, and never for the
+  // no-fee home apartments. The ≥₹599 waiver is applied client-side where
+  // the whole basket is visible.
+  const rawFee      = parseInt(data.deliveryFee) || 0;
+  const deliveryFee = (rawFee === DELIVERY_FEE && !NO_FEE_APTS.includes(aptKey) && !(opts && opts.subscriptionId))
+    ? DELIVERY_FEE : 0;
+
   const totalRs    = q250*PRICING.q250 + q500*PRICING.q500 + q750*PRICING.q750 + q1kg*PRICING.q1kg
-                   + extrasRs(x);
+                   + extrasRs(x) + deliveryFee;
 
   // Running total BEFORE this order (for this apartment's sheet)
   const prevGrams = getRunningTotalGrams(sheet, data.deliveryDate);
@@ -418,11 +433,12 @@ function insertOrderRow(data, opts) {
     '',   // Payment Collected
     (opts && opts.subscriptionId) || '',  // Subscription ID
     x.chaap, x.ghee, x.butter, x.khoya,   // Saturday Specials (cols 22-25)
+    deliveryFee || '',                    // Delivery Fee (col 26; already in Total ₹)
   ]);
 
   const newGrams = prevGrams + totalGrams;
 
-  return { orderId, aptKey, q250, q500, q750, q1kg, extras: x, totalGrams, totalRs, prevGrams, newGrams };
+  return { orderId, aptKey, q250, q500, q750, q1kg, extras: x, totalGrams, totalRs, prevGrams, newGrams, deliveryFee };
 }
 
 // ── RAZORPAY ORDER CREATION ───────────────────────────────────
@@ -464,7 +480,7 @@ const ORDER_HEADERS = ['Timestamp','Order ID','Name','Phone','Address','Map URL'
   'Total (g)','Total (₹)','Status',
   'Payment Method','Payment Status','RZP Payment ID',
   'Delivered','Payment Collected','Subscription ID',
-  'Chaap','Ghee','Butter','Khoya'];
+  'Chaap','Ghee','Butter','Khoya','Delivery Fee'];
 
 function ensureOrderHeaders(sheet) {
   if (sheet.getLastRow() === 0) {
@@ -475,14 +491,16 @@ function ensureOrderHeaders(sheet) {
     r.setFontColor('#ffffff');
     return;
   }
-  // Self-heal older sheets created with the 21-column layout: stamp the
-  // four Saturday Specials headers into cols 22-25 if they're missing.
-  if (!sheet.getRange(1, 22).getValue()) {
-    const extra = sheet.getRange(1, 22, 1, 4);
-    extra.setValues([ORDER_HEADERS.slice(21)]);
-    extra.setFontWeight('bold');
-    extra.setBackground('#2d5a1b');
-    extra.setFontColor('#ffffff');
+  // Self-heal older sheets created with fewer columns: stamp any headers
+  // missing after col 21 (Specials cols 22-25, Delivery Fee col 26).
+  for (let c = 22; c <= ORDER_HEADERS.length; c++) {
+    if (!sheet.getRange(1, c).getValue()) {
+      const cell = sheet.getRange(1, c);
+      cell.setValue(ORDER_HEADERS[c - 1]);
+      cell.setFontWeight('bold');
+      cell.setBackground('#2d5a1b');
+      cell.setFontColor('#ffffff');
+    }
   }
 }
 
@@ -843,7 +861,7 @@ function materializeSubscriptions() {
 
 // ── ORDER NOTIFICATION ────────────────────────────────────────
 
-function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams, subscriptionId) {
+function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGrams, totalRs, prevGrams, newGrams, subscriptionId, deliveryFee) {
   const meta   = aptMeta(aptKey);
 
   const items = [];
@@ -855,6 +873,7 @@ function notifyNewOrder(orderId, data, aptKey, q250, q500, q750, q1kg, totalGram
   Object.keys(x).forEach(k => {
     if (x[k]) items.push(`${EXTRAS_LABELS[k]} × ${x[k]}  —  ₹${x[k]*EXTRAS_PRICING[k]}`);
   });
+  if (deliveryFee) items.push(`Delivery  —  ₹${deliveryFee}`);
 
   const { unit } = parseApt(data.address);
   // Display as "#17", not the raw "DB017" — that letter+digits shape reads
@@ -1206,20 +1225,30 @@ const APARTMENTS = [
   { key: 'SPC', label: 'Sobha Palm Court',   emoji: '🟠' },
   { key: 'BNR', label: 'Brigade Northridge', emoji: '🔵' },
   { key: 'ADG', label: 'Adarsh Greens',       emoji: '🟤' },
-  { key: 'BNL', label: 'Bren Northern Lights', emoji: '🟣' }
+  { key: 'BNL', label: 'Bren Northern Lights', emoji: '🟣' },
+  { key: 'GG',  label: 'Hiranandani Glen Gate', emoji: '⚫' },
+  { key: 'HA',  label: 'Hoysala Ace',           emoji: '⚪' }
 ];
 
 // Which PIN identity (login) owns each apartment's orders. Must match the
 // APTS `owner` map in ops/index.html. Rekha (SPC) handles SPC;
-// Deepa (BNR) handles BNR + ADG + BNL.
-const APT_OWNER = { SPC: 'SPC', BNL: 'BNR', BNR: 'BNR', ADG: 'BNR' };
+// Deepa (BNR) handles BNR + ADG + BNL + GG + HA.
+const APT_OWNER = { SPC: 'SPC', BNL: 'BNR', BNR: 'BNR', ADG: 'BNR', GG: 'BNR', HA: 'BNR' };
 
 const APT_PATTERNS = {
   SPC: ['sobha palm court'],
   BNR: ['brigade north ridge', 'brigade northridge', 'brigade north-ridge'],
   ADG: ['adarsh greens', 'adarsh green'],
-  BNL: ['bren northern lights', 'bren northern light', 'bren northernlights']
+  BNL: ['bren northern lights', 'bren northern light', 'bren northernlights'],
+  GG:  ['glen gate', 'glengate'],
+  HA:  ['hoysala ace', 'hoysala-ace']
 };
+
+// Apartments with no delivery fee (our home bases). Everyone else pays a
+// flat ₹50 unless the basket crosses the free-delivery threshold — the
+// client computes/waives it, the server bounds and records it.
+const NO_FEE_APTS  = ['SPC', 'BNR'];
+const DELIVERY_FEE = 50;
 
 /**
  * Returns { apt: 'SPC'|'BNR'|'Other', unit: 'A-301' } from a raw address string.
@@ -1234,7 +1263,8 @@ function parseApt(address) {
   }
 
   // Extract the unit — first short segment that doesn't contain the complex name or city
-  const skipWords = ['sobha', 'brigade', 'adarsh', 'bren', 'bangalore', 'bengaluru', 'karnataka', 'india'];
+  const skipWords = ['sobha', 'brigade', 'adarsh', 'bren', 'hiranandani', 'glen gate', 'hoysala',
+                     'sahakar', 'yelahanka', 'bangalore', 'bengaluru', 'karnataka', 'india'];
   const unit = String(address || '')
     .split(',')
     .map(p => p.trim())
@@ -1245,7 +1275,7 @@ function parseApt(address) {
 }
 
 function aptMeta(key) {
-  return APARTMENTS.find(a => a.key === key) || { key: 'Other', label: 'Other', emoji: '⚪' };
+  return APARTMENTS.find(a => a.key === key) || { key: 'Other', label: 'Other', emoji: '◽️' };
 }
 
 // ── CUTOFF SUMMARY (Tue 8pm → Wed orders, Fri 8pm → Sat orders) ──
@@ -1838,7 +1868,7 @@ function matchDate(cell, dateStr) {
 // Delivery dates fully paused across all apartments (e.g. a one-off week
 // where we're not delivering) — format 'yyyy-MM-dd'. Remove the entry once
 // that week has passed; this is not a recurring schedule change.
-const SUSPENDED_DATES = ['2026-07-22'];
+const SUSPENDED_DATES = [];
 
 /**
  * Returns the next n delivery dates (Wed=3, Sat=6) with an open/closed flag.
