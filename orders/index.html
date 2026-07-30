@@ -1336,8 +1336,12 @@ function initAptAutocomplete() {
 (function restoreCustomer() {
   try {
     const saved = JSON.parse(localStorage.getItem('db_cust') || 'null');
+    // ?apt=SPC handoff from a legacy per-apartment page beats the locally
+    // remembered apartment — the old page knows exactly where they shop.
+    const paramApt = String(new URLSearchParams(location.search).get('apt') || '').toUpperCase();
     const aptKey = localStorage.getItem('db_apt');
-    const apt = SERVICE_APTS.find(a => a.key === aptKey);
+    const apt = SERVICE_APTS.find(a => a.key === paramApt)
+             || SERVICE_APTS.find(a => a.key === aptKey);
     if (apt) setApt(apt);
     if (saved) {
       if (saved.name)  document.getElementById('f-name').value  = saved.name;

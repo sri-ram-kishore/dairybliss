@@ -178,10 +178,23 @@
 
     /* ── QUANTITY CARDS ── */
         .qty-rows { display: flex; flex-direction: column; }
-    .moved-note {
-      display: block; text-align: center; text-decoration: none;
-      background: var(--green-light, #e6f3de); color: var(--green);
-      font-size: 12.5px; font-weight: 700; padding: 9px 14px;
+    .upg-backdrop {
+      position: fixed; inset: 0; z-index: 90;
+      background: rgba(28,47,92,0.45);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .upg-card {
+      background: #fff; border-radius: 18px; padding: 28px 24px;
+      max-width: 340px; text-align: center;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.22);
+    }
+    .upg-emoji { font-size: 34px; margin-bottom: 8px; }
+    .upg-title { font-size: 19px; font-weight: 780; margin-bottom: 8px; }
+    .upg-sub   { font-size: 13.5px; color: var(--text-mid, #4a5f7a); line-height: 1.5; margin-bottom: 16px; }
+    .upg-btn {
+      display: inline-block; background: var(--green); color: #fff;
+      font-weight: 750; font-size: 14.5px; padding: 11px 26px;
+      border-radius: 24px; text-decoration: none;
     }
     .qty-row {
       display: flex; align-items: center; justify-content: space-between;
@@ -533,7 +546,18 @@ const APT = {
   </div>
 </header>
 <hr class="hd-sep">
-<a class="moved-note" href="../">✨ New: one order page for everything — faster reorders &amp; free-delivery rewards. Try it →</a>
+<div class="upg-backdrop" id="upg-backdrop">
+  <div class="upg-card">
+    <div class="upg-emoji">✨</div>
+    <h2 class="upg-title">Your order page just got an upgrade!</h2>
+    <p class="upg-sub">Same products and prices — now with photos, 15%-off pricing and
+      one-tap reorders. Taking you there…</p>
+    <a class="upg-btn" href="/orders/?apt=SPC">Go now →</a>
+  </div>
+</div>
+<script>
+  setTimeout(function () { window.location.replace('/orders/?apt=SPC'); }, 2600);
+</script>
 
 <!-- APT CONTEXT STRIP -->
 <!-- ═══════════════════════════ FORM SCREEN ═══════════════════════════ -->
