@@ -475,10 +475,6 @@
 
     /* ── unified-page additions ──────────────────────────────── */
     /* product thumbs + MRP/save price line */
-    .qty-thumb {
-      width: 46px; height: 46px; border-radius: 10px; object-fit: cover;
-      margin-right: 10px; flex-shrink: 0; background: var(--border);
-    }
     #qty-cards .qty-info { flex-wrap: wrap; }
     .p-now  { font-size: 14px; font-weight: 700; color: var(--text); font-style: normal; }
     .p-mrp  { font-size: 12px; color: var(--text-soft, #7a8fa8); margin-left: 2px; }
@@ -560,7 +556,6 @@
     @media (max-width: 520px) {
       .qty-line { display: none; }
       .qty-row { gap: 6px; padding-left: 4px; padding-right: 4px; }
-      .qty-thumb { width: 44px; height: 44px; margin-right: 8px; }
       #qty-cards .qty-info { flex-direction: column; align-items: flex-start; gap: 3px; }
       .qty-info { padding-right: 6px; }
       /* uniform 3-line stack: name / Save chip / price — never collides
@@ -665,7 +660,6 @@ let APT = null;
 
     <div class="qty-rows" id="qty-cards">
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/thumb-paneer.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">250g <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹155</b> <s class="p-mrp">₹185</s></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -677,7 +671,6 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/thumb-paneer.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">500g <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹289</b> <s class="p-mrp">₹340</s></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -689,7 +682,6 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/thumb-paneer.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">1 kg <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹569</b> <s class="p-mrp">₹670</s></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -718,7 +710,6 @@ let APT = null;
 
     <div class="qty-rows" id="extra-cards">
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/thumb-chaap.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">Soya Chaap <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹170</b> <s class="p-mrp">₹200</s><span class="p-unit">4 pcs (~300g)</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -730,7 +721,6 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/thumb-ghee.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">Desi Ghee <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹549</b> <s class="p-mrp">₹650</s><span class="p-unit">500ml</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -742,7 +732,6 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/thumb-butter.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">White Butter <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹216</b> <s class="p-mrp">₹255</s><span class="p-unit">250g</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -754,7 +743,6 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/thumb-khoya.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">Khoya <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹208</b> <s class="p-mrp">₹245</s><span class="p-unit">250g</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
