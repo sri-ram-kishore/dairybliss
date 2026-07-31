@@ -116,7 +116,7 @@
               <p>No starch. No preservatives. Just paneer.</p>
               <ul class="price-list">
                 <li class="price-list-header"><span>Size</span><span>Price</span></li>
-                <li><span>250g</span><span>₹148</span></li>
+                <li><span>250g</span><span>₹155</span></li>
                 <li><span>500g</span><span>₹289</span></li>
                 <li><span>1 kg</span><span>₹569</span></li>
               </ul>
@@ -134,7 +134,7 @@
               <img src="assets/ghee.webp" loading="lazy" decoding="async" alt="Ghee">
             </div>
             <div class="product-text">
-              <span class="badge badge-price">₹569 · 500ml</span>
+              <span class="badge badge-price">₹549 · 500ml</span>
               <h3>Desi Ghee</h3>
               <p>Slow-made. Deep aroma.<br>Rich finish.</p>
             </div>
@@ -144,7 +144,7 @@
               <img src="assets/chaap.webp" loading="lazy" decoding="async" alt="Soya chaap">
             </div>
             <div class="product-text">
-              <span class="badge badge-price">₹204 · 4 pcs (~300g)</span>
+              <span class="badge badge-price">₹170 · 4 pcs (~300g)</span>
               <h3>Soya Chaap</h3>
               <p>For grills, gravies<br>and rolls.</p>
             </div>
@@ -301,7 +301,7 @@
           <div class="order-items">
             <p class="order-section-label">Fresh Paneer · Wed &amp; Sat</p>
             <label class="order-item">
-              <div class="order-item-info"><span>250g</span><span class="order-price">₹148</span></div>
+              <div class="order-item-info"><span>250g</span><span class="order-price">₹155</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('q250',-1)">−</button><span id="q250">0</span><button type="button" onclick="adjustQty('q250',1)">+</button></div>
             </label>
             <label class="order-item">
@@ -316,11 +316,11 @@
           <div class="order-items">
             <p class="order-section-label">Saturday Specials · Saturdays only</p>
             <label class="order-item">
-              <div class="order-item-info"><span>Soya Chaap · 4 pcs (~300g)</span><span class="order-price">₹204</span></div>
+              <div class="order-item-info"><span>Soya Chaap · 4 pcs (~300g)</span><span class="order-price">₹170</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('qChaap',-1)">−</button><span id="qChaap">0</span><button type="button" onclick="adjustQty('qChaap',1)">+</button></div>
             </label>
             <label class="order-item">
-              <div class="order-item-info"><span>Desi Ghee · 500ml</span><span class="order-price">₹569</span></div>
+              <div class="order-item-info"><span>Desi Ghee · 500ml</span><span class="order-price">₹549</span></div>
               <div class="order-qty-ctrl"><button type="button" onclick="adjustQty('qGhee',-1)">−</button><span id="qGhee">0</span><button type="button" onclick="adjustQty('qGhee',1)">+</button></div>
             </label>
             <label class="order-item">
@@ -430,8 +430,8 @@
     })();
 
     /* ── ORDER MODAL ── */
-    const PRICES = { q250: 148, q500: 289, q1kg: 569,
-                     qChaap: 204, qGhee: 569, qButter: 216, qKhoya: 208 };
+    const PRICES = { q250: 155, q500: 289, q1kg: 569,
+                     qChaap: 170, qGhee: 549, qButter: 216, qKhoya: 208 };
     const LABELS = { q250: 'Paneer 250g', q500: 'Paneer 500g', q1kg: 'Paneer 1kg',
                      qChaap: 'Soya Chaap 4 pcs (~300g)', qGhee: 'Desi Ghee 500ml', qButter: 'White Butter 250g', qKhoya: 'Khoya 250g' };
     let _placeUrl = null; // Google Maps URL from Places autocomplete

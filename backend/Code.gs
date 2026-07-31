@@ -14,7 +14,7 @@ const SHEET_ID         = '1JqZ6YhCldPSaS9S-RPm4vpJM9CHlr67OLY5HEajZHvQ';
 // Bump on every redeploy. Shown in /debug so we can tell exactly which
 // deployed version answered a given Telegram message (used to diagnose
 // stale/duplicate responses coming from an old deployment).
-const CODE_VERSION = '2026-07-30-b';
+const CODE_VERSION = '2026-07-31-a';
 
 // This project's deployed web app URL (the single active deployment —
 // same URL all the frontends post to). Hardcoded because
@@ -317,12 +317,12 @@ function nextSubscriptionId() {
 // written to the sheet and charged.)
 // 2026-07-30 price revision. 750g was dropped from every order form —
 // the q750 rate stays only so a stale cached client can't produce a ₹0 row.
-const PRICING = { q250: 148, q500: 289, q750: 420, q1kg: 569 };
+const PRICING = { q250: 155, q500: 289, q750: 420, q1kg: 569 };
 
 // Saturday Specials — one-off add-ons delivered on the Saturday run only.
 // Quantities live in sheet columns 22-25 (appended AFTER the original 21
 // so every existing column index keeps working).
-const EXTRAS_PRICING = { chaap: 204, ghee: 569, butter: 216, khoya: 208 };
+const EXTRAS_PRICING = { chaap: 170, ghee: 549, butter: 216, khoya: 208 };
 // Procurement cost per SELLING unit, from Ratirams challans (rates are
 // all-in — the vendor's per-kg rate already embeds 5% GST where it
 // applies, and no tax is added on the bill):

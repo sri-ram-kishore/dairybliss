@@ -518,14 +518,14 @@
 const CONFIG = {
   WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbzL8rGFWH3d6R4n8Ct69mWnOki_KOnv6In8hlZO_hsj-D_v0qp9q0lvBDnds8uTy_k3nw/exec",
   PRICES: {
-    "250g": { label: "250g",  display: "₹148", amount: 148, desc: "Great for 1–2 people" },
+    "250g": { label: "250g",  display: "₹155", amount: 155, desc: "Great for 1–2 people" },
     "500g": { label: "500g",  display: "₹289", amount: 289, desc: "Perfect for a family" },
     "1kg":  { label: "1 Kg", display: "₹569", amount: 569, desc: "Best value" },
   },
   // New products — one-time add-ons, Saturday delivery only.
   EXTRAS: {
-    chaap:  { label: "Soya Chaap",   unit: "4 pcs (~300g)",  amount: 204 },
-    ghee:   { label: "Desi Ghee",    unit: "500ml", amount: 569 },
+    chaap:  { label: "Soya Chaap",   unit: "4 pcs (~300g)",  amount: 170 },
+    ghee:   { label: "Desi Ghee",    unit: "500ml", amount: 549 },
     butter: { label: "White Butter", unit: "250g",  amount: 216 },
     khoya:  { label: "Khoya",        unit: "250g",  amount: 208 },
   },
@@ -613,7 +613,7 @@ const APT = {
 
     <div class="qty-rows" id="qty-cards">
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price">₹148</span></div>
+        <div class="qty-info"><span class="qty-label">250g</span><span class="qty-price">₹155</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
@@ -663,7 +663,7 @@ const APT = {
 
     <div class="qty-rows" id="extra-cards">
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price">₹204 · 4 pcs (~300g)</span></div>
+        <div class="qty-info"><span class="qty-label">Soya Chaap</span><span class="qty-price">₹170 · 4 pcs (~300g)</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('chaap',-1)">−</button>
@@ -674,7 +674,7 @@ const APT = {
         </div>
       </div>
       <div class="qty-row">
-        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price">₹569 · 500ml</span></div>
+        <div class="qty-info"><span class="qty-label">Desi Ghee</span><span class="qty-price">₹549 · 500ml</span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('ghee',-1)">−</button>

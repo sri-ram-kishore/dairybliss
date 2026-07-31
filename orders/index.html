@@ -600,14 +600,14 @@
 const CONFIG = {
   WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbzL8rGFWH3d6R4n8Ct69mWnOki_KOnv6In8hlZO_hsj-D_v0qp9q0lvBDnds8uTy_k3nw/exec",
   PRICES: {
-    "250g": { label: "250g",  display: "₹148", amount: 148, mrp: 175, desc: "Great for 1–2 people" },
+    "250g": { label: "250g",  display: "₹155", amount: 155, mrp: 185, desc: "Great for 1–2 people" },
     "500g": { label: "500g",  display: "₹289", amount: 289, mrp: 340, desc: "Perfect for a family" },
     "1kg":  { label: "1 Kg", display: "₹569", amount: 569, mrp: 670, desc: "Best value" },
   },
   // New products — one-time add-ons, Saturday delivery only.
   EXTRAS: {
-    chaap:  { label: "Soya Chaap",   unit: "4 pcs (~300g)",  amount: 204, mrp: 240 },
-    ghee:   { label: "Desi Ghee",    unit: "500ml", amount: 569, mrp: 670 },
+    chaap:  { label: "Soya Chaap",   unit: "4 pcs (~300g)",  amount: 170, mrp: 200 },
+    ghee:   { label: "Desi Ghee",    unit: "500ml", amount: 549, mrp: 650 },
     butter: { label: "White Butter", unit: "250g",  amount: 216, mrp: 255 },
     khoya:  { label: "Khoya",        unit: "250g",  amount: 208, mrp: 245 },
   },
@@ -665,8 +665,8 @@ let APT = null;
 
     <div class="qty-rows" id="qty-cards">
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/paneer.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">250g <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹148</b> <s class="p-mrp">₹175</s></span></div>
+        <img class="qty-thumb" src="../assets/thumb-paneer.webp" alt="" loading="lazy">
+        <div class="qty-info"><span class="qty-label">250g <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹155</b> <s class="p-mrp">₹185</s></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepQty('250g',-1)">−</button>
@@ -677,7 +677,7 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/paneer.webp" alt="" loading="lazy">
+        <img class="qty-thumb" src="../assets/thumb-paneer.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">500g <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹289</b> <s class="p-mrp">₹340</s></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -689,7 +689,7 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/paneer.webp" alt="" loading="lazy">
+        <img class="qty-thumb" src="../assets/thumb-paneer.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">1 kg <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹569</b> <s class="p-mrp">₹670</s></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -718,8 +718,8 @@ let APT = null;
 
     <div class="qty-rows" id="extra-cards">
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/chaap.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">Soya Chaap <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹204</b> <s class="p-mrp">₹240</s><span class="p-unit">4 pcs (~300g)</span></span></div>
+        <img class="qty-thumb" src="../assets/thumb-chaap.webp" alt="" loading="lazy">
+        <div class="qty-info"><span class="qty-label">Soya Chaap <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹170</b> <s class="p-mrp">₹200</s><span class="p-unit">4 pcs (~300g)</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('chaap',-1)">−</button>
@@ -730,8 +730,8 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/ghee.webp" alt="" loading="lazy">
-        <div class="qty-info"><span class="qty-label">Desi Ghee <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹569</b> <s class="p-mrp">₹670</s><span class="p-unit">500ml</span></span></div>
+        <img class="qty-thumb" src="../assets/thumb-ghee.webp" alt="" loading="lazy">
+        <div class="qty-info"><span class="qty-label">Desi Ghee <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹549</b> <s class="p-mrp">₹650</s><span class="p-unit">500ml</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" onclick="stepExtra('ghee',-1)">−</button>
@@ -742,7 +742,7 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/butter.webp" alt="" loading="lazy">
+        <img class="qty-thumb" src="../assets/thumb-butter.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">White Butter <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹216</b> <s class="p-mrp">₹255</s><span class="p-unit">250g</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
@@ -754,7 +754,7 @@ let APT = null;
         </div>
       </div>
       <div class="qty-row">
-        <img class="qty-thumb" src="../assets/khoya.webp" alt="" loading="lazy">
+        <img class="qty-thumb" src="../assets/thumb-khoya.webp" alt="" loading="lazy">
         <div class="qty-info"><span class="qty-label">Khoya <em class="save-chip">Save 15%</em></span><span class="qty-price"><b class="p-now">₹208</b> <s class="p-mrp">₹245</s><span class="p-unit">250g</span></span></div>
         <div class="qty-right">
           <div class="qty-stepper">
