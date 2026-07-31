@@ -542,6 +542,16 @@
       font-weight: 700; font-size: 13px; padding: 0 16px; border-radius: 10px; cursor: pointer;
     }
     .coupon-msg { display: none; font-size: 12px; margin: 2px 2px 10px; }
+    .coupon-chip {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: var(--green-light, #e6f3de); border: 1.5px solid rgba(61,122,26,0.3);
+      border-radius: 10px; padding: 9px 13px; margin-bottom: 12px;
+      font-size: 13px; font-weight: 700; color: var(--green);
+    }
+    .coupon-remove {
+      background: none; border: none; color: var(--text-soft, #7a8fa8);
+      font-size: 12.5px; font-weight: 600; cursor: pointer; text-decoration: underline;
+    }
     .coupon-msg.ok  { display: block; color: var(--green); font-weight: 650; }
     .coupon-msg.bad { display: block; color: #c0392b; }
 
@@ -841,11 +851,15 @@ let APT = null;
     </div>
 
     <!-- Coupon code -->
-    <div class="coupon-row">
+    <div class="coupon-row" id="coupon-row">
       <input type="text" id="f-coupon" placeholder="Coupon code" autocomplete="off">
       <button type="button" class="coupon-apply" id="btn-coupon" onclick="applyCoupon()">Apply</button>
     </div>
     <p class="coupon-msg" id="coupon-msg"></p>
+    <div class="coupon-chip" id="coupon-chip" style="display:none">
+      <span id="coupon-chip-text"></span>
+      <button type="button" class="coupon-remove" onclick="removeCoupon()">Remove</button>
+    </div>
 
     <!-- Mini-bill: exactly what they're paying, right above the pay buttons -->
     <div class="invoice">
@@ -1167,10 +1181,19 @@ async function applyCoupon() {
     });
     const data = await resp.json();
     if (data.ok) {
-      COUPON = { code, type: data.type };
-      msg.textContent = '✓ ' + code + ' applied — free delivery on this order!';
-      msg.className = 'coupon-msg ok';
-      inp.disabled = true; btn.style.display = 'none';
+      if (grandTotal() >= FREE_DELIVERY_MIN) {
+        // Fee is already waived by the basket size — applying the code
+        // here would change nothing and read as a broken discount.
+        COUPON = null;
+        msg.textContent = 'Your basket is above ₹' + FREE_DELIVERY_MIN + ', so delivery is already FREE — no code needed 🎉';
+        msg.className = 'coupon-msg ok';
+      } else {
+        COUPON = { code, type: data.type };
+        msg.className = 'coupon-msg';
+        document.getElementById('coupon-row').style.display = 'none';
+        document.getElementById('coupon-chip-text').textContent = '🎟 ' + code + ' — ₹50 delivery fee waived';
+        document.getElementById('coupon-chip').style.display = 'flex';
+      }
     } else {
       COUPON = null;
       msg.textContent = data.reason || 'Invalid code.';
@@ -1194,12 +1217,7 @@ function updateShipNudge() {
   const sub = document.getElementById('ship-nudge-sub');
   document.getElementById('ship-bar-fill').style.width =
     Math.min(100, Math.round(t / FREE_DELIVERY_MIN * 100)) + '%';
-  if (COUPON && COUPON.type === 'free_delivery') {
-    document.getElementById('ship-bar-fill').style.width = '100%';
-    sub.textContent = '🎟 ' + COUPON.code + ' applied — free delivery on this order!';
-    sub.classList.add('unlocked');
-    return;
-  }
+  if (COUPON && COUPON.type === 'free_delivery') { el.style.display = 'none'; return; }
   if (t === 0) {
     sub.textContent = 'Start your basket to unlock free delivery.';
     sub.classList.remove('unlocked');
@@ -1303,6 +1321,8 @@ function changeApt() {
   const cb = document.getElementById('btn-coupon');
   cb.style.display = ''; cb.textContent = 'Apply';
   document.getElementById('coupon-msg').className = 'coupon-msg';
+  document.getElementById('coupon-chip').style.display = 'none';
+  document.getElementById('coupon-row').style.display = 'flex';
   document.getElementById('apt-ok').style.display = 'none';
   document.getElementById('apt-no').style.display = 'none';
   document.getElementById('gated').style.display = 'none';
@@ -1312,6 +1332,14 @@ function changeApt() {
   inp.value = '';
   inp.focus();
   try { localStorage.removeItem('db_apt'); } catch {}
+}
+
+function removeCoupon() {
+  COUPON = null;
+  document.getElementById('coupon-chip').style.display = 'none';
+  document.getElementById('coupon-row').style.display = 'flex';
+  document.getElementById('coupon-msg').className = 'coupon-msg';
+  updateTotalPill();
 }
 
 function initAptAutocomplete() {
