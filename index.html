@@ -25,7 +25,7 @@
       <a href="#story">Our Story</a>
       <a href="#products">Products</a>
       <a href="#quality">Purity</a>
-      <a class="nav-cta" href="#" onclick="openPincodeModal();return false;">Order Now</a>
+      <a class="nav-cta" href="orders/">Order Now</a>
     </nav>
   </header>
 
@@ -64,7 +64,7 @@
             </div>
           </div>
           <div class="actions reveal reveal-delay-2">
-            <a class="button primary hero-cta" href="#" onclick="openPincodeModal();return false;">
+            <a class="button primary hero-cta" href="orders/">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
               Order Now
             </a>
@@ -174,7 +174,7 @@
       </div>
     
       <div class="products-cta reveal">
-        <a class="button primary" href="#" onclick="openPincodeModal();return false;">
+        <a class="button primary" href="orders/">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:7px;flex-shrink:0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           Order Now
         </a>
@@ -237,7 +237,7 @@
         <a href="#story">Our Story</a>
         <a href="#products">Products</a>
         <a href="#quality">Quality</a>
-        <a href="#" onclick="openOrderModal();return false;">Order Now</a>
+        <a href="orders/">Order Now</a>
       </nav>
       <div class="footer-delivery">
         <span class="footer-label">Delivery</span>
@@ -740,7 +740,7 @@ function openOrderModalPrefilled() {
           <div class="pincode-yes">
             <span class="pincode-badge yes">✓ We deliver to your area</span>
             <p>Fresh paneer &amp; Saturday Specials, delivered to your door.</p>
-            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
+            <a class="button primary" href="orders/">Order Now →</a>
           </div>`;
       } else if (isServiceable === false) {
         resultEl.innerHTML = `
@@ -755,7 +755,7 @@ function openOrderModalPrefilled() {
           <div class="pincode-yes">
             <span class="pincode-badge yes">Looks like we might cover your area</span>
             <p>Place an order and we'll confirm delivery on WhatsApp.</p>
-            <a class="button primary" href="#" onclick="closePincodeModal();openOrderModalPrefilled();return false;">Order Now →</a>
+            <a class="button primary" href="orders/">Order Now →</a>
           </div>`;
       }
     }
