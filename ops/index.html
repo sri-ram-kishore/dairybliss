@@ -371,6 +371,17 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .order-meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+    /* Customer contact — tap to call or WhatsApp. */
+    .contact-line {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px;
+      margin-top: 5px; font-size: 12px; font-weight: 700;
+    }
+    .contact-line a {
+      display: inline-flex; align-items: center; gap: 4px;
+      text-decoration: none; -webkit-tap-highlight-color: transparent;
+    }
+    .contact-call { color: var(--green); }
+    .contact-wa   { color: #25D366; }
     .order-btns { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
     /* Action buttons — same fixed width so they always align */
     .btn-del, .btn-pay {
@@ -1522,6 +1533,20 @@ function renderToday() {
   el.innerHTML = html;
 }
 
+// Tap-to-call + WhatsApp links for a customer. Sheet phones may carry
+// +91 / spaces, so keep the last 10 digits.
+function contactLineHTML(o) {
+  const ph = String(o.phone || '').replace(/\D/g, '').slice(-10);
+  if (ph.length !== 10) return '';
+  const shown = `${ph.slice(0, 5)} ${ph.slice(5)}`;
+  const phoneIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>`;
+  return `
+      <div class="contact-line">
+        <a class="contact-call" href="tel:+91${ph}">${phoneIcon} ${shown}</a>
+        <a class="contact-wa" href="https://wa.me/91${ph}" target="_blank" rel="noopener">WhatsApp</a>
+      </div>`;
+}
+
 // Read-only reference row (Today tab order lists)
 function refRow(o) {
   const flat      = flatFromAddress(o.address);
@@ -1535,6 +1560,7 @@ function refRow(o) {
     <div class="ref-info">
       <div class="ref-name">${esc(o.name)}</div>
       <div class="ref-flat">${esc(flat)}</div>
+      ${contactLineHTML(o)}
     </div>
     <div class="ref-qty">${typeTagsHTML(o)}</div>
     <div class="ref-right"><span class="ref-price">${fmt(o.totalRs)}</span>${badge}</div>
@@ -1625,6 +1651,7 @@ function orderCardHTML(o, editable) {
       <div class="order-info">
         <div class="order-name">${esc(o.name)}</div>
         <div class="order-meta">${esc(flat)} · ${fmt(o.totalRs)} ${typeTagsHTML(o)}</div>
+        ${contactLineHTML(o)}
       </div>
       <div class="order-btns">
         ${delChip}
@@ -1651,6 +1678,7 @@ function orderCardHTML(o, editable) {
     <div class="order-info">
       <div class="order-name">${esc(o.name)}</div>
       <div class="order-meta">${esc(flat)} · ${fmt(o.totalRs)} ${typeTagsHTML(o)}</div>
+      ${contactLineHTML(o)}
     </div>
     <div class="order-btns">
       <button class="btn-del${delDone ? ' done' : ''}" onclick="toggleDelivered('${rid}','${o.apt}')">${delLabel}</button>
